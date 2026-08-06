@@ -1,0 +1,36 @@
+name: "Micro Drama"
+description: "A short vertical drama: conflict hook, confrontation, twist, unresolved cliffhanger, follow-for-part-2 CTA"
+category: drama
+default_duration_s: 30
+default_aspect: "9:16"
+default_model: h3
+shots:
+  - name: "Hook / Conflict"
+    duration_s: 6
+    mode: t2v
+    prompt_hint: "Drop into the dramatic conflict mid-beat; tension is immediate, vertical framing, no warm-up"
+  - name: "Confrontation"
+    duration_s: 7
+    mode: fl2va
+    prompt_hint: "The dramatic exchange between characters; coverage-style close-ups, eyelines carry the emotion"
+  - name: "Twist"
+    duration_s: 7
+    mode: fl2va
+    prompt_hint: "The unexpected turn; a reveal or reversal that reframes everything, beat held a beat longer for impact"
+  - name: "Cliffhanger"
+    duration_s: 6
+    mode: fl2va
+    prompt_hint: "Unresolved beat hanging on a charged expression or action; the moment before the consequence lands"
+  - name: "Follow CTA"
+    duration_s: 4
+    mode: i2v
+    prompt_hint: "End card prompting follow for part 2; simple vertical card, the dramatic score still trailing"
+audio:
+  music: true
+  dialogue: true
+  ambient: false
+quality:
+  min_steps: 18
+  judge_bar: 0.7
+  best_of_n: 1
+tags: [micro-drama, vertical, serialized, dialogue-heavy, cliffhanger]

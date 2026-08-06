@@ -3,3 +3,21 @@ artifacts/
 __pycache__/
 *.pyc
 .env
+
+# packaging build artifacts
+build/
+dist/
+*.egg-info/
+*.egg-link
+.eggs/
+
+# one-click installer (scripts/install.sh) artifacts — never commit the engine
+# clone, the venv, the ~54 GB of model weights, or local logs.
+ComfyUI/
+.venv/
+.cache/
+output/
+
+
+# Allow the landing-page hero demo (site needs this on Pages)
+!website/demo.mp4

@@ -1,0 +1,36 @@
+name: "UGC Ad"
+description: "A user-generated-style ad: handheld phone feel, problem to discovery to try to genuine reaction to CTA"
+category: ugc
+default_duration_s: 20
+default_aspect: "9:16"
+default_model: h3
+shots:
+  - name: "Hook / Problem"
+    duration_s: 4
+    mode: t2v
+    prompt_hint: "Person frustrated by the relatable problem; vertical handheld phone aesthetic, imperfect framing, real room light"
+  - name: "Discovery"
+    duration_s: 4
+    mode: fl2va
+    prompt_hint: "Same person notices or is handed the product; genuine curious reaction, no polished staging"
+  - name: "Try / Use"
+    duration_s: 5
+    mode: fl2va
+    prompt_hint: "First use of the product in the same environment; natural motion, the product doing its job visibly"
+  - name: "Reaction"
+    duration_s: 4
+    mode: fl2va
+    prompt_hint: "Genuine surprised or delighted reaction; eyeline to camera-as-friend, authentic micro-expressions"
+  - name: "CTA"
+    duration_s: 3
+    mode: i2v
+    prompt_hint: "Product held to camera with a simple on-screen prompt; casual, not broadcast-polished"
+audio:
+  music: true
+  dialogue: false
+  ambient: true
+quality:
+  min_steps: 16
+  judge_bar: 0.65
+  best_of_n: 1
+tags: [ugc, vertical, handheld, social-ad, authentic]

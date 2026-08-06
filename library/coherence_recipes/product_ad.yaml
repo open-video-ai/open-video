@@ -1,0 +1,40 @@
+name: "Product Ad"
+description: "A product demonstration ad: hero reveal, feature detail, in-use lifestyle, brand close"
+category: product
+default_duration_s: 30
+default_aspect: "16:9"
+default_model: h3
+shots:
+  - name: "Hook / Problem"
+    duration_s: 5
+    mode: t2v
+    prompt_hint: "Relatable moment or pain point that sets up the need; subtle, naturalistic lighting"
+  - name: "Product Hero Reveal"
+    duration_s: 6
+    mode: i2v
+    prompt_hint: "Product on a clean seamless background, dramatic studio key light, slow turntable rotation revealing form and materials"
+  - name: "Feature Detail"
+    duration_s: 5
+    mode: i2v
+    prompt_hint: "Extreme macro of the signature feature; crisp surface texture, precise mechanical or material motion"
+  - name: "In-Use / Lifestyle"
+    duration_s: 7
+    mode: fl2va
+    prompt_hint: "Product being used in its real context by a person; natural handheld energy, environment grounded and believable"
+  - name: "Brand Close"
+    duration_s: 5
+    mode: i2v
+    prompt_hint: "Product lineup or hero frame with brand wordmark settling in; clean, confident, end-card feel"
+  - name: "Logo / Tagline"
+    duration_s: 2
+    mode: i2v
+    prompt_hint: "Brand logo centered on neutral field with a single-line tagline; held static for readability"
+audio:
+  music: true
+  dialogue: false
+  ambient: true
+quality:
+  min_steps: 20
+  judge_bar: 0.75
+  best_of_n: 2
+tags: [product, commercial, product-demo, hero-reveal]

@@ -1,0 +1,99 @@
+# open-video packaging. Modern PEP 621 metadata; setuptools build backend.
+# After install: `open-video "prompt"` / `python -m open_video` / `import open_video`.
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-video"
+version = "0.1.0"
+description = "Open-source autonomous video generation — the agent director layer on ComfyUI + open models (MiniMax H3 baseline)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "OpenVideo Contributors" },
+]
+keywords = [
+    "video-generation",
+    "text-to-video",
+    "comfyui",
+    "minimax-h3",
+    "agent",
+    "open-source",
+    "generative",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# Runtime Python deps: NONE. The core path (plan -> craft -> validate -> generate
+# via engine -> judge -> stitch) imports only the Python standard library; it talks
+# to ComfyUI over HTTP via urllib and to ffmpeg/ffprobe via subprocess. System deps
+# (ffmpeg/ffprobe, a running ComfyUI) are documented, not pip-installed.
+dependencies = []
+
+[project.optional-dependencies]
+# `open-video serve` needs uvicorn (and a server module, not yet shipped).
+serve = ["uvicorn>=0.20"]
+dev = [
+    "pytest>=7",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+# Console entry point -> open_video/__main__.py:main -> cli/open_video.py:main.
+open-video = "open_video.__main__:main"
+
+[project.urls]
+Homepage = "https://open-video.ai"
+Repository = "https://github.com/open-video-ai/open-video"
+Documentation = "https://github.com/open-video-ai/open-video/tree/main/docs"
+Issues = "https://github.com/open-video-ai/open-video/issues"
+
+# --- packaging layout --------------------------------------------------------
+# Flat layout: core/, backends/, engines/, cli/, open_video/ are all top-level
+# packages. This is required because the existing modules import each other as
+# top-level packages (e.g. `from core.backend import ModelBackend`,
+# `from backends.h3.backend import H3Backend`, `from engines.comfyui.adapter
+# import ComfyUIAdapter`). Keeping them top-level means zero import edits and
+# the source tree keeps working unchanged.
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "core",
+    "core.*",
+    "backends",
+    "backends.*",
+    "engines",
+    "engines.*",
+    "cli",
+    "cli.*",
+    "open_video",
+    "open_video.*",
+]
+exclude = [
+    "artifacts*",
+    "bench*",
+    "docs*",
+    "library*",
+    "skill*",
+    "templates*",
+    "website*",
+    "tests*",
+]
+
+# Ship the H3 ComfyUI workflow templates alongside the backend plugin.
+[tool.setuptools.package-data]
+"backends.h3" = ["workflows/*.json"]

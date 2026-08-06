@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" || pip install -r requirements.txt || true
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v || python tests/test_backend.py
+
+      - name: Check imports
+        run: |
+          python -c "from core.backend import ModelBackend, ShotRequest, Capabilities; print('core imports OK')"
+          python -c "from core.pipeline import LongFilmPipeline, Shot; print('pipeline imports OK')"
+          python -c "from core.judge import QualityJudge, Verdict; print('judge imports OK')"

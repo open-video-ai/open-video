@@ -1,0 +1,32 @@
+name: "Cinematic Short Film"
+description: "A narrative short film with multiple shots, coherent story, cinematic quality"
+category: cinematic
+default_duration_s: 60
+default_aspect: "16:9"
+default_model: h3
+shots:
+  - name: "Establishing"
+    duration_s: 10
+    mode: t2v
+    prompt_hint: "Wide establishing shot of the setting, camera slowly revealing the environment"
+  - name: "Character Introduction"
+    duration_s: 8
+    mode: i2v
+    prompt_hint: "Medium shot introducing the main character, their appearance and demeanor"
+  - name: "Action/Development"
+    duration_s: 10
+    mode: i2v
+    prompt_hint: "The central action or conflict develops"
+  - name: "Resolution"
+    duration_s: 8
+    mode: i2v
+    prompt_hint: "The story resolves, camera pulls back to a wider frame"
+audio:
+  music: true
+  dialogue: false
+  ambient: true
+quality:
+  min_steps: 20
+  judge_bar: 0.7
+  best_of_n: 1
+tags: [narrative, cinematic, multi-shot]

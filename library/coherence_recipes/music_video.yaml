@@ -1,0 +1,44 @@
+name: "Music Video"
+description: "A music-driven visual cut to phrase boundaries; beat-synced shots flowing performer, narrative, peak, outro"
+category: music
+default_duration_s: 60
+default_aspect: "16:9"
+default_model: h3
+shots:
+  - name: "Intro / Atmosphere"
+    duration_s: 8
+    mode: t2v
+    prompt_hint: "Mood-setting atmosphere before the vocal enters; slow drift, texture and light establishing the world of the track"
+  - name: "Verse 1 - Performer"
+    duration_s: 8
+    mode: fl2va
+    prompt_hint: "Performer introduced in their setting; energy matches the verse, camera locked or gently pushing"
+  - name: "Chorus 1 - Energy"
+    duration_s: 8
+    mode: fl2va
+    prompt_hint: "Chorus lift: bigger framing, more dynamic camera motion, lighting intensifies on the beat"
+  - name: "Verse 2 - Cutaway Narrative"
+    duration_s: 8
+    mode: i2v
+    prompt_hint: "Narrative or conceptual cutaway that contrasts the performer shot; same color grade, different subject"
+  - name: "Chorus 2 - Peak"
+    duration_s: 8
+    mode: fl2va
+    prompt_hint: "Return to performer at peak energy; most dynamic camera and lighting of the cut, hits the downbeat"
+  - name: "Bridge - Breakdown"
+    duration_s: 8
+    mode: fl2va
+    prompt_hint: "Texture and mood strip back; slower motion, negative space, tension before the final chorus"
+  - name: "Outro - Fade"
+    duration_s: 8
+    mode: fl2va
+    prompt_hint: "Track resolves; performer or environment settles, light and motion ease down to a held final frame"
+audio:
+  music: true
+  dialogue: false
+  ambient: false
+quality:
+  min_steps: 20
+  judge_bar: 0.7
+  best_of_n: 2
+tags: [music-driven, beat-synced, multi-shot, performer]

@@ -1,0 +1,36 @@
+name: "Brand Ad"
+description: "A brand advertisement: emotional brand world, authentic people moments, product as enabler, transformation, ethos close"
+category: brand
+default_duration_s: 30
+default_aspect: "16:9"
+default_model: h3
+shots:
+  - name: "Brand World / Value"
+    duration_s: 7
+    mode: t2v
+    prompt_hint: "Open on the emotional world the brand stands for; aspirational but human, a single evocative environment"
+  - name: "People / Moments"
+    duration_s: 7
+    mode: fl2va
+    prompt_hint: "Authentic people in real moments connected to that world; diverse, warm, unposed energy"
+  - name: "Product Hero"
+    duration_s: 6
+    mode: i2v
+    prompt_hint: "The product introduced not as the star but as the enabler of the moment; integrated, not glossy-for-its-own-sake"
+  - name: "Transformation / Emotion"
+    duration_s: 6
+    mode: fl2va
+    prompt_hint: "The feeling or outcome the brand delivers; visible emotional or practical transformation, the payoff beat"
+  - name: "Logo / Ethos Close"
+    duration_s: 4
+    mode: i2v
+    prompt_hint: "Brand mark and a single ethos line on a clean field; held steady, confident, end-card tone"
+audio:
+  music: true
+  dialogue: false
+  ambient: true
+quality:
+  min_steps: 22
+  judge_bar: 0.75
+  best_of_n: 2
+tags: [brand, emotional, aspirational, commercial, ethos]

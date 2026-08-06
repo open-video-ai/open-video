@@ -1,0 +1,512 @@
+#!/usr/bin/env python3
+"""open-video CLI — concept -> planned film -> generated film.
+
+Two ways to run (from the repo root):
+
+    python cli/open_video.py "A cinematic shot of waves at sunset" \\
+        --duration 10 --model h3 --output output.mp4
+
+    # also works if the repo root is on PYTHONPATH and an open_video package
+    # shim points here:
+    python -m open_video "A cinematic shot of waves at sunset" [options]
+
+Subcommands:
+    list-models    List available backends discovered under backends/.
+    list-presets   List prompt presets in library/prompts/.
+    serve          Start the open-video HTTP server (if installed).
+
+The default action (no subcommand) is `generate`: validate the prompt -> build a
+Planner plan -> run LongFilmPipeline (plan -> per-shot generate via the backend ->
+FL2VA continuity chain -> judge -> stitch) -> write the film to --output.
+"""
+from __future__ import annotations
+import argparse
+import importlib
+import inspect
+import json
+import os
+import sys
+from pathlib import Path
+
+# --- repo-root bootstrap ------------------------------------------------------
+# core/, backends/, engines/ all import as top-level packages rooted at the repo
+# root. Make sure the repo root (parent of this cli/ dir) is on sys.path no matter
+# how we are invoked (python cli/open_video.py ... | python -m open_video ...).
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+# --- defaults / constants -----------------------------------------------------
+DEFAULT_MODEL = os.environ.get("OPEN_VIDEO_MODEL", "h3")
+DEFAULT_DURATION = 10.0
+DEFAULT_ASPECT = "16:9"
+DEFAULT_OUTPUT = "output/film.mp4"
+DEFAULT_SERVER = os.environ.get("OPEN_VIDEO_COMFYUI", "http://127.0.0.1:8188")
+VALID_MODES = ("t2v", "i2v", "flf2v")
+SUBCOMMANDS = ("list-models", "list-presets", "serve")
+
+# Explicit registry (alias -> module path, class name). Discovery below is the
+# fallback for new models dropped into backends/<name>/backend.py.
+BACKEND_REGISTRY = {
+    "h3": ("backends.h3.backend", "H3Backend"),
+}
+
+
+# =============================================================================#
+# Backend discovery + loading
+# =============================================================================#
+def discover_backends():
+    """Walk backends/<name>/backend.py and instantiate every ModelBackend subclass.
+
+    Returns a list of (alias, instance) where alias is the directory name. Import
+    failures are reported on stderr but do not abort discovery.
+    """
+    from core.backend import ModelBackend
+    backends_dir = REPO_ROOT / "backends"
+    found = []
+    if not backends_dir.is_dir():
+        return found
+    for sub in sorted(backends_dir.iterdir()):
+        if not (sub.is_dir() and (sub / "backend.py").exists()):
+            continue
+        mod_path = f"backends.{sub.name}.backend"
+        try:
+            mod = importlib.import_module(mod_path)
+        except Exception as e:  # pragma: no cover - depends on backend deps
+            print(f"[open-video] warning: could not import {mod_path}: {e}",
+                  file=sys.stderr)
+            continue
+        for _name, obj in inspect.getmembers(mod, inspect.isclass):
+            if obj is ModelBackend or not issubclass(obj, ModelBackend):
+                continue
+            if obj.__module__ != mod.__name__:
+                continue  # imported base class, not the one defined here
+            try:
+                inst = obj()
+            except Exception as e:  # pragma: no cover
+                print(f"[open-video] warning: {mod_path}.{_name} failed to "
+                      f"instantiate: {e}", file=sys.stderr)
+                continue
+            found.append((sub.name, inst))
+    return found
+
+
+def load_backend(model_id: str):
+    """Resolve a model alias/id to a ModelBackend instance.
+
+    Order: explicit BACKEND_REGISTRY -> discovery (match dir name or backend.id).
+    Raises KeyError if not found.
+    """
+    if model_id in BACKEND_REGISTRY:
+        mod_path, cls_name = BACKEND_REGISTRY[model_id]
+        try:
+            mod = importlib.import_module(mod_path)
+        except Exception as e:
+            raise KeyError(f"model '{model_id}' ({mod_path}) could not be imported: {e}") from e
+        if not hasattr(mod, cls_name):
+            raise KeyError(f"model '{model_id}': {mod_path} has no '{cls_name}'")
+        return getattr(mod, cls_name)()
+
+    for alias, inst in discover_backends():
+        if alias == model_id or getattr(inst, "id", None) == model_id:
+            return inst
+    raise KeyError(model_id)
+
+
+def _bind_engine(backend, engine):
+    """Inject `engine` into every backend.generate() call made by LongFilmPipeline.
+
+    The base contract declares generate(req); H3 declares generate(req, engine=None)
+    and creates its own default adapter when engine is None. The pipeline calls
+    generate(req) (one arg), so without this binding the --server flag would be
+    silently ignored. We wrap generate so our configured engine is always passed,
+    but only if the backend's signature actually accepts it.
+    """
+    orig = backend.generate
+    try:
+        params = inspect.signature(orig).parameters
+    except (TypeError, ValueError):
+        params = {}
+    accepts_engine = "engine" in params or any(
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+    )
+    if not accepts_engine:
+        return  # backend takes no engine kwarg; let it use its own default adapter
+
+    def _generate(req, engine=None, *args, **kwargs):
+        return orig(req, engine=engine, *args, **kwargs)
+
+    # call as bound method on the instance so `self` is preserved
+    backend.generate = lambda req, *a, **kw: orig(req, engine=engine, *a, **kw)
+
+
+# =============================================================================#
+# Engine loading
+# =============================================================================#
+def load_engine(server: str, output_dir: str):
+    from engines.comfyui.adapter import ComfyUIAdapter
+    return ComfyUIAdapter(server=server, output_dir=output_dir)
+
+
+# =============================================================================#
+# Plan rendering
+# =============================================================================#
+def _truncate(s: str, n: int = 240) -> str:
+    s = (s or "").strip().replace("\n", " ")
+    return s if len(s) <= n else s[: n - 1] + "…"
+
+
+def print_plan(plan, backend):
+    caps = backend.capabilities
+    print("=" * 78)
+    print(f"CONCEPT: {plan.concept}")
+    print(f"target: {plan.target_duration_s:g}s | aspect: {plan.metadata.get('aspect','?')} "
+          f"| model: {backend.id} ({backend.display_name})")
+    print(f"max shot: {caps.max_duration_s:g}s | native audio: {caps.native_audio} "
+          f"| modes: "
+          + "/".join(m for m, on in (("t2v", caps.t2v), ("i2v", caps.i2v),
+                                     ("flf2v", caps.flf2v), ("r2v", caps.r2v)) if on))
+    print(f"plan: {len(plan.shots)} shot(s), {len(plan.transitions)} transition(s)")
+    if plan.metadata.get("v0_note"):
+        print(f"note: {plan.metadata['v0_note']}")
+    print("-" * 78)
+    for s in plan.shots:
+        ff = f" ff={s.first_frame}" if s.first_frame else ""
+        lf = f" lf={s.last_frame}" if s.last_frame else ""
+        print(f"  Shot {s.scene_id} [{s.mode}] {s.duration_s:g}s seed={s.seed}{ff}{lf}")
+        print(f"    {_truncate(s.prompt)}")
+    print("=" * 78)
+
+
+# =============================================================================#
+# generate (default command)
+# =============================================================================#
+def cmd_generate(args) -> int:
+    # 1. prompt validation
+    if not args.prompt or not args.prompt.strip():
+        print("[open-video] error: prompt is empty", file=sys.stderr)
+        return 2
+
+    # 2. load backend
+    try:
+        backend = load_backend(args.model)
+    except KeyError as e:
+        print(f"[open-video] error: unknown model '{args.model}' ({e})", file=sys.stderr)
+        known = sorted({*BACKEND_REGISTRY.keys(), *[a for a, _ in discover_backends()]})
+        print(f"[open-video] available: {', '.join(known) or '(none)'}", file=sys.stderr)
+        return 2
+    except Exception as e:
+        print(f"[open-video] error loading model '{args.model}': {e}", file=sys.stderr)
+        return 2
+
+    caps = backend.capabilities
+
+    # 3. mode vs capabilities
+    mode_supported = {"t2v": caps.t2v, "i2v": caps.i2v, "flf2v": caps.flf2v}.get(args.mode, False)
+    if not mode_supported:
+        print(f"[open-video] error: model '{backend.id}' does not support mode '{args.mode}'",
+              file=sys.stderr)
+        return 2
+
+    # 4. aspect vs native list (warning only; resolution_for still computes a grid)
+    if caps.aspects and args.aspect not in caps.aspects:
+        print(f"[open-video] warning: aspect '{args.aspect}' not in model's native "
+              f"aspects {caps.aspects}; will compute the nearest grid anyway.",
+              file=sys.stderr)
+
+    # 5. duration sanity
+    if args.duration <= 0:
+        print(f"[open-video] error: --duration must be > 0 (got {args.duration})",
+              file=sys.stderr)
+        return 2
+    if args.duration < 1.0:
+        print(f"[open-video] warning: --duration {args.duration}s is very short.",
+              file=sys.stderr)
+
+    # 6. frame-input validation per mode
+    ff, lf = args.first_frame, args.last_frame
+    if args.mode == "i2v" and not ff:
+        print("[open-video] error: --mode i2v requires --first-frame", file=sys.stderr)
+        return 2
+    if args.mode == "flf2v" and not (ff and lf):
+        print("[open-video] error: --mode flf2v requires both --first-frame and --last-frame",
+              file=sys.stderr)
+        return 2
+    for label, path in (("first-frame", ff), ("last-frame", lf)):
+        if path and not Path(path).is_file():
+            print(f"[open-video] error: {label} not found: {path}", file=sys.stderr)
+            return 2
+
+    # 7. decide shot-0 mode (upgrade t2v -> i2v when a first frame is supplied)
+    shot0_mode = args.mode
+    if ff and args.mode == "t2v":
+        if not caps.i2v:
+            print(f"[open-video] error: --first-frame needs i2v but '{backend.id}' "
+                  f"has no i2v capability", file=sys.stderr)
+            return 2
+        print("[open-video] note: --first-frame supplied; upgrading shot 1 t2v -> i2v",
+              file=sys.stderr)
+        shot0_mode = "i2v"
+
+    # 8. build the plan
+    from core.planner import Planner
+    planner = Planner(backend=backend)
+    plan = planner.plan_from_concept(args.prompt, target_duration_s=args.duration,
+                                     aspect=args.aspect)
+    shots = plan.shots
+    if not shots:
+        print("[open-video] error: planner produced no shots", file=sys.stderr)
+        return 1
+
+    # 9. inject CLI overrides into the planned shots
+    shots[0].mode = shot0_mode
+    if ff:
+        shots[0].first_frame = str(Path(ff).resolve())
+    if lf and shot0_mode == "flf2v":
+        shots[0].last_frame = str(Path(lf).resolve())
+    if args.seed is not None:
+        for i, s in enumerate(shots):
+            s.seed = args.seed + i
+
+    # 10. single-shot films use the user's prompt verbatim; multi-shot v0 plans
+    #     carry template prompts and need an LLM planner — be honest about it.
+    if len(shots) == 1:
+        shots[0].prompt = args.prompt
+    elif any("TODO" in (s.prompt or "") for s in shots):
+        print(f"[open-video] note: multi-shot plan uses v0 template prompts. Wire an "
+              f"LLM planner (Planner(llm_fn=...)) for authored per-shot prompts, or set "
+              f"--duration <= {caps.max_duration_s:g}s for a single-shot film using "
+              f"your prompt verbatim.", file=sys.stderr)
+
+    # 11. show the plan
+    print_plan(plan, backend)
+
+    if args.dry_run:
+        print("[open-video] --dry-run: prompt + plan validated. No generation performed.",
+              flush=True)
+        return 0
+
+    # 12. engine + pipeline
+    out_path = Path(args.output)
+    out_dir = str(out_path.parent) if str(out_path.parent) not in ("", ".") else "output"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    engine = load_engine(args.server, output_dir=out_dir)
+    if not engine.health():
+        print(f"[open-video] error: ComfyUI not reachable at {args.server}. "
+              f"Start it (or use --dry-run to validate without generating).",
+              file=sys.stderr)
+        return 3
+    _bind_engine(backend, engine)
+
+    from core.pipeline import LongFilmPipeline
+    pipeline = LongFilmPipeline(backend=backend, engine=engine, output_dir=out_dir)
+    film, _final_plan = pipeline.make_film(shots, out_path=str(out_path))
+    if not film:
+        print("[open-video] error: pipeline did not produce a film.", file=sys.stderr)
+        return 4
+    print(f"[open-video] DONE -> {film}", flush=True)
+    return 0
+
+
+# =============================================================================#
+# list-models
+# =============================================================================#
+def cmd_list_models(args) -> int:
+    rows = []
+    # registry-first so aliases like "h3" always appear even if discovery trips
+    seen = set()
+    for alias in BACKEND_REGISTRY:
+        try:
+            inst = load_backend(alias)
+        except Exception as e:
+            rows.append((alias, "?", "ERROR", "", f"load failed: {e}"))
+            seen.add(alias)
+            continue
+        rows.append(_backend_row(alias, inst))
+        seen.add(alias)
+    for alias, inst in discover_backends():
+        if alias in seen:
+            continue
+        rows.append(_backend_row(alias, inst))
+        seen.add(alias)
+
+    if args.json:
+        print(json.dumps([{"alias": a, "id": i, "display": d, "modes": m, "max_s": mx}
+                          for (a, i, d, m, mx) in rows], indent=2))
+        return 0
+
+    if not rows:
+        print("(no backends found under backends/)")
+        return 0
+    print(f"{'ALIAS':<14} {'MODEL ID':<22} {'MODES':<18} {'MAX_S':<7} DISPLAY")
+    print("-" * 78)
+    for alias, bid, display, modes, max_s in rows:
+        print(f"{alias:<14} {bid:<22} {modes:<18} {str(max_s):<7} {display}")
+    return 0
+
+
+def _backend_row(alias, inst):
+    caps = inst.capabilities
+    modes = "/".join(m for m, on in (("t2v", caps.t2v), ("i2v", caps.i2v),
+                                     ("flf2v", caps.flf2v), ("r2v", caps.r2v)) if on) or "-"
+    return (alias, getattr(inst, "id", alias), getattr(inst, "display_name", alias),
+            modes, caps.max_duration_s)
+
+
+# =============================================================================#
+# list-presets
+# =============================================================================#
+def cmd_list_presets(args) -> int:
+    presets_dir = REPO_ROOT / "library" / "prompts"
+    if not presets_dir.is_dir():
+        print(f"[open-video] no presets dir at {presets_dir}", file=sys.stderr)
+        return 1
+    files = sorted(p for p in presets_dir.iterdir()
+                   if p.is_file() and p.suffix in (".txt", ".md"))
+    if not files:
+        print("(no presets found)")
+        return 0
+    if args.json:
+        out = []
+        for f in files:
+            out.append({"file": f.name, "path": str(f), "title": _first_line(f)})
+        print(json.dumps(out, indent=2))
+        return 0
+    print(f"{'FILE':<38} TITLE")
+    print("-" * 78)
+    for f in files:
+        print(f"{f.name:<38} {_truncate(_first_line(f), 36)}")
+    return 0
+
+
+def _first_line(path: Path) -> str:
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                line = line.strip()
+                if line:
+                    return line
+    except OSError:
+        return ""
+    return ""
+
+
+# =============================================================================#
+# serve
+# =============================================================================#
+def cmd_serve(args) -> int:
+    candidates = [("server.app", "app"), ("server", "app"),
+                  ("api.app", "app"), ("open_video.server", "app")]
+    app_obj, loaded_from = None, None
+    for mod, attr in candidates:
+        try:
+            m = importlib.import_module(mod)
+        except ImportError:
+            continue
+        if hasattr(m, attr):
+            app_obj = getattr(m, attr)
+            loaded_from = f"{mod}:{attr}"
+            break
+    if app_obj is None:
+        print("[open-video] no server module found. Looked for: "
+              + ", ".join(f"{m}:{a}" for m, a in candidates), file=sys.stderr)
+        print("[open-video] the HTTP server is not installed in this repo yet.",
+              file=sys.stderr)
+        return 5
+    try:
+        import uvicorn
+    except ImportError:
+        print("[open-video] uvicorn not installed; install with: pip install uvicorn",
+              file=sys.stderr)
+        return 5
+    print(f"[open-video] serving {loaded_from} on http://{args.host}:{args.port}",
+          flush=True)
+    uvicorn.run(app_obj, host=args.host, port=args.port)
+    return 0
+
+
+# =============================================================================#
+# argparse builders
+# =============================================================================#
+def build_generate_parser():
+    p = argparse.ArgumentParser(
+        prog="open_video",
+        description="Generate a film from a concept (default action). "
+                    "Validates the prompt, builds a Planner plan, runs LongFilmPipeline "
+                    "(generate -> judge -> FL2VA chain -> stitch).",
+        epilog="examples:\n"
+               "  open_video \"waves at sunset\" --duration 10 --model h3\n"
+               "  open_video \"...\" --mode i2v --first-frame start.png --output out.mp4\n"
+               "  open_video \"...\" --dry-run        # plan only, no generation\n"
+               "  open_video list-models\n",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument("prompt", help="Concept / prompt for the film.")
+    p.add_argument("--duration", type=float, default=DEFAULT_DURATION,
+                   help=f"Target duration in seconds (default {DEFAULT_DURATION:g}). "
+                        f"Values above the model's max shot length produce a multi-shot film.")
+    p.add_argument("--model", default=DEFAULT_MODEL,
+                   help=f"Backend alias or id (default '{DEFAULT_MODEL}'). "
+                        f"See `list-models`.")
+    p.add_argument("--output", default=DEFAULT_OUTPUT,
+                   help=f"Output film path (default '{DEFAULT_OUTPUT}').")
+    p.add_argument("--aspect", default=DEFAULT_ASPECT,
+                   help=f"Aspect ratio (default '{DEFAULT_ASPECT}').")
+    p.add_argument("--seed", type=int, default=None,
+                   help="Base seed; applied as seed+i across shots (default: planner's).")
+    p.add_argument("--mode", choices=VALID_MODES, default="t2v",
+                   help="Generation mode for shot 1 (default t2v). i2v/flf2v require "
+                        "frame inputs; supplying --first-frame auto-upgrades t2v -> i2v.")
+    p.add_argument("--first-frame", metavar="PATH",
+                   help="First-frame image (i2v/flf2v, or to upgrade shot 1 from t2v).")
+    p.add_argument("--last-frame", metavar="PATH",
+                   help="Last-frame image (flf2v only).")
+    p.add_argument("--server", default=DEFAULT_SERVER,
+                   help=f"ComfyUI server URL (default '{DEFAULT_SERVER}'; "
+                        f"env OPEN_VIDEO_COMFYUI).")
+    p.add_argument("--dry-run", action="store_true",
+                   help="Validate prompt + show the plan, then exit without generating.")
+    return p
+
+
+def build_list_models_parser():
+    p = argparse.ArgumentParser(prog="open_video list-models",
+                                description="List available backends under backends/.")
+    p.add_argument("--json", action="store_true", help="Emit JSON instead of a table.")
+    return p
+
+
+def build_list_presets_parser():
+    p = argparse.ArgumentParser(prog="open_video list-presets",
+                                description="List prompt presets in library/prompts/.")
+    p.add_argument("--json", action="store_true", help="Emit JSON instead of a table.")
+    return p
+
+
+def build_serve_parser():
+    p = argparse.ArgumentParser(prog="open_video serve",
+                                description="Start the open-video HTTP server (uvicorn).")
+    p.add_argument("--host", default="127.0.0.1", help="Bind host (default 127.0.0.1).")
+    p.add_argument("--port", type=int, default=8000, help="Bind port (default 8000).")
+    return p
+
+
+# =============================================================================#
+# dispatch
+# =============================================================================#
+def main(argv=None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] in SUBCOMMANDS:
+        sub, rest = argv[0], argv[1:]
+        if sub == "list-models":
+            return cmd_list_models(build_list_models_parser().parse_args(rest))
+        if sub == "list-presets":
+            return cmd_list_presets(build_list_presets_parser().parse_args(rest))
+        if sub == "serve":
+            return cmd_serve(build_serve_parser().parse_args(rest))
+    return cmd_generate(build_generate_parser().parse_args(argv))
+
+
+if __name__ == "__main__":
+    sys.exit(main())

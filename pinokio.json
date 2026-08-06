@@ -1,0 +1,41 @@
+{
+  "title": "OpenVideo",
+  "description": "Open-source autonomous video generation. One click installs MiniMax H3 (the #1 open video model, at Arena parity with closed) on ComfyUI, then opens the OpenVideo interface. Describe a concept; OpenVideo plans, generates, judges, refines, and delivers a finished film. Apache 2.0. Domain: open-video.ai.",
+  "icon": "icon.png",
+  "version": "0.1.0",
+  "homepage": "https://open-video.ai",
+  "license": "Apache-2.0",
+  "engine": "pinokio",
+  "categories": ["Video", "Generation", "ComfyUI"],
+  "tags": ["video-generation", "text-to-video", "minimax-h3", "hailuo", "comfyui", "agent", "open-source"],
+  "requirements": {
+    "gpu": "nvidia (16GB+ VRAM recommended for the int8 H3 weights; 24GB+ ideal)",
+    "disk": "~60GB free (H3 weights ~54GB + ComfyUI/cache)",
+    "ram": "32GB recommended",
+    "internet": "required for first-time install (weights download)"
+  },
+  "scripts": {
+    "install": "scripts/pinokio_install.js",
+    "start": "scripts/pinokio_install.js",
+    "update": "scripts/pinokio_install.js",
+    "reset": "scripts/pinokio_install.js"
+  },
+  "links": [
+    {
+      "title": "Project",
+      "links": [
+        { "title": "Homepage", "value": "https://open-video.ai" },
+        { "title": "GitHub", "value": "https://github.com/open-video/open-video" },
+        { "title": "Docs", "value": "https://github.com/open-video/open-video/tree/main/docs" },
+        { "title": "Issues", "value": "https://github.com/open-video/open-video/issues" }
+      ]
+    },
+    {
+      "title": "Models",
+      "links": [
+        { "title": "MiniMax H3 weights (Comfy-Org)", "value": "https://huggingface.co/Comfy-Org/MiniMax-H3" },
+        { "title": "ComfyUI engine", "value": "https://github.com/comfyanonymous/ComfyUI" }
+      ]
+    }
+  ]
+}

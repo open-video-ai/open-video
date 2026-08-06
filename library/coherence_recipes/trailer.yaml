@@ -1,0 +1,44 @@
+name: "Trailer"
+description: "A cinematic movie trailer: cold-open tease, world build, stakes, escalating conflict, climax promise, title card"
+category: cinematic
+default_duration_s: 45
+default_aspect: "16:9"
+default_model: h3
+shots:
+  - name: "Cold Open / Teaser"
+    duration_s: 6
+    mode: t2v
+    prompt_hint: "Mysterious hook shot before the score kicks in; sparse, quiet, a single charged image that raises a question"
+  - name: "World Establish"
+    duration_s: 6
+    mode: fl2va
+    prompt_hint: "Reveal the scale of the world; sweeping wide geometry, the score enters and the cut widens"
+  - name: "Character / Stakes"
+    duration_s: 7
+    mode: fl2va
+    prompt_hint: "Introduce the protagonist and what is at stake; eyeline and body language carry the weight"
+  - name: "Conflict Escalation"
+    duration_s: 8
+    mode: fl2va
+    prompt_hint: "Quick-cut escalation of the central conflict; each beat faster than the last, building pressure toward the peak"
+  - name: "Climax Promise"
+    duration_s: 6
+    mode: fl2va
+    prompt_hint: "The peak moment teased without resolution; biggest image, most dynamic motion, cut on the downbeat"
+  - name: "Title Card"
+    duration_s: 6
+    mode: i2v
+    prompt_hint: "Title reveal held on a dark frame; the logo or title settles, score sustains then drops to silence"
+  - name: "Tag / Release Date"
+    duration_s: 6
+    mode: i2v
+    prompt_hint: "Final beat: a lone image and the release-date or tag line; held in silence before the cut to black"
+audio:
+  music: true
+  dialogue: true
+  ambient: true
+quality:
+  min_steps: 25
+  judge_bar: 0.8
+  best_of_n: 2
+tags: [trailer, cinematic, tension-build, multi-shot, title-card]

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="OpenVideo — Open-source video generation">
+  <title>OpenVideo — Open-source video generation</title>
+  <defs>
+    <!-- Reusable OpenVideo logo mark (open aperture + play triangle) -->
+    <symbol id="ov-logo" viewBox="0 0 120 120">
+      <rect width="120" height="120" rx="24" fill="#0A0A0A"/>
+      <g stroke="#FFB800" stroke-width="2.5" fill="none" stroke-linecap="round">
+        <path d="M60 60 L60 18"/>
+        <path d="M60 60 L96.5 39"/>
+        <path d="M60 60 L96.5 81"/>
+        <path d="M60 60 L60 102"/>
+        <path d="M60 60 L23.5 81"/>
+        <path d="M60 60 L23.5 39"/>
+      </g>
+      <circle cx="60" cy="60" r="22" stroke="#FFB800" stroke-width="2.5" fill="none" opacity="0.6"/>
+      <polygon points="52,44 52,76 78,60" fill="#FFB800"/>
+    </symbol>
+    <radialGradient id="ov-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFB800" stop-opacity="0.16"/>
+      <stop offset="55%" stop-color="#FFB800" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#FFB800" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ov-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#111111"/>
+      <stop offset="100%" stop-color="#0A0A0A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#ov-bg)"/>
+  <ellipse cx="640" cy="152" rx="336" ry="205" fill="url(#ov-glow)"/>
+  <rect x="0.5" y="0.5" width="1279" height="639" fill="none" stroke="#1E1E1E" stroke-width="1"/>
+
+  <!-- Logo mark -->
+  <use href="#ov-logo" x="555" y="76" width="170" height="170"/>
+
+  <!-- Wordmark -->
+  <text x="640" y="320" text-anchor="middle"
+        font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        font-size="98" font-weight="700" letter-spacing="-2"
+        fill="#FFFFFF">OpenVideo</text>
+
+  <!-- Amber accent rule -->
+  <rect x="590" y="356" width="100" height="4" rx="2" fill="#FFB800"/>
+
+  <!-- Tagline -->
+  <text x="640" y="410" text-anchor="middle"
+        font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        font-size="32" font-weight="500" letter-spacing="0.2"
+        fill="#A6A6A6">Open-source video generation</text>
+
+  <!-- Domain pill -->
+  <g transform="translate(640 548)">
+    <rect x="-96" y="-22" width="192" height="44" rx="22" fill="#121212" stroke="#2A2A2A" stroke-width="1"/>
+    <circle cx="-66" cy="0" r="3.5" fill="#FFB800"/>
+    <text x="6" y="6" text-anchor="middle"
+          font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+          font-size="20" font-weight="600" letter-spacing="0.3"
+          fill="#E6E6E6">open-video.ai</text>
+  </g>
+</svg>

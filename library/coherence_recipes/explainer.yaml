@@ -1,0 +1,36 @@
+name: "Explainer"
+description: "An explainer/educational video: concept intro, problem, step-by-step demo, real-world use, summary takeaway"
+category: educational
+default_duration_s: 45
+default_aspect: "16:9"
+default_model: h3
+shots:
+  - name: "Concept Intro"
+    duration_s: 8
+    mode: t2v
+    prompt_hint: "Introduce the topic with a clean visual metaphor or title moment; calm authoritative framing, space for a voiceover"
+  - name: "Problem Statement"
+    duration_s: 7
+    mode: fl2va
+    prompt_hint: "Show why it matters; the pain or confusion before the solution, grounded and relatable"
+  - name: "How It Works - Demo"
+    duration_s: 12
+    mode: fl2va
+    prompt_hint: "Step-by-step demo or animated breakdown of the mechanism; clear staged beats, each step readable, consistent visual language"
+  - name: "Use Case / Example"
+    duration_s: 8
+    mode: i2v
+    prompt_hint: "Real-world application of the concept; concrete scenario a learner would recognize"
+  - name: "Summary / Takeaway"
+    duration_s: 8
+    mode: fl2va
+    prompt_hint: "Recap the key point in one clean frame; settle to a held end state that reinforces the lesson"
+audio:
+  music: true
+  dialogue: true
+  ambient: false
+quality:
+  min_steps: 20
+  judge_bar: 0.7
+  best_of_n: 1
+tags: [explainer, educational, voiceover, demo]

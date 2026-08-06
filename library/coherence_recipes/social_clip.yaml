@@ -1,0 +1,28 @@
+name: "Social Clip"
+description: "A short vertical social clip: scroll-stopping hook, payoff reveal, CTA or seamless loop point"
+category: social
+default_duration_s: 15
+default_aspect: "9:16"
+default_model: h3
+shots:
+  - name: "Hook"
+    duration_s: 4
+    mode: t2v
+    prompt_hint: "Scroll-stopping opening frame in the first second; bold visual, immediate motion, vertical composition tuned for a phone"
+  - name: "Reveal / Punchline"
+    duration_s: 6
+    mode: fl2va
+    prompt_hint: "The payoff that delivers on the hook; one clear beat, readable at small size, no clutter"
+  - name: "CTA / Loop"
+    duration_s: 5
+    mode: fl2va
+    prompt_hint: "Call to action or a seam that loops back to the hook; held just long enough to read or to restart cleanly"
+audio:
+  music: true
+  dialogue: false
+  ambient: false
+quality:
+  min_steps: 16
+  judge_bar: 0.65
+  best_of_n: 1
+tags: [social, vertical, short-form, fast-cut, loop]

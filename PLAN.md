@@ -34,15 +34,19 @@ backends), with community-contributed coherence recipes.
 - **engines/&lt;engine&gt;/** (adapter): open-video talks to the engine API. ComfyUI = adapter #1.
 → Add a model = write a backend plugin (core unchanged). Add an engine = write an adapter.
 
+## Features (Phase 0–1)
+- **Web Generation Page** (`open-video.ai/try`): users type a prompt → our deployed H3 (RTX 5090) generates → video returned, **free for now**. Simple frontend (React/static) + FastAPI backend → ComfyUI adapter → H3. Makes open-video immediately usable by non-tech visitors (the "for everyone" vision). Like OpenArt's model page but open + free. Queue management needed if traffic grows.
+- **Verified Prompt Gallery** (`open-video.ai/gallery`): every prompt in `library/prompts/` is tested on H3 + the output is shown alongside (prompt → video → quality verdict). Community can browse + copy + remix. This is the flywheel seed + the "proof" that open-video works.
+
 ## Phases
 - **Phase 0 — thesis proof (now)**: H3 backend + ComfyUI adapter + core loop (planner/crafter/
   validator/judge/stitcher). **Success = a real ~1–5 min open film, vision-judged coherent**, that
   holds up next to a Seedance short on the same concept. Buy/confirm domain, pick license.
 - **Phase 1 — open + community**: open-source core (license), `library/` (prompts/ref-packs/
   coherence-recipes) as the flywheel, Discord, partner with ComfyUI/H3 ecosystems, add a 2nd
-  backend (Wan3 / FLUX3-Dev when open) to prove model-agnostic.
+  backend (Wan 2.2 / FLUX3-Dev when open-weighted) to prove model-agnostic.
 - **Phase 2 — hosted**: managed open-video SaaS/API (bring-your-key or our GPUs) + enterprise
-  license (AGPL dual). Unit-economics hinge on an efficient judge loop (refine-few, not best-of-many).
+  license (Apache 2.0). Unit-economics hinge on an efficient judge loop (refine-few, not best-of-many).
 - **Phase 3 — marketplace**: premium coherence-recipes / style LoRAs / reference-packs; take rate.
 
 ## Competitive map
@@ -57,7 +61,7 @@ backends), with community-contributed coherence recipes.
 | **woodfantasy Seedance skill** | agentic skill, but closed-model only | skill open | pattern reference (port to open) |
 
 ## Open decisions (need your call)
-1. **License**: AGPL (open-core, anti-white-label) vs Apache (max adoption). Lean: **AGPL core + commercial license** (you're explicitly fighting closed vendors).
+1. **License**: **Apache 2.0** (DECIDED — max adoption, contributor-friendly. AGPL was considered for anti-white-label but Apache chosen for ecosystem growth).
 2. **Judge loop strategy**: single-generate + diagnose-refine (cheap) vs best-of-N (quality, GPU×K). Lean: **refine-primary** (H3 quality is already at parity; loop fixes adherence/length, not raw quality) — best-of-N as optional.
 3. **Engine-first vs standalone**: build on ComfyUI (engine adapter) from day 1, or also a standalone runner? Lean: **ComfyUI-first** (where the users are), standalone later.
 4. **Phase-0 scope**: prove the loop on a **1-min** film first (cheaper) then scale to 5-min? Lean: **1-min first** as the milestone, 5-min as the stretch demo.
