@@ -47,7 +47,7 @@ DRY_ONLY=0
 KEEP_SERVER=0
 SAGE=0
 ASSUME_YES=0
-REPO_URL="${OPEN_VIDEO_REPO:-https://github.com/open-video/open-video.git}"
+REPO_URL="${OPEN_VIDEO_REPO:-https://github.com/robotlearning123/open-video.git}"
 
 # Verified byte sizes for the 4 default H3 INT8-ConvRot files (HF == ModelScope).
 # Source: HF HEAD content-length + proven sibling-repo download receipt (53,889,785,072 B total ≈ 54 GB).
