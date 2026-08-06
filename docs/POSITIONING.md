@@ -12,7 +12,9 @@
 
 ## 0. The one-line pitch (TL;DR)
 
-> **OpenCode is to Cursor what OpenVideo is to Runway.**
+> **OpenCode is to Cursor what Open Design is to Claude Design what OpenVideo is to Runway.**
+>
+> Shorter: **OpenCode → Cursor. Open Design → Claude Design. OpenVideo → Runway.**
 
 Unpacked: *Cursor* is the polished, closed, commercial AI coding product. *OpenCode* is its open alternative — same destination, open road. *Runway* (and *Seedance*) are the polished, closed, commercial AI video products. **OpenVideo is their open alternative** — the autonomous director that turns today's open models into a delivered film, open and free.
 
@@ -67,7 +69,10 @@ This is the capability Seedance ships closed and natively; OpenVideo ships it op
 
 ---
 
-## 3. The dual DNA: OpenArt (product) + OpenCode (business model)
+## 3. The dual DNA: OpenArt (product) + OpenCode (business) + Open Design (agent packaging)
+
+> See also `docs/REFERENCES.md` for live URLs and install-UX parity.
+
 
 OpenVideo is built from two open-source archetypes. **OpenArt contributes the *product* DNA. OpenCode contributes the *business-model* DNA.** Neither alone is enough; the combination is the point.
 

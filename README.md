@@ -11,15 +11,15 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"/></a>
-  <a href="https://github.com/open-video-ai/open-video/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/open-video-ai/open-video?style=social"/></a>
+  <a href="https://github.com/robotlearning123/open-video/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/open-video-ai/open-video?style=social"/></a>
   <a href="https://discord.gg/open-video"><img alt="Discord" src="https://img.shields.io/discord/0?style=social&logo=discord&label=Discord&color=5865F2"/></a>
   <a href="https://open-video.ai"><img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fopen-video.ai&label=open-video.ai"/></a>
   <a href="https://huggingface.co/spaces/ArtificialAnalysis/Video-Generation-Arena"><img alt="H3 Arena" src="https://img.shields.io/badge/H3-Arena%20%231%20open-FBBF24.svg"/></a>
 </p>
 
 <p align="center">
-  <sub><b>OpenCode&nbsp;→&nbsp;Cursor.&nbsp;&nbsp;OpenVideo&nbsp;→&nbsp;Runway.</b></sub><br/>
-  <sub>One open brain that turns any model into a finished film — local, free, and yours.</sub>
+  <sub><b>OpenCode&nbsp;→&nbsp;Cursor.&nbsp;&nbsp;Open&nbsp;Design&nbsp;→&nbsp;Claude&nbsp;Design.&nbsp;&nbsp;OpenVideo&nbsp;→&nbsp;Runway.</b></sub><br/>
+  <sub>One open director brain that turns open video models into a finished film — local, free, and yours.</sub>
 </p>
 
 ---
@@ -32,6 +32,19 @@
 <p align="center"><sub>A concept → a coherent, multi-shot film. Live demo: <a href="https://open-video.ai">open-video.ai</a>.</sub></p>
 
 ---
+
+## References (OpenCode · Open Design · OpenArt)
+
+We deliberately mirror sibling open products:
+
+| Project | Domain | Closed peer |
+|---|---|---|
+| [OpenCode](https://opencode.ai/) | Code agent | Cursor |
+| [Open Design](https://open-design.ai/) | Design workspace | Claude Design |
+| [OpenArt](https://openart.ai/) | Creator studio DNA | (product polish) |
+| **OpenVideo** | **Video director** | **Runway / Seedance** |
+
+Details: [`docs/REFERENCES.md`](docs/REFERENCES.md) · positioning: [`docs/POSITIONING.md`](docs/POSITIONING.md).
 
 ## Why OpenVideo
 
@@ -48,7 +61,7 @@ results on hardware you own, with models you control.**
 ## One-command quickstart
 
 ```bash
-curl -fsSL https://open-video.ai/install.sh | bash      # one command — installs + pulls H3
+curl -fsSL https://open-video.ai/install | bash           # same pattern as opencode.ai/install
 open-video "A lone astronaut planting a flag on a red dune at dusk" --duration 60
 ```
 
@@ -60,7 +73,7 @@ own GPU or run on our managed cloud.**
 <summary><b>Prefer manual?</b></summary>
 
 ```bash
-git clone https://github.com/open-video-ai/open-video && cd open-video
+git clone https://github.com/robotlearning123/open-video && cd open-video
 python cli/open_video.py "waves at sunset, golden hour" --duration 10 --model h3 --output out.mp4
 # requires a running ComfyUI at http://127.0.0.1:8188 (OPEN_VIDEO_COMFYUI=...)
 ```
