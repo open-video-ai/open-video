@@ -320,6 +320,11 @@ def cmd_generate(args) -> int:
         print("[open-video] [4/5] --dry-run: prompt + plan validated. No generation performed.",
               flush=True)
         print("[open-video] [5/5] done (dry-run).", flush=True)
+        if getattr(args, "json", False):
+            print(json.dumps({"dry_run": True, "validated": True, "film": None,
+                              "shots": [{"scene_id": s_.scene_id, "mode": s_.mode,
+                                         "duration_s": s_.duration_s, "seed": s_.seed}
+                                        for s_ in shots]}))
         return 0
 
     # 12. engine + pipeline
@@ -343,6 +348,14 @@ def cmd_generate(args) -> int:
         print("[open-video] error: pipeline did not produce a film.", file=sys.stderr)
         return 4
     print(f"[open-video] [5/5] DONE -> {film}", flush=True)
+    if getattr(args, "json", False):
+        print(json.dumps({"dry_run": False, "film": film,
+                          "shots": [{"scene_id": s_.scene_id, "mode": s_.mode,
+                                     "seed": s_.seed, "video_path": s_.video_path,
+                                     "verdict": s_.verdict,
+                                     "judge_score": s_.receipt.get("judge_score"),
+                                     "judge_issues": s_.receipt.get("judge_issues", [])}
+                                    for s_ in shots]}))
     return 0
 
 
@@ -504,6 +517,10 @@ def build_generate_parser():
                         f"env OPEN_VIDEO_COMFYUI).")
     p.add_argument("--dry-run", action="store_true",
                    help="Validate prompt + show the plan, then exit without generating.")
+    p.add_argument("--json", action="store_true",
+                   help="Emit a machine-readable JSON result (film path + per-shot judge "
+                        "verdicts) as the final stdout line — the agent self-verification "
+                        "channel.")
     return p
 
 

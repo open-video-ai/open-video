@@ -101,7 +101,7 @@ python -m open_video recommend-quant
 ```bash
 cd "${H3_LAB:-$OPEN_VIDEO_ROOT/../lab}"
 curl -sf http://127.0.0.1:8188/system_stats || (
-  cd ComfyUI && nohup ../venv/bin/python main.py \
+  mkdir -p logs && cd ComfyUI && nohup ../venv/bin/python main.py \
     --listen 127.0.0.1 --port 8188 --lowvram --use-sage-attention \
     > ../logs/comfy_server.log 2>&1 &
 )
@@ -115,6 +115,8 @@ curl -sf http://127.0.0.1:8188/system_stats || (
 | + 1 image | **I2V** (+ instruction line) |
 | + first & last image | **FL2VA** (+ alignment line) |
 | Multi-ref identity/style | R2V (needs ref2va weights — not default) |
+
+CLI `--mode` tokens: `t2v` · `i2v` · `flf2v` (FL2VA ↔ `--mode flf2v`). R2V has no CLI token yet.
 
 ### C. Craft the 3-field prompt (quality lever #1)
 
@@ -144,8 +146,8 @@ non_diegetic_music: <1–3 sentences: instruments, tempo, rhythm — no vague mo
 ```bash
 cd "$OPEN_VIDEO_ROOT"
 python -m open_video run "$(cat prompts/my_shot.txt)" --duration 8 --dry-run
-# or lab harness:
-cd "$H3_LAB" && ./venv/bin/python scripts/h3_agent.py --prompt "$(cat …)" --dry-run
+# optional, only if a lab tree exists at $H3_LAB:
+#   cd "$H3_LAB" && ./venv/bin/python "$OPEN_VIDEO_ROOT/scripts/h3_agent.py" --prompt "$(cat …)" --dry-run
 ```
 
 Fix validator issues before GPU spend.
@@ -161,26 +163,25 @@ python -m open_video run "$(cat prompts/my_shot.txt)" \
 # aliases: open-video "…", open-video run "…"
 ```
 
-**Lab agent path (same quality stack, battle-tested on this machine):**
+I2V / FL2VA (product CLI — supply frames; FL2VA is `--mode flf2v`):
 
 ```bash
-cd "$H3_LAB"
-./venv/bin/python scripts/h3_agent.py \
-  --prompt "$(cat prompts/my_shot.txt)" \
-  --width 1344 --height 768 --duration 8 --seed 42
-# mp4 → output/   receipt → artifacts/verify/agent_*.json
+python -m open_video run "$(cat prompts/my_shot.txt)" \
+  --mode i2v --first-frame inputs/start.png --duration 8
+python -m open_video run "$(cat prompts/my_shot.txt)" \
+  --mode flf2v --first-frame inputs/start.png --last-frame inputs/end.png --duration 8
 ```
 
-I2V / FL2VA:
-
-```bash
-./venv/bin/python scripts/h3_agent.py --prompt "$(cat …)" \
-  --first-frame inputs/start.png [--last-frame inputs/end.png] \
-  --width 1344 --height 768 --duration 8
-```
+**Optional lab path** (only when a lab tree exists — `$H3_LAB` set, with its own venv):
+`cd "$H3_LAB" && ./venv/bin/python "$OPEN_VIDEO_ROOT/scripts/h3_agent.py" --prompt … --width 1344 --height 768 --duration 8 --seed 42` (mp4 → output/, receipt → artifacts/verify/agent_*.json).
 
 ### F. Review & iterate
 
+0. **Automatic VLM judge:** set `OPEN_VIDEO_VLM_URL` + `OPEN_VIDEO_VLM_MODEL`
+   (+ `OPEN_VIDEO_VLM_KEY`) to any OpenAI-compatible vision endpoint and the
+   pipeline judges every shot for real (score + issues in the `--json` output).
+   Without these env vars the judge auto-PASSes — then the manual review below
+   is mandatory, not optional.
 1. Play the mp4 (native audio matters).
 2. Extract a contact sheet:  
    `ffmpeg -y -i out.mp4 -vf "fps=1,scale=320:-1,tile=4x2" contact.png`
@@ -189,7 +190,15 @@ I2V / FL2VA:
 
 ### G. Deliver
 
-Tell the user: **path · duration · resolution · seed · mode · wall time** (from receipt).
+**Verify before claiming done:** exit code 0 AND `DONE -> <path>` printed, then
+
+```bash
+[ -f "$path" ] && ffprobe -v error -show_entries format=duration -of csv=p=0 "$path"
+```
+
+(or run with `--json` and read `film` + per-shot `verdict`/`judge_score` from the
+final stdout line). Only then tell the user: **path · duration · resolution ·
+seed · mode · wall time** (from receipt).
 
 ---
 
@@ -218,6 +227,9 @@ python -m open_video list-models
 | `OPEN_VIDEO_COMFYUI` | ComfyUI base URL |
 | `OPEN_VIDEO_MODEL` | Default backend (`h3`) |
 | `H3_LAB` | Optional lab tree with ComfyUI + h3_agent |
+| `OPEN_VIDEO_VLM_URL` | OpenAI-compatible vision endpoint → real judge |
+| `OPEN_VIDEO_VLM_MODEL` | Vision model id for the judge |
+| `OPEN_VIDEO_VLM_KEY` | Bearer token for the judge endpoint (optional) |
 
 ---
 
