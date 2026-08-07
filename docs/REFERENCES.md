@@ -84,4 +84,4 @@ One-liner (from `POSITIONING.md`):
 - https://open-design.ai/ · https://open-design.ai/download/ · https://github.com/nexu-io/open-design  
 - https://opencode.ai/ · https://opencode.ai/docs/ · https://github.com/sst/opencode / anomalyco  
 - https://openart.ai/ · https://github.com/OpenArt-AI  
-- Local: `docs/POSITIONING.md`, `README.md`, `website/`
+- Local: `README.md`, `REPOS.md`; positioning/strategy in private `open-video-ops`; site in `open-video-web`

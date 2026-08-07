@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="website/logo.svg" width="110" height="110" alt="OpenVideo" />
+  <img src="https://open-video.ai/logo.svg" width="110" height="110" alt="OpenVideo" />
 </p>
 
 <h1 align="center">OpenVideo</h1>
@@ -25,11 +25,11 @@
 ---
 
 <p align="center">
-  <video controls width="100%" src="website/demo.mp4" poster="website/logo.svg">
-    Demo film — open this file on GitHub, or view it locally at <code>website/demo.mp4</code>.
+  <video controls width="100%" src="https://open-video.ai/demo.mp4" poster="https://open-video.ai/logo.svg">
+    Demo film — watch on <a href="https://open-video.ai">open-video.ai</a>.
   </video>
 </p>
-<p align="center"><sub>A concept → a coherent, multi-shot film. Live demo: <a href="https://open-video.ai">open-video.ai</a>.</sub></p>
+<p align="center"><sub>A concept → a coherent, multi-shot film. Site (private repo <code>open-video-web</code>): <a href="https://open-video.ai">open-video.ai</a>.</sub></p>
 
 ---
 

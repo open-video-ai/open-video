@@ -18,6 +18,5 @@ ComfyUI/
 .cache/
 output/
 
-
-# Allow the landing-page hero demo (site needs this on Pages)
-!website/demo.mp4
+# Product site lives in open-video-web (not this repo)
+website/
