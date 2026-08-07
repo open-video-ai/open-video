@@ -68,9 +68,9 @@ One-liner (from `POSITIONING.md`):
 ## Repo / brand hygiene (from Open Design “official”)
 
 - **Canonical site:** `https://open-video.ai`
-- **Canonical code:** prefer one public GitHub path (today: `robotlearning123/open-video`; target org: `open-video` / `open-video-ai` when secured).
+- **Canonical code:** prefer one public GitHub path (canonical: `robotlearning123/open-video`).
 - Names that all mean this project: **OpenVideo**, **open-video**, **open-video.ai**.
-- Avoid linking to dead orgs (`open-video-ai/...` before the org exists) or foreign Pages projects (`open-video.pages.dev` name collision).
+- Canonical GitHub is `robotlearning123/open-video`. Avoid foreign Pages projects (`open-video.pages.dev` name collision) — use `open-video.ai` or the project `*.pages.dev` only.
 
 ## How to use this doc
 

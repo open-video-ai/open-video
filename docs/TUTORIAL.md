@@ -83,7 +83,7 @@ heavy lifting. It is free while the project is young.
 
 This is the "Ollama for video" experience: one installer, double-click, done.
 
-1. Download the installer for your system from the **[Releases page](https://github.com/open-video/open-video/releases)**:
+1. Download the installer for your system from the **[Releases page](https://github.com/robotlearning123/open-video/releases)**:
    - Windows: `OpenVideo-Setup.exe`
    - macOS: `OpenVideo.dmg`
    - Linux: `OpenVideo.AppImage`
@@ -106,7 +106,7 @@ can run OpenVideo straight from source today. The full step-by-step is in
 
 ```bash
 # 1. Get the code
-git clone https://github.com/open-video/open-video.git
+git clone https://github.com/robotlearning123/open-video.git
 cd open-video
 
 # 2. Check the orchestrator is healthy (prints a table with the "h3" model)
@@ -443,7 +443,7 @@ how-to and a link to the weights). The full guide is in
 <summary><b>Contribute via Pull Request (command line)</b></summary>
 
 ```bash
-git clone https://github.com/open-video/open-video.git && cd open-video
+git clone https://github.com/robotlearning123/open-video.git && cd open-video
 
 # Easiest: add a prompt recipe
 cp templates/prompt_recipe.md library/prompts/my_idea.txt

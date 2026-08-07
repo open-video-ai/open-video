@@ -25,9 +25,9 @@
       "title": "Project",
       "links": [
         { "title": "Homepage", "value": "https://open-video.ai" },
-        { "title": "GitHub", "value": "https://github.com/open-video/open-video" },
-        { "title": "Docs", "value": "https://github.com/open-video/open-video/tree/main/docs" },
-        { "title": "Issues", "value": "https://github.com/open-video/open-video/issues" }
+        { "title": "GitHub", "value": "https://github.com/robotlearning123/open-video" },
+        { "title": "Docs", "value": "https://github.com/robotlearning123/open-video/tree/master/docs" },
+        { "title": "Issues", "value": "https://github.com/robotlearning123/open-video/issues" }
       ]
     },
     {

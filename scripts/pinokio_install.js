@@ -37,7 +37,7 @@ module.exports = {
       method: "shell.run",
       params: {
         message: [
-          "git clone --depth 1 https://github.com/open-video/open-video app"
+          "git clone --depth 1 https://github.com/robotlearning123/open-video app"
         ]
       }
     },
