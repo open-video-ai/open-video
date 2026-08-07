@@ -101,13 +101,13 @@ a hard validator, and curated presets (`open-video list-presets`).
 |---|---|---|
 | **Generate** | Local MiniMax H3 via ComfyUI — `pull` / `status` / `run` | Multi-model backends (Wan, LTX, …) |
 | **Agent path** | `skill/h3-video` crafts official prompts + drives the CLI | Full multi-shot director agent |
-| **Judge loop** | Real VLM judge via env `OPEN_VIDEO_VLM_URL/MODEL/KEY` (OpenAI-compatible); honest PASS stub when unset | Refine loop → best-of-N |
+| **Judge loop** | Real VLM judge via env `OPEN_VIDEO_VLM_URL/MODEL/KEY` + automatic REFINE retries (`OPEN_VIDEO_JUDGE_RETRIES`, best take kept); honest PASS stub when unset | Best-of-N tournament judging |
 | **Long film** | Single clips (H3 shot length) | Planner → stitch multi-minute film |
 | **Hosted try** | Site `/try` is a **browser mockup** | Real hosted generate |
 
-The full generate → judge → **refine** loop is the long-term design; today the judge scores and
-diagnoses (point `OPEN_VIDEO_VLM_URL` at any OpenAI-compatible vision model), and refine/regenerate
-is still manual.
+The generate → judge → **refine** loop runs today: point `OPEN_VIDEO_VLM_URL` at any
+OpenAI-compatible vision model and low-scoring shots regenerate automatically with a bumped
+seed (`OPEN_VIDEO_JUDGE_RETRIES` extra takes, best score kept — full take history in `--json`).
 
 ## Why local
 

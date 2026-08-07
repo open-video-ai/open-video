@@ -230,6 +230,7 @@ python -m open_video list-models
 | `OPEN_VIDEO_VLM_URL` | OpenAI-compatible vision endpoint → real judge |
 | `OPEN_VIDEO_VLM_MODEL` | Vision model id for the judge |
 | `OPEN_VIDEO_VLM_KEY` | Bearer token for the judge endpoint (optional) |
+| `OPEN_VIDEO_JUDGE_RETRIES` | Extra takes on REFINE verdicts (default 1; best score kept) |
 
 ---
 
