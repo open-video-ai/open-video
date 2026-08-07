@@ -651,11 +651,21 @@ start_server() {
         return 0
     fi
 
-    [[ "$HAVE_NVIDIA" -eq 1 ]] \
-        || die "ComfyUI generation needs an NVIDIA GPU. Re-run with --skip-server and --skip-generate."
+    if [[ "$HAVE_NVIDIA" -ne 1 ]]; then
+        warn "No NVIDIA GPU — not starting ComfyUI (generation deferred)."
+        SKIP_SERVER=1
+        return 0
+    fi
 
     local sage_args=""
     [[ "$SAGE" -eq 1 ]] && sage_args="--use-sage-attention"
+    local lowvram_args=""
+    if [[ "${USE_LOWVRAM:-0}" -eq 1 ]]; then
+        lowvram_args="--lowvram"
+        info "Using ComfyUI --lowvram (quant=$QUANT / VRAM policy)."
+    else
+        info "Full VRAM path (no --lowvram); quant=$QUANT."
+    fi
 
     info "Launching ComfyUI (log: $COMFYUI_LOG). First load of a 21 GB model is slow."
     mkdir -p "$(dirname "$COMFYUI_LOG")"
@@ -665,7 +675,7 @@ start_server() {
     # Launch detached from ComfyUI's own dir so it finds models/, custom_nodes/, etc.
     # Capture the PID via a file (robust vs pipe-to-subshell read races).
     ( cd "$COMFYUI_DIR" \
-        && nohup "$VENVPY" main.py --listen "$HOST" --port "$PORT" --lowvram $sage_args \
+        && nohup "$VENVPY" main.py --listen "$HOST" --port "$PORT" $lowvram_args $sage_args \
            >"$COMFYUI_LOG" 2>&1 & echo $! > "$pid_file" )
     local _i
     for _i in 1 2 3 4 5 6 7 8 9 10; do [[ -s "$pid_file" ]] && break; sleep 0.2; done
@@ -804,7 +814,7 @@ ${vid_line}${C_BOLD}Generate more:${C_RESET}
   $ov_cmd "a neon koi swimming through rain, slow dolly" --duration 8 --output output/koi.mp4
 
 ${C_BOLD}Start ComfyUI again later:${C_RESET}
-  cd "$COMFYUI_DIR" && $py main.py --listen $HOST --port $PORT --lowvram
+  cd "$COMFYUI_DIR" && $py main.py --listen $HOST --port $PORT$([ "${USE_LOWVRAM:-0}" -eq 1 ] && echo " --lowvram")
 
 ${C_BOLD}Plan/validate without spending GPU:${C_RESET}
   $ov_cmd "a concept" --dry-run
@@ -836,15 +846,29 @@ main() {
         exit 0
     fi
 
+    # No NVIDIA: never die in start_server — skip server/generate (and default weight pull).
+    if [[ "${HAVE_NVIDIA:-0}" -ne 1 ]]; then
+        SKIP_SERVER=1
+        SKIP_GENERATE=1
+        if [[ "${OPEN_VIDEO_FORCE_DOWNLOAD:-0}" != "1" && "$SKIP_DOWNLOAD" -eq 0 ]]; then
+            SKIP_DOWNLOAD=1
+            warn "No NVIDIA GPU — skipping weight download (OPEN_VIDEO_FORCE_DOWNLOAD=1 to pull anyway)."
+        fi
+        info "No NVIDIA: SKIP_SERVER=1 SKIP_GENERATE=1 (setup continues; generation deferred)."
+    fi
+
     make_venv
     install_engine
     download_weights
 
-    if [[ "$DRY_ONLY" -eq 1 && "$HAVE_NVIDIA" -ne 1 ]]; then
-        # No GPU + dry-only: we can still smoke-test the orchestrator without a server.
-        step "First test generation — dry-run (no GPU)"
-        ( cd "$OV_ROOT" && "$VENVPY" cli/open_video.py "$WELCOME_PROMPT" --dry-run \
-            --server "http://$HOST:$PORT" ) || warn "dry-run needs ComfyUI; start it to validate fully."
+    if [[ "$HAVE_NVIDIA" -ne 1 ]]; then
+        step "First test generation — dry-run (no GPU / deferred generation)"
+        if ( cd "$OV_ROOT" && "$VENVPY" cli/open_video.py "$WELCOME_PROMPT" --dry-run                 --server "http://$HOST:$PORT" ); then
+            ok "dry-run passed — plan + validator OK (use an NVIDIA host to generate)."
+        else
+            warn "dry-run could not reach ComfyUI (expected without a server). Orchestrator installed."
+            warn "Next on an NVIDIA machine:  bash scripts/install.sh -y"
+        fi
         print_success
         return 0
     fi
