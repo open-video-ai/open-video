@@ -57,14 +57,20 @@ class QualityJudge:
                               "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", video_path],
                              capture_output=True, text=True, timeout=15)
         total = int(out.stdout.strip()) if out.stdout.strip().isdigit() else 120
-        idxs = [int(i * (total - 1) / max(self.n - 1, 1)) for i in range(self.n)]
+        idxs = sorted({int(i * (total - 1) / max(self.n - 1, 1)) for i in range(self.n)})
+        # one decode pass for all frames (was: one full ffmpeg run per frame)
+        select = "+".join(f"eq(n\\,{i})" for i in idxs)
+        pattern = frames_dir / f"shot{shot_id}_sel%d.png"
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", video_path,
+                        "-vf", f"select='{select}'", "-vsync", "passthrough",
+                        "-frames:v", str(len(idxs)), str(pattern)], check=False)
         paths = []
-        for idx in idxs:
-            p = frames_dir / f"shot{shot_id}_f{idx}.png"
-            subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", video_path,
-                            "-vf", f"select=eq(n\\,{idx})", "-frames:v", "1", str(p)], check=False)
-            if p.exists():
-                paths.append(str(p))
+        for k, idx in enumerate(idxs, start=1):
+            src = frames_dir / f"shot{shot_id}_sel{k}.png"
+            dst = frames_dir / f"shot{shot_id}_f{idx}.png"
+            if src.exists():
+                src.replace(dst)
+                paths.append(str(dst))
         return paths
 
     def diagnose(self, vision_result: dict, prompt: str) -> list:

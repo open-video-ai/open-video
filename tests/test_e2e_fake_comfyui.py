@@ -130,3 +130,37 @@ def test_stitcher_concat_real_ffmpeg(tmp_path):
     out = Stitcher(output_dir=str(tmp_path)).concat([str(a), str(b)], str(tmp_path / "film.mp4"))
     assert out and Path(out).exists()
     assert 0.8 <= _duration(out) <= 1.3  # two 0.5s clips stitched
+
+
+def test_refine_retry_keeps_best_take(tmp_path, monkeypatch):
+    """REFINE on take 1 → retry with bumped seed; best-scoring take wins."""
+    from open_video.core.pipeline import LongFilmPipeline, Shot
+
+    monkeypatch.setenv("OPEN_VIDEO_JUDGE_RETRIES", "1")
+    clip = _tiny_mp4(tmp_path / "src.mp4")
+    fake = FakeComfy(clip, pending_polls=0)
+    scores = iter([0.3, 0.9])
+
+    def vision_fn(frames, prompt):
+        return {"score": next(scores), "missing_elements": [], "artifacts": "",
+                "motion_quality": "good", "incoherence": False}
+
+    try:
+        engine = ComfyUIAdapter(server=fake.url, output_dir=str(tmp_path / "out"))
+        orig_wait = engine.wait
+        engine.wait = lambda pid, timeout=1800, poll=3.0: orig_wait(pid, timeout=30, poll=0.05)
+        pipe = LongFilmPipeline(backend=H3Backend(), engine=engine,
+                                output_dir=str(tmp_path / "out"), vision_fn=vision_fn)
+        shot = Shot(scene_id=1, prompt="a blue test pattern, static camera",
+                    mode="t2v", duration_s=2.0, seed=7)
+        ok = pipe._run_shot(shot)
+    finally:
+        fake.close()
+
+    assert ok
+    assert len(fake.submitted) == 2, "REFINE must trigger exactly one retry"
+    seeds = [wf["prompt"]["noise"]["inputs"]["noise_seed"] for wf in fake.submitted]
+    assert seeds == [7, 107]
+    takes = shot.receipt["takes"]
+    assert [t["judge_score"] for t in takes] == [0.3, 0.9]
+    assert shot.receipt["judge_score"] == 0.9 and shot.verdict == "PASS"

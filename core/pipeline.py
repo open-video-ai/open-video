@@ -9,6 +9,7 @@ shot-by-shot loop and the FL2VA chain. Quality assessment goes through core.judg
 concat / last-frame extraction through core.stitcher.Stitcher, and the generation recipe is
 embedded in the output film via core.recipe.embed_recipe. No judge/stitch logic is duplicated here.
 """
+import os
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -67,26 +68,48 @@ class LongFilmPipeline:
             ]
         return verdict.verdict != "FAIL"
 
-    # --- single-shot generation via backend ---
+    # --- single-shot generation via backend, with judge-driven retries ---
     def _run_shot(self, shot: Shot) -> bool:
-        # use backend's resolution_for if available, else default 1344x768
+        """Generate → judge; on REFINE regenerate with a bumped seed and keep the
+        best-scoring take. Retries only matter with a real judge (the stub
+        PASSes take 1). OPEN_VIDEO_JUDGE_RETRIES caps extra takes (default 1)."""
         try:
             w, h = self.backend.resolution_for("16:9") if self.backend else (1344, 768)
         except Exception:
             w, h = 1344, 768
-        req = ShotRequest(prompt=shot.prompt, mode=shot.mode, width=w, height=h,
-                          duration_s=shot.duration_s, seed=shot.seed,
-                          first_frame=shot.first_frame, last_frame=shot.last_frame,
-                          lora=shot.receipt.get("lora"), lora_weight=shot.receipt.get("lora_weight", 0.8),
-                          trigger_word=shot.receipt.get("trigger_word"))
-        result = self.backend.generate(req, engine=self.engine)  # FIX: pass engine through
-        if not result.ok:
-            shot.verdict = "FAIL"
-            shot.receipt["error"] = result.error
-            return False
-        shot.video_path = result.video_path
-        shot.receipt.update(result.receipt)
-        return self.judge(shot)
+        retries = max(0, int(os.environ.get("OPEN_VIDEO_JUDGE_RETRIES", "1") or 0))
+        takes = []
+        for attempt in range(retries + 1):
+            seed = shot.seed + attempt * 100
+            req = ShotRequest(prompt=shot.prompt, mode=shot.mode, width=w, height=h,
+                              duration_s=shot.duration_s, seed=seed,
+                              first_frame=shot.first_frame, last_frame=shot.last_frame,
+                              lora=shot.receipt.get("lora"),
+                              lora_weight=shot.receipt.get("lora_weight", 0.8),
+                              trigger_word=shot.receipt.get("trigger_word"))
+            result = self.backend.generate(req, engine=self.engine)
+            if not result.ok:
+                shot.verdict = "FAIL"
+                shot.receipt["error"] = result.error
+                shot.receipt["takes"] = takes
+                return False
+            shot.video_path = result.video_path
+            shot.receipt.update(result.receipt)
+            ok = self.judge(shot)
+            takes.append({"attempt": attempt + 1, "seed": seed,
+                          "video_path": shot.video_path, "verdict": shot.verdict,
+                          "judge_score": shot.receipt.get("judge_score"),
+                          "judge_issues": shot.receipt.get("judge_issues", [])})
+            if not ok or shot.verdict != "REFINE":
+                break
+        # keep the best take by judge score (None sorts lowest)
+        best = max(takes, key=lambda t: (t["judge_score"] is not None, t["judge_score"]))
+        shot.video_path = best["video_path"]
+        shot.verdict = best["verdict"]
+        shot.receipt["judge_score"] = best["judge_score"]
+        shot.receipt["judge_issues"] = best["judge_issues"]
+        shot.receipt["takes"] = takes
+        return shot.verdict != "FAIL"
 
     # --- recipe assembly for embed_recipe (self-documenting + remixable output) ---
     def _build_recipe(self, plan: list, film_path: str) -> dict:
