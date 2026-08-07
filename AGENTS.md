@@ -6,12 +6,10 @@ You are inside the **product** git repo: [`open-video-ai/open-video`](https://gi
 
 | Doc | Why |
 |---|---|
-| [`BRAND.md`](BRAND.md) | Brand is #1 — lead with **OpenVideo** |
 | [`README.md`](README.md) | What v0.0.1 ships vs design-only |
 | [`docs/QUICKSTART.md`](docs/QUICKSTART.md) | Install / pull / run |
 | [`skill/h3-video/SKILL.md`](skill/h3-video/SKILL.md) | Agent generate path |
 | [`docs/LAB.md`](docs/LAB.md) | ComfyUI + weights outside git |
-| [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) | Public prep; owner-gated visibility |
 
 ## Rules (public-safe)
 

@@ -1,6 +1,6 @@
 # Community
 
-OpenVideo is open-source video generation. Contributions are welcome once the source tree is open for external PRs.
+OpenVideo is open-source video generation. The source tree is public — contributions are welcome.
 
 ## Where to participate
 

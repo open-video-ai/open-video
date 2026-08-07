@@ -70,5 +70,4 @@ Gap-analysis run: Seedance-style prompts (ported to H3 3-field) targeting Seedan
 **H3 successfully generated all Seedance-style prompts** at 1344×768/sage — timings scale as expected
 (~90 s per second of clip). Outputs in `output/`; contact sheets in `artifacts/verify/frames_seedance/`.
 Starship (official T2V) vision-reviewed **GOOD**; seedance-port outputs structurally completed (vision
-review deferred — rate-limited). Competitive gap notes (if any) live in the **private ops** repo —
-not in this public product tree.
+review deferred — rate-limited).

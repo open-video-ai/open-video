@@ -1,8 +1,7 @@
 # Reference products — related open projects
 
 > Public map of projects OpenVideo learns from (product UX, install patterns, local-agent
-> surfaces). Update star counts and URLs before press.  
-> **No private GTM / positioning docs are linked from product.** Strategy lives in ops only.
+> surfaces). Update star counts and URLs before citing them.
 
 ## Canonical references
 
@@ -81,4 +80,4 @@ One-liner:
 - https://open-design.ai/ · https://github.com/nexu-io/open-design  
 - https://opencode.ai/ · https://github.com/sst/opencode / anomalyco  
 - https://openart.ai/ · https://github.com/OpenArt-AI  
-- Local: `README.md`, `REPOS.md`, `PLAN.md`; site in `open-video-web`
+- Local: `README.md`, `PLAN.md`; site in `open-video-web`
