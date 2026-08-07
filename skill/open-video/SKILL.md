@@ -28,8 +28,10 @@ the agent brain ComfyUI lacks: judge→refine + multi-shot stitch + coherence pl
 land**.
 
 **v0.0.1 honesty:** prefer [`skill/h3-video`](../h3-video/SKILL.md) for reliable high-quality
-single clips. Multi-minute film is the flagship *design*. `core/judge.py` is a **stub/scaffold** —
-without a wired `vision_fn` it may PASS by default; do not treat auto-PASS as a live vision loop.
+single clips. Multi-minute film is the flagship *design*. The judge is REAL when env-wired:
+set `OPEN_VIDEO_VLM_URL` + `OPEN_VIDEO_VLM_MODEL` (+ `OPEN_VIDEO_VLM_KEY`) to any
+OpenAI-compatible vision endpoint and every shot is scored + diagnosed automatically;
+with the env unset it is an honest PASS stub — then manual frame review is mandatory.
 Single open models still cap ~15s/shot; longer output needs multi-shot orchestration (partial).
 
 ## 2. Agentic procedure — run these steps in order
@@ -69,10 +71,12 @@ Confirm the server is up first (§3). H3 defaults: 1344×768, 20 steps, `res_mul
 scheduler, `shift_video=12.0` / `shift_audio=3.0`, INT8 ConvRot quants, engine flags
 `--lowvram --use-sage-attention`. `length` snaps to the 17k+5 grid.
 
-**Step 6 — Judge the output** (`core/judge.py` — design core; **stub without `vision_fn`**).
-Extract frames; if a real vision backend is wired, assess vs prompt intent + quality bar.
-Verdict: **PASS / REFINE / FAIL**. If no vision is wired, expect auto-PASS — you must
-**manually** review frames or call an external vision model. Record frames + verdict in the receipt.
+**Step 6 — Judge the output** (`core/judge.py`). Activate the real judge with env:
+`OPEN_VIDEO_VLM_URL` + `OPEN_VIDEO_VLM_MODEL` (+ `OPEN_VIDEO_VLM_KEY`) — the pipeline then
+extracts frames and assesses vs prompt intent + quality bar automatically
+(`QualityJudge.from_env()` is the entry point; explicit `QualityJudge(vision_fn=…)` also works).
+Verdict: **PASS / REFINE / FAIL**, with score + issues in the receipt (`run --json` exposes them).
+With the env unset the judge auto-PASSes — then you must manually review frames.
 
 **Step 7 — Refine if REFINE or FAIL.** Diagnose the *specific* issue, apply a *targeted* fix (prompt
 tweak / +steps / different mode / ref-pack for identity lock / different seed), regenerate. Strategy
@@ -100,9 +104,9 @@ Health check: `curl -s http://127.0.0.1:8188/system_stats` (returns JSON when up
 
 **Generate one shot — open-video Python API (the contract; lives in `backends/` + `engines/`):**
 ```python
-from backends.h3.backend import H3Backend
-from core.backend import ShotRequest
-from engines.comfyui.adapter import ComfyUIAdapter
+from open_video.backends.h3.backend import H3Backend
+from open_video.core.backend import ShotRequest
+from open_video.engines.comfyui.adapter import ComfyUIAdapter
 
 engine = ComfyUIAdapter(server="http://127.0.0.1:8188")
 backend = H3Backend()
@@ -110,7 +114,9 @@ req = ShotRequest(prompt=<3-field prompt string>, mode="t2v",
                   width=1344, height=768, duration_s=10.0, seed=0)
 result = backend.generate(req, engine=engine)   # → ShotResult(ok, video_path, receipt)
 ```
-- User-facing CLI (planned in `cli/`): `open-video "<concept>" --duration 300 --model h3`.
+- User-facing CLI (shipped): `open-video "<concept>" --duration 10 --model h3 --json`
+  (durations above ~15s trigger the multi-shot v0 template path — single-shot ≤15s uses your
+  prompt verbatim and is the reliable v0.0.1 route).
 - Proven baseline scripts (same workflows, ported from the early lab):
   - Single shot: `scripts/h3_agent.py --request "<simple NL>" --duration 5 --width 1344 --height 768`
     (use `--prompt "<full 3-field prompt>"` for best quality; `--first-frame`/`--last-frame` for I2V/FL2VA).
@@ -120,8 +126,9 @@ result = backend.generate(req, engine=engine)   # → ShotResult(ok, video_path,
 `plan` is a `list[Shot(scene_id, prompt, mode, duration_s, seed, …)]`. The pipeline generates each
 shot → judges → extracts last frame → chains (FL2VA handoff) → stitches → writes `output/film.mp4`
 and returns `(film_path, plan_with_receipts)`.
-- Proven baseline: `scripts/h3_multishot.py --plan plans/multishot_demo.json --out output/long_demo.mp4`
-  where plan JSON = `{"shots": [{"prompt_file": "...", "duration": 10, "first_frame": null}, …]}`.
+- Proven baseline: `scripts/h3_multishot.py --plan library/plans/multishot_demo.json --out output/long_demo.mp4`
+  (a ready example plan ships at `library/plans/multishot_demo.json`; plan JSON =
+  `{"shots": [{"prompt_file": "...", "duration": 10, "first_frame": null}, …]}`).
 
 ## 4. Constraints (H3 baseline — hard, evidence-based)
 

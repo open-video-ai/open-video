@@ -1,0 +1,7 @@
+{
+  "_doc": "Example plan for scripts/h3_multishot.py — run from the repo root: python scripts/h3_multishot.py --plan library/plans/multishot_demo.json --out output/long_demo.mp4. prompt_file paths are cwd-relative; duration is seconds per shot (<= 15).",
+  "shots": [
+    {"prompt_file": "library/prompts/official_t2va_starship.txt", "duration": 10, "first_frame": null},
+    {"prompt_file": "library/prompts/cinematic_cityspeed.txt", "duration": 8}
+  ]
+}
