@@ -3,6 +3,8 @@ open-video is the director; ComfyUI is the hands. This is the seam."""
 import json, time, urllib.request, urllib.error
 from pathlib import Path
 
+from open_video.core.http import post_json
+
 
 class ComfyUIAdapter:
     id = "comfyui"
@@ -15,10 +17,11 @@ class ComfyUIAdapter:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def _json(self, url, data=None, timeout=30):
-        req = urllib.request.Request(url, headers={"Content-Type": "application/json"})
         if data is not None:
-            req.data = json.dumps(data).encode()
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return post_json(url, data, timeout=timeout)
+        with urllib.request.urlopen(
+                urllib.request.Request(url, headers={"Content-Type": "application/json"}),
+                timeout=timeout) as r:
             return json.loads(r.read())
 
     def health(self) -> bool:

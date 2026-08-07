@@ -10,6 +10,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
+from open_video.core.config import DEFAULT_STATE_HOME, is_installed_path
+
 # Verified byte sizes — HF HEAD + install.sh H3_SIZES (INT8 ConvRot package).
 H3_INT8_FILES: dict[str, int] = {
     "diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors": 20_970_379_616,
@@ -86,10 +88,9 @@ def default_models_dir(repo_root: Optional[Path] = None) -> Path:
 
     root = Path(repo_root) if repo_root else Path.cwd()
     root = root.resolve()
-    from open_video.core.config import is_installed_path
     if is_installed_path(root):
         # wheel install: never target site-packages for a ~54 GB pull
-        return (Path.home() / ".open-video" / "models").resolve()
+        return (DEFAULT_STATE_HOME / "models").resolve()
     sibling_lab = (root.parent / "lab" / "h3_models")
     if sibling_lab.is_dir():
         return sibling_lab.resolve()

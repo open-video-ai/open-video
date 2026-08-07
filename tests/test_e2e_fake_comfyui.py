@@ -9,17 +9,15 @@ them; locally they're already a runtime dependency).
 import json
 import shutil
 import subprocess
-import sys
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import pytest
+from conftest import CannedJSONHandler, serve
 
-from open_video.backends.h3.backend import H3Backend  # noqa: E402
-from open_video.core.backend import ShotRequest  # noqa: E402
-from open_video.core.stitcher import Stitcher  # noqa: E402
-from open_video.engines.comfyui.adapter import ComfyUIAdapter  # noqa: E402
+from open_video.backends.h3.backend import H3Backend
+from open_video.core.backend import ShotRequest
+from open_video.core.stitcher import Stitcher
+from open_video.engines.comfyui.adapter import ComfyUIAdapter
 
 assert shutil.which("ffmpeg") and shutil.which("ffprobe"), (
     "ffmpeg/ffprobe are required for the e2e test (runtime deps of the product)"
@@ -50,49 +48,34 @@ class FakeComfy:
         self.history_calls = 0
         fake = self
 
-        class Handler(BaseHTTPRequestHandler):
-            def _send(self, obj, raw=None, ctype="application/json"):
-                data = raw if raw is not None else json.dumps(obj).encode()
-                self.send_response(200)
-                self.send_header("Content-Type", ctype)
-                self.send_header("Content-Length", str(len(data)))
-                self.end_headers()
-                self.wfile.write(data)
-
+        class Handler(CannedJSONHandler):
             def do_GET(self):
                 if self.path.startswith("/system_stats"):
-                    self._send({"system": {"comfyui_version": "fake"}})
+                    self.reply({"system": {"comfyui_version": "fake"}})
                 elif self.path.startswith("/history/"):
                     fake.history_calls += 1
                     pid = self.path.rsplit("/", 1)[1]
                     if fake.history_calls <= pending_polls:
-                        self._send({})  # still running
+                        self.reply({})  # still running
                     else:
-                        self._send({pid: {
+                        self.reply({pid: {
                             "status": {"status_str": "success", "completed": True},
                             "outputs": {"save_video": {
                                 "gifs": [{"filename": "clip.mp4", "subfolder": ""}]}},
                         }})
                 elif self.path.startswith("/view"):
-                    self._send(None, raw=clip_bytes, ctype="video/mp4")
+                    self.reply(raw=clip_bytes, ctype="video/mp4")
                 else:
                     self.send_error(404)
 
             def do_POST(self):
-                body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-                fake.submitted.append(body)
-                self._send({"prompt_id": f"fake-{len(fake.submitted)}"})
+                fake.submitted.append(self.read_json())
+                self.reply({"prompt_id": f"fake-{len(fake.submitted)}"})
 
-            def log_message(self, *a):
-                pass
-
-        self.server = HTTPServer(("127.0.0.1", 0), Handler)
-        self.url = f"http://127.0.0.1:{self.server.server_port}"
-        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.url, self._close = serve(Handler)
 
     def close(self):
-        self.server.shutdown()
-        self.server.server_close()
+        self._close()
 
 
 def test_backend_generate_end_to_end(tmp_path):
@@ -125,34 +108,18 @@ def test_backend_generate_end_to_end(tmp_path):
 def test_workflow_rejection_is_loud(tmp_path):
     """A server-side node_errors reply must raise from ComfyUIAdapter.submit."""
 
-    class RejectingHandler(BaseHTTPRequestHandler):
+    class RejectingHandler(CannedJSONHandler):
         def do_POST(self):
-            self.rfile.read(int(self.headers["Content-Length"]))
-            data = json.dumps({"prompt_id": "x",
-                               "node_errors": {"h3_i2v": "missing input"}}).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
+            self.read_json()
+            self.reply({"prompt_id": "x", "node_errors": {"h3_i2v": "missing input"}})
 
-        def log_message(self, *a):
-            pass
-
-    server = HTTPServer(("127.0.0.1", 0), RejectingHandler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url, close = serve(RejectingHandler)
     try:
-        engine = ComfyUIAdapter(server=f"http://127.0.0.1:{server.server_port}",
-                                output_dir=str(tmp_path / "out"))
-        raised = False
-        try:
+        engine = ComfyUIAdapter(server=url, output_dir=str(tmp_path / "out"))
+        with pytest.raises(RuntimeError, match="workflow rejected"):
             engine.submit({"any": "workflow"})
-        except RuntimeError as e:
-            raised = "workflow rejected" in str(e)
-        assert raised, "node_errors reply must raise RuntimeError('workflow rejected: …')"
     finally:
-        server.shutdown()
-        server.server_close()
+        close()
 
 
 def test_stitcher_concat_real_ffmpeg(tmp_path):
