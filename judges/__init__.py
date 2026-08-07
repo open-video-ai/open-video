@@ -14,7 +14,7 @@ from open_video.core.judge import QualityJudge
 JUDGES = {}
 for _, name, _ in pkgutil.iter_modules(__path__):
     try:
-        mod = importlib.import_module(f"judges.{name}")
+        mod = importlib.import_module(f"open_video.judges.{name}")
         if hasattr(mod, "Judge"):
             JUDGES[mod.Judge.id] = mod.Judge()
     except Exception:
