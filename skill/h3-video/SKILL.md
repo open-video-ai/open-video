@@ -32,8 +32,8 @@ Compat symlink:
 |---|---|
 | **Product root (CLI, skills)** | `$OPEN_VIDEO_ROOT` or `/mnt/data/workspace/open-video-project/open-video` |
 | **Install / pull / run** | From product root: `./scripts/install.sh`, `python -m open_video …` |
-| **Lab engine + weights (this host)** | `/mnt/data/workspace/55-ai-video` (ComfyUI + `h3_models/`) |
-| **Weights env** | `export OPEN_VIDEO_MODELS=/mnt/data/workspace/55-ai-video/h3_models` |
+| **Lab engine + weights (this host)** | `/mnt/data/workspace/open-video-project/lab` (ComfyUI + `h3_models/`) |
+| **Weights env** | `export OPEN_VIDEO_MODELS=/mnt/data/workspace/open-video-project/lab/h3_models` |
 | **ComfyUI URL** | `export OPEN_VIDEO_COMFYUI=http://127.0.0.1:8188` (default) |
 
 **Resolve product root in scripts** (never hardcode old paths):
@@ -47,12 +47,13 @@ cd "$OPEN_VIDEO_ROOT"
 Lab harness (same ComfyUI, proven agent script) lives next door:
 
 ```bash
-export H3_LAB="${H3_LAB:-/mnt/data/workspace/55-ai-video}"
+export OPEN_VIDEO_LAB="${OPEN_VIDEO_LAB:-/mnt/data/workspace/open-video-project/lab}"
+export H3_LAB="${H3_LAB:-$OPEN_VIDEO_LAB}"
 # optional: open-video pull uses OPEN_VIDEO_MODELS
 export OPEN_VIDEO_MODELS="${OPEN_VIDEO_MODELS:-$H3_LAB/h3_models}"
 ```
 
-Do **not** assume `55-ai-video` is the product root anymore. Product = `open-video-project/open-video`.
+Do **not** assume `open-video-project/lab` is the product root anymore. Product = `open-video-project/open-video`.
 
 ---
 
@@ -103,7 +104,7 @@ python -m open_video recommend-quant
 - ComfyUI down → start lab server:
 
 ```bash
-cd "${H3_LAB:-/mnt/data/workspace/55-ai-video}"
+cd "${H3_LAB:-/mnt/data/workspace/open-video-project/lab}"
 curl -sf http://127.0.0.1:8188/system_stats || (
   cd ComfyUI && nohup ../venv/bin/python main.py \
     --listen 127.0.0.1 --port 8188 --lowvram --use-sage-attention \
@@ -294,5 +295,5 @@ non_diegetic_music: …
 ## 9. Commit / path hygiene
 
 - Product commits: inside `open-video-project/open-video` only (own git repo).
-- Do not hardcode `/mnt/data/workspace/55-ai-video` as the **product** root in new code; use `Path(__file__).resolve()` or `OPEN_VIDEO_ROOT` / `H3_LAB`.
-- Lab scripts under `55-ai-video/scripts/` should resolve `ROOT` from `__file__` (relative), not a frozen absolute path.
+- Do not hardcode `/mnt/data/workspace/open-video-project/lab` as the **product** root in new code; use `Path(__file__).resolve()` or `OPEN_VIDEO_ROOT` / `H3_LAB`.
+- Lab scripts under `open-video-project/lab/scripts/` should resolve `ROOT` from `__file__` (relative), not a frozen absolute path.

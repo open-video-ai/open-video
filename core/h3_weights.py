@@ -64,27 +64,31 @@ def default_models_dir(repo_root: Optional[Path] = None) -> Path:
 
     Order:
       1. ``OPEN_VIDEO_MODELS``
-      2. ``$OPEN_VIDEO_HOME/ComfyUI/models`` or ``$OPEN_VIDEO_HOME/models``
-      3. ``<repo>/ComfyUI/models``
-      4. ``<repo>/models``
+      2. ``$OPEN_VIDEO_LAB/h3_models`` (official project lab layout)
+      3. ``$OPEN_VIDEO_HOME/ComfyUI/models`` or ``…/models``
+      4. ``<repo>/../lab/h3_models`` (sibling lab next to product checkout)
+      5. ``<repo>/ComfyUI/models`` then ``<repo>/models``
     """
     env = os.environ.get("OPEN_VIDEO_MODELS", "").strip()
     if env:
         return Path(env).expanduser().resolve()
 
+    lab = os.environ.get("OPEN_VIDEO_LAB", "").strip()
+    if lab:
+        return (Path(lab).expanduser().resolve() / "h3_models")
+
     home = os.environ.get("OPEN_VIDEO_HOME", "").strip()
     if home:
         hp = Path(home).expanduser().resolve()
-        for cand in (hp / "ComfyUI" / "models", hp / "models"):
-            if cand.is_dir() or not (hp / "ComfyUI").exists():
-                # Prefer ComfyUI/models when ComfyUI tree exists or neither exists yet
-                if (hp / "ComfyUI").exists():
-                    return (hp / "ComfyUI" / "models").resolve()
-                return cand.resolve()
-        return (hp / "ComfyUI" / "models").resolve()
+        if (hp / "ComfyUI").exists():
+            return (hp / "ComfyUI" / "models").resolve()
+        return (hp / "models").resolve()
 
     root = Path(repo_root) if repo_root else Path.cwd()
     root = root.resolve()
+    sibling_lab = (root.parent / "lab" / "h3_models")
+    if sibling_lab.is_dir():
+        return sibling_lab.resolve()
     comfy = root / "ComfyUI" / "models"
     if comfy.is_dir() or (root / "ComfyUI").is_dir():
         return comfy.resolve()

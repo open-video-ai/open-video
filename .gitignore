@@ -24,3 +24,7 @@ website/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# never vendor lab runtime
+lab/
+../lab/

@@ -1,0 +1,5 @@
+integrated_multimodal_description: [Shot 1] Live-action, cinematic, the elderly lighthouse keeper in his weathered coat stands at the cliff edge as established, the lighthouse beam now sweeping past him in steady rotations. The camera tracks right with small amplitude at slow speed along the cliff edge, revealing the vast stormy sea below, lightning flickering on the horizon, as the keeper raises a lantern and the lighthouse beam crosses with its warm glow.
+
+overall_soundscape: The wind intensifies, the lighthouse mechanism groans with each rotation, waves crash louder, and a distant rumble of thunder rolls in from the sea.
+
+non_diegetic_music: The cello deepens, a low brass note enters underneath, building slightly as the lightning flickers, then settling back to the sustained cello.

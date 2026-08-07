@@ -1,0 +1,12 @@
+https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors
+  dir=/mnt/data/workspace/55-ai-video/h3_models/diffusion_models
+  out=minimax_h3_fl2va_pruned_int8_convrot.safetensors
+https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors
+  dir=/mnt/data/workspace/55-ai-video/h3_models/text_encoders
+  out=qwen3vl_32b_minimax_h3_int8_convrot.safetensors
+https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=vae/minimax_h3_video_vae_fp16.safetensors
+  dir=/mnt/data/workspace/55-ai-video/h3_models/vae
+  out=minimax_h3_video_vae_fp16.safetensors
+https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=vae/minimax_h3_audio_vae_fp32.safetensors
+  dir=/mnt/data/workspace/55-ai-video/h3_models/vae
+  out=minimax_h3_audio_vae_fp32.safetensors

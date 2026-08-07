@@ -1,0 +1,5 @@
+integrated_multimodal_description: [Shot 1] Live-action, cinematic, a sweeping aerial shot descends toward a solitary lighthouse on a rugged cliff at dusk, the last rays of golden light catching the white tower against a deep blue stormy sea. The camera cranes down with large amplitude at slow speed from the clouds to the lighthouse base, where an elderly keeper in a weathered coat stands at the door, looking out at the horizon.
+
+overall_soundscape: Wind howls across the cliff edge, waves crash against the rocks below, and the lighthouse mechanism begins its rhythmic mechanical rotation with a deep metallic groan.
+
+non_diegetic_music: A solitary cello sustains a low, mournful note, joined gradually by distant string swells at a slow, elegiac tempo.
