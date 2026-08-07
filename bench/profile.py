@@ -230,7 +230,7 @@ def call_generate(backend, req, engine):
 def run_config(backend, engine, name, w, h, dur, seed, prompt, mode,
                server_log, steps_hint, gpu_index, results, receipt_path):
     """Run one generation config, capture metrics, write incremental JSON."""
-    from core.backend import ShotRequest
+    from open_video.core.backend import ShotRequest
     req = ShotRequest(prompt=prompt, mode=mode, width=w, height=h,
                       duration_s=dur, seed=seed)
 

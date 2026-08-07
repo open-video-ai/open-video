@@ -41,11 +41,13 @@ import sys
 from pathlib import Path
 
 # --- repo-root bootstrap ------------------------------------------------------
-# core/, backends/, engines/ all import as top-level packages rooted at the repo
-# root. Make sure the repo root (parent of this cli/ dir) is on sys.path no matter
-# how we are invoked (python cli/open_video.py ... | python -m open_video ...).
+# REPO_ROOT is the parent of this cli/ dir: the repo root when run from source,
+# the installed open_video/ package dir when packaged (backends/ etc. live
+# directly under it either way). Only script-style invocation
+# (python cli/open_video.py) needs the sys.path insert so `open_video.*`
+# resolves; as an imported module the package machinery already handles it.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(REPO_ROOT) not in sys.path:
+if not __package__ and str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 # --- defaults / constants -----------------------------------------------------
@@ -71,7 +73,7 @@ SUBCOMMANDS = (
 # Explicit registry (alias -> module path, class name). Discovery below is the
 # fallback for new models dropped into backends/<name>/backend.py.
 BACKEND_REGISTRY = {
-    "h3": ("backends.h3.backend", "H3Backend"),
+    "h3": ("open_video.backends.h3.backend", "H3Backend"),
 }
 
 
@@ -84,7 +86,7 @@ def discover_backends():
     Returns a list of (alias, instance) where alias is the directory name. Import
     failures are reported on stderr but do not abort discovery.
     """
-    from core.backend import ModelBackend
+    from open_video.core.backend import ModelBackend
     backends_dir = REPO_ROOT / "backends"
     found = []
     if not backends_dir.is_dir():
@@ -92,7 +94,7 @@ def discover_backends():
     for sub in sorted(backends_dir.iterdir()):
         if not (sub.is_dir() and (sub / "backend.py").exists()):
             continue
-        mod_path = f"backends.{sub.name}.backend"
+        mod_path = f"open_video.backends.{sub.name}.backend"
         try:
             mod = importlib.import_module(mod_path)
         except Exception as e:  # pragma: no cover - depends on backend deps
@@ -167,7 +169,7 @@ def _bind_engine(backend, engine):
 # Engine loading
 # =============================================================================#
 def load_engine(server: str, output_dir: str):
-    from engines.comfyui.adapter import ComfyUIAdapter
+    from open_video.engines.comfyui.adapter import ComfyUIAdapter
     return ComfyUIAdapter(server=server, output_dir=output_dir)
 
 
@@ -274,7 +276,7 @@ def cmd_generate(args) -> int:
 
     # 8. build the plan
     print("[open-video] [2/5] planning shots…", flush=True)
-    from core.planner import Planner
+    from open_video.core.planner import Planner
     planner = Planner(backend=backend)
     plan = planner.plan_from_concept(args.prompt, target_duration_s=args.duration,
                                      aspect=args.aspect)
@@ -309,7 +311,7 @@ def cmd_generate(args) -> int:
 
     # Optional: show resource-aware quant hint (never blocks)
     try:
-        from core.resources import format_recommendation, recommend_for_host
+        from open_video.core.resources import format_recommendation, recommend_for_host
         print(format_recommendation(recommend_for_host()), flush=True)
     except Exception:
         pass
@@ -334,7 +336,7 @@ def cmd_generate(args) -> int:
         return 3
     _bind_engine(backend, engine)
 
-    from core.pipeline import LongFilmPipeline
+    from open_video.core.pipeline import LongFilmPipeline
     pipeline = LongFilmPipeline(backend=backend, engine=engine, output_dir=out_dir)
     film, _final_plan = pipeline.make_film(shots, out_path=str(out_path))
     if not film:
@@ -541,7 +543,7 @@ def build_recommend_quant_parser():
 
 def cmd_recommend_quant(args) -> int:
     print("[open-video] [1/1] probing host resources for H3 quant…", flush=True)
-    from core.resources import (
+    from open_video.core.resources import (
         format_recommendation,
         recommend_for_host,
         recommend_quant,
@@ -594,13 +596,13 @@ def build_pull_parser():
 
 def cmd_pull(args) -> int:
     """Ollama ``pull`` analogue — verify / download H3 weights."""
-    from core.h3_weights import (
+    from open_video.core.h3_weights import (
         default_models_dir,
         format_inventory,
         inventory_h3_int8,
         known_models,
     )
-    from core.resources import format_recommendation, recommend_for_host
+    from open_video.core.resources import format_recommendation, recommend_for_host
 
     model = (args.model or "h3").strip().lower()
     if model not in known_models():
@@ -703,9 +705,9 @@ def build_status_parser():
 
 def cmd_status(args) -> int:
     """Ollama ``ps`` / status — ComfyUI health + H3 inventory + quant."""
-    from core.h3_weights import default_models_dir, format_inventory, inventory_h3_int8
-    from core.resources import format_recommendation, recommend_for_host
-    from engines.comfyui.adapter import ComfyUIAdapter
+    from open_video.core.h3_weights import default_models_dir, format_inventory, inventory_h3_int8
+    from open_video.core.resources import format_recommendation, recommend_for_host
+    from open_video.engines.comfyui.adapter import ComfyUIAdapter
 
     models_dir = (
         Path(args.models_dir).expanduser().resolve()

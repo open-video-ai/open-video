@@ -53,7 +53,8 @@ dev = [
 ]
 
 [project.scripts]
-# Console entry point -> open_video/__main__.py:main -> cli/open_video.py:main.
+# Console entry point -> open_video/__main__.py:main -> cli/open_video.py:main
+# (packaged as open_video.cli.open_video via [tool.setuptools.package-dir]).
 open-video = "open_video.__main__:main"
 
 [project.urls]
@@ -64,37 +65,42 @@ Issues = "https://github.com/open-video-ai/open-video/issues"
 HuggingFace = "https://huggingface.co/open-video-ai/open-video"
 
 # --- packaging layout --------------------------------------------------------
-# Flat layout: core/, backends/, engines/, cli/, open_video/ are all top-level
-# packages. This is required because the existing modules import each other as
-# top-level packages (e.g. `from core.backend import ModelBackend`,
-# `from backends.h3.backend import H3Backend`, `from engines.comfyui.adapter
-# import ComfyUIAdapter`). Keeping them top-level means zero import edits and
-# the source tree keeps working unchanged.
-[tool.setuptools.packages.find]
-where = ["."]
-include = [
-    "core",
-    "core.*",
-    "backends",
-    "backends.*",
-    "engines",
-    "engines.*",
-    "cli",
-    "cli.*",
+# Source tree keeps core/, backends/, engines/, judges/, cli/ as sibling dirs of
+# open_video/ so documented repo paths (`python cli/open_video.py`,
+# backends/h3/PROMPT_GRAMMAR.md, scripts/install.sh) stay true. The wheel,
+# however, ships a SINGLE top-level package: package-dir maps each sibling dir
+# to an open_video.* subpackage, so site-packages gains only `open_video/`
+# (no generic `core`/`cli` top-level names). All imports use the canonical
+# `open_video.*` form; open_video/__init__.py extends __path__ so those imports
+# also resolve in a plain source checkout.
+[tool.setuptools]
+packages = [
     "open_video",
-    "open_video.*",
-]
-exclude = [
-    "artifacts*",
-    "bench*",
-    "docs*",
-    "library*",
-    "skill*",
-    "templates*",
-    "website*",
-    "tests*",
+    "open_video.cli",
+    "open_video.core",
+    "open_video.backends",
+    "open_video.backends.h3",
+    "open_video.engines",
+    "open_video.engines.comfyui",
+    "open_video.judges",
+    "open_video.library",
+    "open_video.scripts",
 ]
 
-# Ship the H3 ComfyUI workflow templates alongside the backend plugin.
+[tool.setuptools.package-dir]
+"open_video.cli" = "cli"
+"open_video.core" = "core"
+"open_video.backends" = "backends"
+"open_video.engines" = "engines"
+"open_video.judges" = "judges"
+"open_video.library" = "library"
+"open_video.scripts" = "scripts"
+
+# Ship the runtime data the CLI advertises: H3 workflow templates + the official
+# prompt grammar (backend.prompt_guide), the prompt presets (list-presets), and
+# the resumable weight installer (pull). REPO_ROOT-relative lookups in the CLI
+# resolve identically in a source checkout and inside the installed package.
 [tool.setuptools.package-data]
-"backends.h3" = ["workflows/*.json"]
+"open_video.backends.h3" = ["workflows/*.json", "PROMPT_GRAMMAR.md"]
+"open_video.library" = ["prompts/*.txt", "prompts/*.md"]
+"open_video.scripts" = ["install.sh", "h3_download.sh", "h3_aria2_list.txt"]

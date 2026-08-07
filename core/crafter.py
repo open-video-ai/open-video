@@ -6,7 +6,7 @@ better prompts → better outputs. Can be overridden by an LLM for richer prompt
 """
 from __future__ import annotations
 from typing import Optional, Callable
-from core.backend import ModelBackend
+from open_video.core.backend import ModelBackend
 
 
 class Crafter:

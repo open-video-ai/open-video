@@ -5,7 +5,7 @@ This is the default judge: extracts N frames from the video, sends each to a vis
 """
 import subprocess, json, urllib.request
 from pathlib import Path
-from core.judge import QualityJudge, Verdict, Issue
+from open_video.core.judge import QualityJudge, Verdict, Issue
 
 
 class VisionJudge(QualityJudge):

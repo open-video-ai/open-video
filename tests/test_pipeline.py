@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.pipeline import Shot, LongFilmPipeline
+from open_video.core.pipeline import Shot, LongFilmPipeline
 
 
 def test_shot_creation():

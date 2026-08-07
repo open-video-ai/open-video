@@ -6,7 +6,7 @@ to backends/<your_model>/workflows/, and PR. The core never changes — your mod
 See backends/h3/backend.py for a complete working example.
 """
 from __future__ import annotations
-from core.backend import ModelBackend, Capabilities, ShotRequest, ShotResult
+from open_video.core.backend import ModelBackend, Capabilities, ShotRequest, ShotResult
 
 
 class YourModelBackend(ModelBackend):
@@ -44,7 +44,7 @@ class YourModelBackend(ModelBackend):
         workflow = self._build_workflow(req)
         # Run via the engine adapter
         if engine is None:
-            from engines.comfyui.adapter import ComfyUIAdapter
+            from open_video.engines.comfyui.adapter import ComfyUIAdapter
             engine = ComfyUIAdapter()
         res = engine.submit_and_wait(workflow, timeout=1800)
         if res["status"].get("status_str") != "success":

@@ -8,7 +8,7 @@ for the user's request. E.g.:
 """
 from __future__ import annotations
 from typing import Optional
-from core.backend import ModelBackend
+from open_video.core.backend import ModelBackend
 
 
 class Selector:

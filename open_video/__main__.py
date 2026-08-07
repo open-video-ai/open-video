@@ -1,6 +1,6 @@
 """``python -m open_video`` entry point and the ``open-video`` console script.
 
-Delegates to cli.open_video.main() (the real CLI). A leading ``gen`` token is
+Delegates to open_video.cli.open_video.main() (the real CLI). A leading ``gen`` token is
 stripped as a convenience so both forms work identically:
 
     open-video gen "waves at sunset" --duration 10
@@ -16,7 +16,7 @@ import sys
 
 
 def main(argv=None) -> int:
-    """Forward to cli.open_video.main, optionally stripping a leading ``gen``.
+    """Forward to open_video.cli.open_video.main, optionally stripping a leading ``gen``.
 
     Returns the process exit code so this works both as a console_scripts entry
     point (``open-video``) and as ``python -m open_video``.
@@ -27,7 +27,7 @@ def main(argv=None) -> int:
     # bare `open-video gen` (treated as a literal prompt) are not perturbed.
     if len(argv) >= 2 and argv[0] == "gen":
         argv = argv[1:]
-    from cli.open_video import main as _cli_main
+    from open_video.cli.open_video import main as _cli_main
     return _cli_main(argv)
 
 

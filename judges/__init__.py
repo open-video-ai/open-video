@@ -9,12 +9,12 @@ Each judge implements the QualityJudge interface from core/judge.py. Plugins:
 Auto-discovery: drop a .py file in judges/ implementing QualityJudge → it's available.
 """
 import importlib, pkgutil
-from core.judge import QualityJudge
+from open_video.core.judge import QualityJudge
 
 JUDGES = {}
 for _, name, _ in pkgutil.iter_modules(__path__):
     try:
-        mod = importlib.import_module(f"judges.{name}")
+        mod = importlib.import_module(f"{__name__}.{name}")
         if hasattr(mod, "Judge"):
             JUDGES[mod.Judge.id] = mod.Judge()
     except Exception:
