@@ -36,6 +36,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
+      - name: Install ffmpeg (runtime dep; e2e test exercises the real binary)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg
+
       - name: Unit tests
         run: python -m pytest tests/ -q --tb=short
 
