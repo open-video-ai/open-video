@@ -26,7 +26,8 @@ COMFY_DIR = Path(os.environ.get("OPEN_VIDEO_COMFYUI_DIR", LAB / "ComfyUI"))
 SERVER = os.environ.get("OPEN_VIDEO_COMFYUI", "http://127.0.0.1:8188")
 OUT = Path(os.environ.get("OPEN_VIDEO_OUTPUT", PRODUCT / "output"))
 REC = Path(os.environ.get("OPEN_VIDEO_RECEIPTS", PRODUCT / "artifacts" / "verify"))
-OUT.mkdir(parents=True, exist_ok=True); REC.mkdir(parents=True, exist_ok=True)
+# dirs are created lazily at write time — importing this module must not
+# touch the filesystem (it ships inside the wheel as open_video.scripts.*)
 sys.path.insert(0, str(PRODUCT / "scripts"))
 from h3_generate_benchmark import (VRAMSampler, ram_used_mb, http_json,
     queue_prompt, get_history, fetch_output, duration_to_length)
@@ -101,6 +102,7 @@ def run(a):
                "first_frame": a.first_frame, "last_frame": a.last_frame},
                "wall_s": round(t1-t0, 1), "peak_vram_mb": sampler.peak,
                "ram_used_mb": round(ram_used_mb()), "status": st, "outputs": out, "fetch_msg": msg}
+    REC.mkdir(parents=True, exist_ok=True)
     rp = REC/f"agent_{mode}_{int(t0)}.json"; rp.write_text(json.dumps(receipt, indent=2, default=str))
     return receipt
 

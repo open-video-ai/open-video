@@ -3,15 +3,32 @@ import os
 from pathlib import Path
 
 # Paths
-ROOT = Path(__file__).resolve().parent.parent  # open-video/
+ROOT = Path(__file__).resolve().parent.parent  # open-video/ (source) or site-packages/open_video (wheel)
 LIBRARY = ROOT / "library"
 BACKENDS = ROOT / "backends"
 ENGINES = ROOT / "engines"
 JUDGES = ROOT / "judges"
 TEMPLATES = ROOT / "templates"
 BENCH = ROOT / "bench"
-OUTPUT = ROOT / "output"
-ARTIFACTS = ROOT / "artifacts"
+
+
+def is_installed_path(p: Path) -> bool:
+    """True when ``p`` lives inside an installed package tree (site/dist-packages)."""
+    return any(part in ("site-packages", "dist-packages") for part in p.parts)
+
+
+# Mutable state (outputs, artifacts, model fallbacks) must never land inside an
+# installed package tree. Source checkout keeps the historical repo-relative
+# behavior; a wheel install defaults to ~/.open-video (override: OPEN_VIDEO_HOME).
+_home = os.environ.get("OPEN_VIDEO_HOME", "").strip()
+if _home:
+    STATE_ROOT = Path(_home).expanduser()
+elif is_installed_path(ROOT):
+    STATE_ROOT = Path.home() / ".open-video"
+else:
+    STATE_ROOT = ROOT
+OUTPUT = STATE_ROOT / "output"
+ARTIFACTS = STATE_ROOT / "artifacts"
 
 # Engine defaults
 COMFYUI_SERVER = os.environ.get("OPEN_VIDEO_COMFYUI", "http://127.0.0.1:8188")

@@ -86,6 +86,10 @@ def default_models_dir(repo_root: Optional[Path] = None) -> Path:
 
     root = Path(repo_root) if repo_root else Path.cwd()
     root = root.resolve()
+    from open_video.core.config import is_installed_path
+    if is_installed_path(root):
+        # wheel install: never target site-packages for a ~54 GB pull
+        return (Path.home() / ".open-video" / "models").resolve()
     sibling_lab = (root.parent / "lab" / "h3_models")
     if sibling_lab.is_dir():
         return sibling_lab.resolve()
