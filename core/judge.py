@@ -73,6 +73,13 @@ class QualityJudge:
                 paths.append(str(dst))
         return paths
 
+    @staticmethod
+    def _flag(value) -> bool:
+        """VLMs return booleans as strings — treat 'false'/'none'/'no'/'' as False."""
+        if isinstance(value, str):
+            return value.strip().lower() not in ("", "false", "none", "no", "0")
+        return bool(value)
+
     def diagnose(self, vision_result: dict, prompt: str) -> list:
         """Parse vision-model output into structured issues + fixes."""
         issues = []
@@ -80,13 +87,13 @@ class QualityJudge:
         for elem in vision_result.get("missing_elements", []):
             issues.append(Issue(type="dropped_element", detail=f"'{elem}' from prompt not visible",
                                 fix=f"emphasize '{elem}' earlier + more explicitly in the prompt"))
-        if vision_result.get("artifacts"):
-            issues.append(Issue(type="artifact", detail=vision_result["artifacts"],
+        if self._flag(vision_result.get("artifacts")):
+            issues.append(Issue(type="artifact", detail=str(vision_result["artifacts"]),
                                 fix="try different seed or add resolution/stability constraint"))
         if vision_result.get("motion_quality") == "poor":
             issues.append(Issue(type="bad_motion", detail="motion is choppy/unnatural",
                                 fix="increase steps to 25 or adjust camera amplitude/speed"))
-        if vision_result.get("incoherence"):
+        if self._flag(vision_result.get("incoherence")):
             issues.append(Issue(type="incoherence", detail="frames don't flow coherently",
                                 fix="simplify the shot to single-action; reduce cut count"))
         return issues

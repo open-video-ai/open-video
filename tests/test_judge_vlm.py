@@ -102,3 +102,14 @@ def test_env_activation(monkeypatch):
     monkeypatch.setenv("OPEN_VIDEO_VLM_MODEL", "test-vlm")
     assert vision_fn_from_env() is not None
     assert QualityJudge.from_env().vision_fn is not None
+
+
+def test_diagnose_ignores_stringly_false_flags():
+    """VLMs emit 'false' as a string; it must not create spurious issues (film60 field bug)."""
+    judge = QualityJudge()
+    raw = {"score": 0.8, "missing_elements": [], "artifacts": "none",
+           "motion_quality": "good", "incoherence": "false"}
+    assert judge.diagnose(raw, "prompt") == []
+    raw_bad = {"score": 0.4, "missing_elements": [], "artifacts": "heavy banding",
+               "motion_quality": "good", "incoherence": "frames jump around"}
+    assert {i.type for i in judge.diagnose(raw_bad, "p")} == {"artifact", "incoherence"}
