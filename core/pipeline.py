@@ -49,12 +49,7 @@ class LongFilmPipeline:
         self.out.mkdir(parents=True, exist_ok=True)
         self.frames.mkdir(parents=True, exist_ok=True)
         # core modules — single source of truth for judge / stitch / recipe logic
-        # explicit vision_fn wins; otherwise env (OPEN_VIDEO_VLM_*) wires a real
-        # judge and unset env keeps the honest PASS stub
-        if vision_fn is not None:
-            self._judge = QualityJudge(vision_fn=vision_fn)
-        else:
-            self._judge = QualityJudge.from_env()
+        self._judge = QualityJudge.from_env(vision_fn=vision_fn)
         self._stitcher = Stitcher(output_dir=str(self.out))
 
     # --- the judge (delegates to core.judge.QualityJudge) ---

@@ -4,8 +4,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from open_video.core.config import is_installed_path  # noqa: E402
 from open_video.core.h3_weights import default_models_dir  # noqa: E402
 

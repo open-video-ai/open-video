@@ -206,6 +206,20 @@ def print_plan(plan, backend):
 # =============================================================================#
 # generate (default command)
 # =============================================================================#
+def _emit_generate_json(shots, film, dry_run: bool):
+    """One schema for the --json self-verification line (dry-run + real)."""
+    out = []
+    for s_ in shots:
+        d = {"scene_id": s_.scene_id, "mode": s_.mode,
+             "duration_s": s_.duration_s, "seed": s_.seed}
+        if not dry_run:
+            d.update({"video_path": s_.video_path, "verdict": s_.verdict,
+                      "judge_score": s_.receipt.get("judge_score"),
+                      "judge_issues": s_.receipt.get("judge_issues", [])})
+        out.append(d)
+    print(json.dumps({"dry_run": dry_run, "validated": True, "film": film, "shots": out}))
+
+
 def cmd_generate(args) -> int:
     print("[open-video] [1/5] loading backend + validating prompt…", flush=True)
     # 1. prompt validation
@@ -320,11 +334,8 @@ def cmd_generate(args) -> int:
         print("[open-video] [4/5] --dry-run: prompt + plan validated. No generation performed.",
               flush=True)
         print("[open-video] [5/5] done (dry-run).", flush=True)
-        if getattr(args, "json", False):
-            print(json.dumps({"dry_run": True, "validated": True, "film": None,
-                              "shots": [{"scene_id": s_.scene_id, "mode": s_.mode,
-                                         "duration_s": s_.duration_s, "seed": s_.seed}
-                                        for s_ in shots]}))
+        if args.json:
+            _emit_generate_json(shots, film=None, dry_run=True)
         return 0
 
     # 12. engine + pipeline
@@ -348,14 +359,8 @@ def cmd_generate(args) -> int:
         print("[open-video] error: pipeline did not produce a film.", file=sys.stderr)
         return 4
     print(f"[open-video] [5/5] DONE -> {film}", flush=True)
-    if getattr(args, "json", False):
-        print(json.dumps({"dry_run": False, "film": film,
-                          "shots": [{"scene_id": s_.scene_id, "mode": s_.mode,
-                                     "seed": s_.seed, "video_path": s_.video_path,
-                                     "verdict": s_.verdict,
-                                     "judge_score": s_.receipt.get("judge_score"),
-                                     "judge_issues": s_.receipt.get("judge_issues", [])}
-                                    for s_ in shots]}))
+    if args.json:
+        _emit_generate_json(shots, film=film, dry_run=False)
     return 0
 
 

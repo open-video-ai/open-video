@@ -51,11 +51,15 @@ KEEP_SERVER=0
 SAGE=0
 ASSUME_YES=0
 REPO_URL="${OPEN_VIDEO_REPO:-https://github.com/open-video-ai/open-video.git}"
+# ComfyUI pin lives in scripts/comfyui.pin (single source; also used by
+# lab-restore.sh). Loaded after OV_ROOT is resolved; fallback values keep the
+# standalone curl|bash bootstrap working before the repo exists.
 COMFYUI_REPO_URL="https://github.com/comfyanonymous/ComfyUI.git"
-# Verified against the RTX 5090 lab runtime on 2026-08-07.
-# To bump this pin, verify the full commit SHA upstream and refresh the lab
-# freeze record in docs/lab-freeze-2026-08-07.txt.
 COMFYUI_COMMIT="14b05228cef127ce529bc0c08660770d4af3e9a8"
+load_comfyui_pin() {
+    # shellcheck disable=SC1091
+    [[ -f "$1/scripts/comfyui.pin" ]] && source "$1/scripts/comfyui.pin"
+}
 
 # Verified byte sizes for the 4 default H3 INT8-ConvRot files (HF == ModelScope).
 # Source: HF HEAD content-length + proven sibling-repo download receipt (53,889,785,072 B total ≈ 54 GB).
@@ -248,6 +252,7 @@ resolve_root() {
     OV_ROOT=$(cd "$OV_ROOT" && pwd) || die "root path not accessible: $OV_ROOT"
     [[ -f "$OV_ROOT/cli/open_video.py" ]] \
         || die "$OV_ROOT does not look like the open-video repo (no cli/open_video.py)."
+    load_comfyui_pin "$OV_ROOT"
 
     COMFYUI_DIR="${COMFYUI_DIR_OVERRIDE:-$OV_ROOT/ComfyUI}"
     VENV_DIR="${VENV_DIR_OVERRIDE:-$OV_ROOT/.venv}"
@@ -424,9 +429,11 @@ install_engine() {
         elif [[ -e "$COMFYUI_DIR" ]]; then
             die "ComfyUI path exists but is not a git checkout: $COMFYUI_DIR"
         else
-            mkdir -p "$(dirname "$COMFYUI_DIR")"
-            git clone --depth 1 "$COMFYUI_REPO_URL" "$COMFYUI_DIR" \
-                || die "ComfyUI clone failed."
+            # fetch the pinned SHA directly — no throwaway default-branch clone
+            mkdir -p "$COMFYUI_DIR"
+            git -C "$COMFYUI_DIR" init -q && \
+                git -C "$COMFYUI_DIR" remote add origin "$COMFYUI_REPO_URL" \
+                || die "ComfyUI init failed."
         fi
         current_comfyui_commit=$(git -C "$COMFYUI_DIR" rev-parse HEAD 2>/dev/null || true)
         if [[ "$current_comfyui_commit" != "$COMFYUI_COMMIT" ]]; then

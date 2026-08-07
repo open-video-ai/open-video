@@ -7,10 +7,10 @@ LAB_ROOT="${OPEN_VIDEO_LAB:-$PRODUCT_ROOT/../lab}"
 COMFYUI_DIR="${OPEN_VIDEO_COMFYUI_DIR:-$LAB_ROOT/ComfyUI}"
 VENV_DIR="${OPEN_VIDEO_VENV_DIR:-$LAB_ROOT/venv}"
 MODELS_DIR="${OPEN_VIDEO_MODELS:-$LAB_ROOT/h3_models}"
-COMFYUI_REPO_URL="https://github.com/comfyanonymous/ComfyUI.git"
-# Keep this in sync with scripts/install.sh. Verify a new full SHA upstream
-# before bumping it, then refresh the verified runtime freeze record.
-COMFYUI_COMMIT="14b05228cef127ce529bc0c08660770d4af3e9a8"
+# ComfyUI pin: single source shared with scripts/install.sh.
+# shellcheck disable=SC1091
+source "$PRODUCT_ROOT/scripts/comfyui.pin" || {
+    printf 'ERROR: missing scripts/comfyui.pin\n' >&2; exit 1; }
 DRY_RUN=0
 
 usage() {
@@ -73,8 +73,10 @@ if [[ -d "$COMFYUI_DIR/.git" ]]; then
 elif [[ -e "$COMFYUI_DIR" ]]; then
     die "ComfyUI path exists but is not a git checkout: $COMFYUI_DIR"
 else
-    mkdir -p "$(dirname "$COMFYUI_DIR")"
-    git clone --depth 1 "$COMFYUI_REPO_URL" "$COMFYUI_DIR"
+    # fetch the pinned SHA directly — no throwaway default-branch clone
+    mkdir -p "$COMFYUI_DIR"
+    git -C "$COMFYUI_DIR" init -q
+    git -C "$COMFYUI_DIR" remote add origin "$COMFYUI_REPO_URL"
 fi
 current_comfyui_commit="$(git -C "$COMFYUI_DIR" rev-parse HEAD 2>/dev/null || true)"
 if [[ "$current_comfyui_commit" != "$COMFYUI_COMMIT" ]]; then

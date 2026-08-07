@@ -16,7 +16,8 @@ from __future__ import annotations
 import base64
 import json
 import os
-import urllib.request
+
+from open_video.core.http import post_json
 
 _SYSTEM = (
     "You are a strict video-quality judge. You are shown evenly spaced frames "
@@ -43,10 +44,7 @@ def _frame_part(path: str) -> dict:
 def _parse_verdict(content: str) -> dict:
     """Extract the JSON verdict object from a model reply (tolerates code fences)."""
     text = content.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        if text.startswith("json"):
-            text = text[4:]
+    # find/rfind is the fence tolerance: it skips ``` markers and any prose
     start, end = text.find("{"), text.rfind("}")
     if start == -1 or end <= start:
         raise ValueError(f"vision model returned no JSON object: {content[:200]!r}")
@@ -83,12 +81,8 @@ def make_vision_fn(url: str, model: str, api_key: str | None = None, timeout: fl
             "temperature": 0,
             "max_tokens": 512,
         }
-        headers = {"Content-Type": "application/json"}
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-        req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            body = json.loads(resp.read().decode())
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
+        body = post_json(url, payload, headers=headers, timeout=timeout)
         return _parse_verdict(body["choices"][0]["message"]["content"])
 
     return vision_fn

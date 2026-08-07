@@ -20,11 +20,12 @@ def is_installed_path(p: Path) -> bool:
 # Mutable state (outputs, artifacts, model fallbacks) must never land inside an
 # installed package tree. Source checkout keeps the historical repo-relative
 # behavior; a wheel install defaults to ~/.open-video (override: OPEN_VIDEO_HOME).
+DEFAULT_STATE_HOME = Path.home() / ".open-video"
 _home = os.environ.get("OPEN_VIDEO_HOME", "").strip()
 if _home:
     STATE_ROOT = Path(_home).expanduser()
 elif is_installed_path(ROOT):
-    STATE_ROOT = Path.home() / ".open-video"
+    STATE_ROOT = DEFAULT_STATE_HOME
 else:
     STATE_ROOT = ROOT
 OUTPUT = STATE_ROOT / "output"

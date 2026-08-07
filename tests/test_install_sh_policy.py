@@ -40,3 +40,21 @@ def test_windows_installer_exists():
     text = ps1.read_text(encoding="utf-8")
     assert "irm https://open-video.ai/install.ps1" in text or "install.ps1" in text
     assert "WSL" in text
+
+
+def test_comfyui_pin_single_source():
+    """Both installer scripts must source scripts/comfyui.pin (no drifting SHAs)."""
+    import re
+    root = Path(__file__).resolve().parent.parent
+    pin = (root / "scripts" / "comfyui.pin").read_text()
+    sha = re.search(r'COMFYUI_COMMIT="([0-9a-f]{40})"', pin)
+    assert sha, "comfyui.pin must define a full-length COMFYUI_COMMIT"
+    for script in ("install.sh", "lab-restore.sh"):
+        text = (root / "scripts" / script).read_text()
+        assert "comfyui.pin" in text, f"{script} must source scripts/comfyui.pin"
+    # lab-restore must not carry its own SHA copy; install.sh may keep ONE
+    # bootstrap fallback (standalone curl|bash runs before the repo exists)
+    assert len(re.findall(r'COMFYUI_COMMIT="[0-9a-f]{40}"',
+                          (root / "scripts" / "lab-restore.sh").read_text())) == 0
+    assert len(re.findall(r'COMFYUI_COMMIT="[0-9a-f]{40}"',
+                          (root / "scripts" / "install.sh").read_text())) == 1

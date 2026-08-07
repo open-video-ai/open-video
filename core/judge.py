@@ -45,7 +45,7 @@ class QualityJudge:
     @classmethod
     def from_env(cls, **kwargs) -> "QualityJudge":
         """Judge wired to the env-configured VLM, or the PASS stub when unset."""
-        if "vision_fn" not in kwargs:
+        if kwargs.get("vision_fn") is None:
             from open_video.judges.openai_compat import vision_fn_from_env
             kwargs["vision_fn"] = vision_fn_from_env()
         return cls(**kwargs)
