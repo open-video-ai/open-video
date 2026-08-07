@@ -1,6 +1,6 @@
 # Changelog
 
-Site: [`open-video-web`](https://github.com/open-video-ai/open-video-web). Ops: private `open-video-ops`.
+Site: [`open-video-web`](https://github.com/open-video-ai/open-video-web).
 
 ## [0.0.1] — 2026-08-07
 
@@ -15,7 +15,7 @@ Not in 0.0.1: multi-model platform, cloud Studio, 100+ gallery productization.
 | Layer | Delivers |
 |---|---|
 | **Ollama-shaped CLI** | `pull h3` · `status`/`ps` · `run` · `recommend-quant` · dry-run |
-| **Installer** | `curl …/install \| bash` → ComfyUI + resumable H3 weights (~54 GB) |
+| **Installer** | `curl …/install \| bash` → ComfyUI + resumable H3 weights (~51 GB) |
 | **Agent skill harness** | `skill/h3-video` — craft official 3-field prompts, validate, generate, review |
 | **H3 backend** | T2V / I2V / FL2VA via ComfyUI adapter |
 | **Quality path** | Prompt grammar + hard validator (agent must follow skill; judge loop early) |
@@ -32,14 +32,13 @@ Not in 0.0.1: multi-model platform, cloud Studio, 100+ gallery productization.
 ### Hub
 
 - HF org: https://huggingface.co/open-video-ai  
-- Bootstrap card: https://huggingface.co/fei567/open-video (transfer → `open-video-ai/open-video` when org write enabled)  
-- Publish: `packaging/huggingface/publish.sh`
+- Publish helpers: `packaging/huggingface/publish.sh`
 
 ### Known limitations
 
 - Long-film director / judge→refine still early (`skill/open-video`)
 - Weights not in git (upstream pull only)
-- GitHub may stay private until owner opens
+- v0.0.1 is local CLI + skill — not hosted free GPU generate
 
 ## Unreleased
 

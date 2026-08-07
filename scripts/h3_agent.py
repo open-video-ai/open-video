@@ -17,7 +17,7 @@ overall_soundscape + non_diegetic_music) — pass it via --prompt.
 import argparse, json, time, urllib.request, urllib.error, shutil, sys, os
 from pathlib import Path
 
-# Product root = open-video repo; lab runtime = open-video-project/lab (ComfyUI + weights)
+# Product root = this open-video checkout; lab runtime = sibling lab/ (ComfyUI + weights)
 PRODUCT = Path(__file__).resolve().parent.parent
 LAB = Path(os.environ.get("OPEN_VIDEO_LAB", PRODUCT.parent / "lab")).resolve()
 ROOT = PRODUCT  # receipts/output under product

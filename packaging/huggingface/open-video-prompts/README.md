@@ -13,8 +13,8 @@ pretty_name: OpenVideo Prompt Recipes v0.0.1
 
 Curated prompt recipes for OpenVideo / MiniMax H3.
 
-- Software card: https://huggingface.co/fei567/open-video (transfer target: `open-video-ai/open-video`)
-- GitHub: https://github.com/open-video-ai/open-video
+- Software card: https://huggingface.co/open-video-ai/open-video  
+- GitHub: https://github.com/open-video-ai/open-video  
 - Site: https://open-video.ai
 
 Files under `prompts/*.txt`.

@@ -73,7 +73,7 @@ python cli/open_video.py "sunset waves" --dry-run
 ## PR expectations
 - One logical change per PR
 - Tests green (`pytest tests/`)
-- No secrets; no private strategy docs (those belong in `open-video-ops`)
+- No secrets (`.env`, tokens, keys); no GTM/strategy essays in product PRs
 - Conventional Commits preferred: `feat:`, `fix:`, `docs:`, `test:`, `ci:`
 
 ## Governance

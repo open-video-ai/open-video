@@ -16,13 +16,11 @@ click. Quality comes from **prompt craft + correct mode + validated settings**, 
 
 ## 0. Paths (env-first)
 
-Recommended sibling layout (absolute host path optional):
+Recommended sibling layout (any parent dir name; no machine-absolute paths):
 
 ```text
-open-video-project/            # optional umbrella (not a git repo)
+parent/
 ├── open-video/       # THIS product — CLI, backends, skills  ← work here
-├── open-video-web/   # open-video.ai static site
-├── open-video-ops/   # private ops (maintainers)
 └── lab/              # ComfyUI + weights (not git)
 ```
 
@@ -83,7 +81,7 @@ Audio:      native 32 kHz stereo — describe in prompt fields
 Prompt:     official 3-field only
 ```
 
-Proven on this host: wall ~10–15 min / 10 s clip @ 1344×768, peak VRAM ~22–30 GB.
+Order-of-magnitude on a 32 GB class NVIDIA GPU: ~10–15 min / 10 s clip @ 1344×768, peak VRAM ~22–30 GB (measure on your machine).
 
 ---
 
@@ -271,9 +269,8 @@ non_diegetic_music: …
 | Intent | Skill |
 |---|---|
 | **High-quality H3 clip, agent generate video** | **`h3-video` (this file) — default** |
-| Multi-minute film, judge→refine→stitch | `skill/open-video` |
-| Website / Pages | work in `open-video-web/` |
-| Launch / strategy | `open-video-ops/` (private) |
+| Multi-minute film, judge→refine→stitch | `skill/open-video` (scaffold; not full product) |
+| Website / Pages | separate `open-video-web` repo |
 
 ---
 
@@ -282,8 +279,8 @@ non_diegetic_music: …
 | Doc | Location |
 |---|---|
 | Prompt grammar | `$OPEN_VIDEO_ROOT/backends/h3/PROMPT_GRAMMAR.md` |
-| Lab prompt guide | `$H3_LAB/docs/PROMPT_GUIDE.md` |
-| Best practices | `$H3_LAB/docs/BEST_PRACTICES.md` |
+| Prompt guide | `$OPEN_VIDEO_ROOT/docs/h3/PROMPT_GUIDE.md` |
+| Best practices | `$OPEN_VIDEO_ROOT/docs/h3/BEST_PRACTICES.md` |
 | Quants / issues | `$OPEN_VIDEO_ROOT/docs/h3_ecosystem.md` |
 | Quickstart | `$OPEN_VIDEO_ROOT/docs/QUICKSTART.md` |
 

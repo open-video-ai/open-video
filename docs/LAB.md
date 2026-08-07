@@ -1,18 +1,21 @@
-# OpenVideo lab runtime
+# Local GPU runtime (lab)
 
 Official product: this repo (`open-video-ai/open-video`).  
-Local GPU runtime (ComfyUI + weights) lives **next to** the product under the monorepo-style project folder:
+ComfyUI + MiniMax H3 weights are **not** in git. Keep them in a sibling **lab** directory (or any path you set via env).
+
+## Recommended layout
 
 ```text
-open-video-project/
+some-parent/
 ├── open-video/     ← THIS git repo (code)
-├── open-video-web/
-├── open-video-ops/
 └── lab/            ← runtime only (not published in git)
     ├── ComfyUI/
-    ├── h3_models/  (~54 GB)
+    ├── h3_models/  (~51 GB INT8 package)
+    ├── venv/       # optional Comfy Python
     └── inputs/
 ```
+
+Site and private maintainer ops, if you clone them, are separate repos — not required to generate video.
 
 ## Environment
 
@@ -22,22 +25,19 @@ open-video-project/
 | `OPEN_VIDEO_LAB` | `../lab` | Runtime root |
 | `OPEN_VIDEO_MODELS` | `$OPEN_VIDEO_LAB/h3_models` | Weight files |
 | `OPEN_VIDEO_COMFYUI` | `http://127.0.0.1:8188` | HTTP API |
+| `OPEN_VIDEO_COMFY_PYTHON` | (optional) | Python that runs ComfyUI |
 
-## Agent / harness scripts (ported from lab)
+## Prefer product surfaces
 
-| Script | Role |
+| Surface | Role |
 |---|---|
-| `scripts/h3_agent.py` | High-quality single-shot agent path |
-| `scripts/validate_prompt.py` | 3-field hard gate |
-| `scripts/h3_generate_benchmark.py` | Comfy HTTP generate helper |
-| `scripts/h3_multishot.py` | Multi-shot plan runner |
-| `docs/h3/*` | BEST_PRACTICES, PROMPT_GUIDE, … |
-
-Prefer **OpenVideo CLI** for users: `open-video pull|status|run`.  
-Prefer **`scripts/h3_agent.py`** when agents need the battle-tested receipt loop.
+| `open-video pull \| status \| run` | Users and scripts |
+| `skill/h3-video` | Agents (prompt craft + generate) |
+| `docs/h3/*` | Prompt / bench / practices in **this** repo |
+| `scripts/h3_agent.py` | Optional advanced harness |
 
 ## Notes
 
-- Product root is **this repo** — never treat `lab/` as the product.
-- Set `OPEN_VIDEO_LAB` / `OPEN_VIDEO_MODELS` on hosts that keep a sibling runtime tree.
-- Historical lab workspace name `55-ai-video` is retired (merged 2026-08-07).
+- Never commit weights, ComfyUI clones, or `.env` files.
+- Do not hardcode machine-absolute paths; use env vars or paths relative to the checkout.
+- Weight license (MiniMax H3 Community) is separate from this software’s Apache-2.0.

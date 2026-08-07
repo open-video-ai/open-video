@@ -73,7 +73,7 @@
     "peak_vram_mb": 29432,
     "peak_ram_mb": 60797,
     "output_size_mb": 1.25,
-    "video_path": "/mnt/data/workspace/open-video/bench/output/1786045391_ov_t2v_00001_.mp4",
+    "video_path": "bench/output/1786045391_ov_t2v_00001_.mp4",
     "vram_samples": 92
   },
   "768p_5s": {
@@ -90,7 +90,7 @@
     "peak_vram_mb": 31988,
     "peak_ram_mb": 61610,
     "output_size_mb": 3.07,
-    "video_path": "/mnt/data/workspace/open-video/bench/output/1786045959_ov_t2v_00002_.mp4",
+    "video_path": "bench/output/1786045959_ov_t2v_00002_.mp4",
     "vram_samples": 257
   }
 }

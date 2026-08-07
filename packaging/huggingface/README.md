@@ -2,23 +2,17 @@
 
 | Target | Type | Purpose |
 |---|---|---|
-| `open-video-ai/open-video` | model | Software / integration card (not H3 weights) |
+| `open-video-ai/open-video` | model | Software / integration card (**not** H3 weights) |
 | `open-video-ai/open-video-prompts` | dataset | Seed prompt recipes |
 
-## Publish to org
+## Publish (maintainers)
 
-Requires a token with **write** on org `open-video-ai` (HF → org settings → members / fine-grained token).
+Requires a Hugging Face token with **write** on org `open-video-ai`.
 
 ```bash
-# after: hf auth login  (org write)
+hf auth login   # org write
 ./packaging/huggingface/publish.sh
 ```
 
-## Bootstrap (2026-08-07)
-
-Org create returned **403** for the lab token (membership without write). Content was published under:
-
-- https://huggingface.co/fei567/open-video  
-- https://huggingface.co/datasets/fei567/open-video-prompts  
-
-**Owner action:** HF UI → Settings → Transfer repository → `open-video-ai`, or re-run `publish.sh` with an org-write token.
+Cards under `packaging/huggingface/open-video/` and `…/open-video-prompts/`.  
+Upstream H3 weights stay on MiniMax / Comfy-Org — never re-upload full weights via this script.

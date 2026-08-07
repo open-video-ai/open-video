@@ -1,8 +1,18 @@
 artifacts/
 *.mp4
+*.safetensors
+*.ckpt
+*.pt
+*.bin
 __pycache__/
 *.pyc
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+credentials*.json
 
 # packaging build artifacts
 build/
@@ -11,12 +21,14 @@ dist/
 *.egg-link
 .eggs/
 
-# one-click installer (scripts/install.sh) artifacts — never commit the engine
-# clone, the venv, the ~54 GB of model weights, or local logs.
+# one-click installer / local runtime — never commit engine, venv, weights, logs
 ComfyUI/
 .venv/
+venv/
 .cache/
 output/
+logs/
+bench/output/
 
 # Product site lives in open-video-web (not this repo)
 website/

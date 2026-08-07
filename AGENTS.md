@@ -1,15 +1,32 @@
 # Agents — OpenVideo product repo
 
-You are inside the **product** git repo (`open-video-ai/open-video`).
+You are inside the **product** git repo: [`open-video-ai/open-video`](https://github.com/open-video-ai/open-video).
 
-**Project-wide brief (layout, brand, lab, all repos):**  
-→ **[../AGENTS.md](../AGENTS.md)** at `open-video-project/` root.
+## Read first
 
-If that path is missing (sparse clone), open:
+| Doc | Why |
+|---|---|
+| [`BRAND.md`](BRAND.md) | Brand is #1 — lead with **OpenVideo** |
+| [`README.md`](README.md) | What v0.0.1 ships vs design-only |
+| [`docs/QUICKSTART.md`](docs/QUICKSTART.md) | Install / pull / run |
+| [`skill/h3-video/SKILL.md`](skill/h3-video/SKILL.md) | Agent generate path |
+| [`docs/LAB.md`](docs/LAB.md) | ComfyUI + weights outside git |
+| [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) | Public prep; owner-gated visibility |
 
-- `BRAND.md` — brand is #1  
-- `docs/LAYOUT.md` — paths  
-- `skill/h3-video/SKILL.md` — generate video  
-- `docs/LAB.md` — ComfyUI + weights  
+## Rules (public-safe)
 
-**Brand:** OpenVideo. **Do not** commit weights. **Do not** public without owner go.
+1. **Brand:** OpenVideo. Do not rename the product to “H3 app” or “ComfyUI wrapper.”
+2. **Honesty:** Do not claim live vision judge, free cloud GPU, desktop installers, or marketplace as shipped in v0.0.1.
+3. **Secrets:** Never commit `.env`, tokens, private keys, or host credential paths.
+4. **Weights:** Never commit `*.safetensors` / ComfyUI / `lab/`.
+5. **Strategy:** No GTM, star-count north stars, or competitive war docs in this repo.
+6. **Visibility:** Do **not** flip the repo public unless the owner explicitly says go.
+
+## Env (before GPU work)
+
+```bash
+export OPEN_VIDEO_ROOT="$(pwd)"
+export OPEN_VIDEO_LAB="${OPEN_VIDEO_LAB:-$OPEN_VIDEO_ROOT/../lab}"
+export OPEN_VIDEO_MODELS="${OPEN_VIDEO_MODELS:-$OPEN_VIDEO_LAB/h3_models}"
+export OPEN_VIDEO_COMFYUI="${OPEN_VIDEO_COMFYUI:-http://127.0.0.1:8188}"
+```
