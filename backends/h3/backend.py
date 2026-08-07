@@ -7,7 +7,7 @@ at parity with closed). Baseline backend for open-video.
 from __future__ import annotations
 import json, shutil, subprocess
 from pathlib import Path
-from core.backend import ModelBackend, Capabilities, ShotRequest, ShotResult
+from open_video.core.backend import ModelBackend, Capabilities, ShotRequest, ShotResult
 
 HERE = Path(__file__).parent
 WORKFLOWS = {"t2v": HERE / "workflows" / "h3_t2v_api.json",
@@ -128,7 +128,7 @@ class H3Backend(ModelBackend):
         wf["save_video"]["inputs"]["filename_prefix"] = f"ov_{req.mode}"
         # run
         if engine is None:
-            from engines.comfyui.adapter import ComfyUIAdapter
+            from open_video.engines.comfyui.adapter import ComfyUIAdapter
             engine = ComfyUIAdapter()
         try:
             res = engine.submit_and_wait(wf, timeout=1800, save_node="save_video")

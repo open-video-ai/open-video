@@ -1,13 +1,11 @@
-# open-video core dependencies (minimal — heavy deps come from ComfyUI/engine)
-av>=14.0.0          # video frame extraction (judge.py, stitcher.py)
-PyYAML>=6.0          # coherence recipe loading (library/coherence_recipes/*.yaml)
-requests>=2.28       # HTTP for ComfyUI adapter + API calls
-psutil>=5.9          # RAM monitoring (judge.py, bench/profile.py)
-
-# Optional (for the quality loop judge vision API calls):
-# urllib3             # already in stdlib via urllib.request
-# Pillow>=10.0        # frame manipulation (if needed beyond av)
-
-# NOT included here (installed separately via scripts/install.sh or ComfyUI):
-# torch, diffusers, transformers — these are ComfyUI's dependencies
-# ComfyUI itself — installed as the generation engine
+# open-video runtime dependencies: NONE — the core path is Python stdlib only.
+# It talks to ComfyUI over HTTP (urllib) and to ffmpeg/ffprobe via subprocess;
+# see pyproject.toml `dependencies = []`, which is authoritative.
+#
+# This file is kept as an intentionally empty manifest because
+# scripts/install.sh and docs/getting-started.md reference
+# `pip install -r requirements.txt` as a fallback path; it is a no-op.
+#
+# NOT listed here (installed by scripts/install.sh, not pip):
+#   torch / ComfyUI stack — the generation engine's own dependencies.
+# Dev tooling (pytest, ruff) lives in pyproject.toml [project.optional-dependencies].dev.

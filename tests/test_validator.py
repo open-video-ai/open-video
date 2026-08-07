@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 # Reuse the validator from core/ (ported from early lab/scripts/validate_prompt.py)
 # The validator checks: 3 required fields, duration range, mode-specific constraints,
 # timeline cut times, dialogue tags.
-from core.validator import validate, detect_mode
+from open_video.core.validator import validate, detect_mode
 
 FIELDS = ["integrated_multimodal_description", "overall_soundscape", "non_diegetic_music"]
 

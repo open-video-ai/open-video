@@ -7,7 +7,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from core.h3_weights import (  # noqa: E402
+from open_video.core.h3_weights import (  # noqa: E402
     H3_INT8_FILES,
     TOTAL_INT8_BYTES,
     default_models_dir,

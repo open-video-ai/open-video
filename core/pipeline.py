@@ -14,10 +14,10 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
-from core.backend import ShotRequest
-from core.judge import QualityJudge
-from core.stitcher import Stitcher
-from core.recipe import embed_recipe
+from open_video.core.backend import ShotRequest
+from open_video.core.judge import QualityJudge
+from open_video.core.stitcher import Stitcher
+from open_video.core.recipe import embed_recipe
 
 
 @dataclass

@@ -4,7 +4,6 @@ include PLAN.md
 include ARCHITECTURE.md
 include LICENSE
 include pyproject.toml
-include setup.py
 recursive-include backends *.json
 recursive-include library *.txt *.md
 recursive-include docs *.md

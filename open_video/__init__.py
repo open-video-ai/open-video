@@ -4,7 +4,10 @@ v0.0.1 scope: local install/pull/run for H3, plus ``skill/h3-video`` so any
 agent host can generate high-quality video. Longer director pipelines exist
 in-tree but are not the release thesis.
 
-Thin facade over top-level ``core`` / ``backends`` / ``engines`` packages.
+Facade over the ``open_video.core`` / ``open_video.backends`` /
+``open_video.engines`` subpackages (which live as sibling top-level dirs in the
+source tree — see the ``__path__`` block below — and inside ``open_video/`` in
+an installed wheel).
 
 Public API:
     H3Backend        -- MiniMax H3 model plugin
@@ -20,14 +23,30 @@ CLI::
 """
 from __future__ import annotations
 
+# --- source-tree subpackage resolution ---------------------------------------
+# In the repo, core/, backends/, engines/, judges/, cli/ live beside this
+# package so documented paths (`python cli/open_video.py`, backends/h3/...)
+# keep working. Extending __path__ with the repo root lets `open_video.core`
+# etc. resolve in source checkouts; in an installed wheel these subpackages are
+# physically inside open_video/ ([tool.setuptools.package-dir]) and the
+# pyproject.toml probe below fails, making this a no-op.
+import os as _os
+
+_repo = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+if _os.path.isfile(_os.path.join(_repo, "pyproject.toml")) and _os.path.isdir(
+    _os.path.join(_repo, "core")
+):
+    __path__.append(_repo)
+del _os, _repo
+
 __version__ = "0.0.1"
 
 # --- re-export the key classes (the public surface the task pins) -----------
 # These imports are side-effect-free (all stdlib at import time); safe to eager-load.
-from core.planner import Planner
-from core.pipeline import LongFilmPipeline
-from backends.h3.backend import H3Backend
-from engines.comfyui.adapter import ComfyUIAdapter
+from open_video.core.planner import Planner
+from open_video.core.pipeline import LongFilmPipeline
+from open_video.backends.h3.backend import H3Backend
+from open_video.engines.comfyui.adapter import ComfyUIAdapter
 
 __all__ = [
     "Planner",

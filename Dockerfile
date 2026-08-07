@@ -1,5 +1,5 @@
-# OpenVideo — containerized deployment (for SaaS/API hosting)
-# Multi-stage: build env → runtime
+# OpenVideo — container image for the open-video CLI.
+# The generation engine (ComfyUI + weights) is mounted/reached separately.
 FROM python:3.12-slim AS base
 
 WORKDIR /app
@@ -20,6 +20,8 @@ RUN pip install --no-cache-dir -e .
 # ENV COMFYUI_PATH=/app/ComfyUI
 # ENV OPEN_VIDEO_COMFYUI=http://host.docker.internal:8188
 
-# Default: start the API server
-EXPOSE 8000
-CMD ["python", "cli/open_video.py", "serve", "--host", "0.0.0.0", "--port", "8000"]
+# `open-video serve` is not shipped yet (see pyproject optional-dependencies).
+# Default: report install health + engine reachability, then exit.
+# Generate with e.g.:
+#   docker run --rm <image> open-video "sunset waves" --dry-run
+CMD ["open-video", "status"]

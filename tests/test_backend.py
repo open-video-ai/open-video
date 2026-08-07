@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.backend import ShotRequest, Capabilities, ModelBackend
+from open_video.core.backend import ShotRequest, Capabilities, ModelBackend
 
 
 def test_shot_request_defaults():

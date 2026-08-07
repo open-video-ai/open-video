@@ -12,7 +12,7 @@ fills the content). v1: LLM-driven planner that generates the full plan from a c
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
-from core.pipeline import Shot
+from open_video.core.pipeline import Shot
 
 
 @dataclass

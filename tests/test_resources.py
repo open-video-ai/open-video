@@ -11,7 +11,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from core.resources import (  # noqa: E402
+from open_video.core.resources import (  # noqa: E402
     THRESH_INT8_FULL_MIB,
     THRESH_NF4_MIB,
     THRESH_W4_MIB,
