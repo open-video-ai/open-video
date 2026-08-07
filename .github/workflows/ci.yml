@@ -89,6 +89,13 @@ jobs:
           stray=$(ls /tmp/wheel-venv/lib/python*/site-packages | grep -vE '^(open_video|.*\.dist-info|pip|setuptools|wheel|pkg_resources|__pycache__)$' || true)
           if [ -n "$stray" ]; then echo "stray top-level packages: $stray"; exit 1; fi
 
+      - name: Importing shipped modules must not write into site-packages
+        run: |
+          cd /tmp
+          /tmp/wheel-venv/bin/python -c "import open_video.scripts.h3_agent, open_video.scripts.h3_generate_benchmark, open_video.judges"
+          extra=$(find /tmp/wheel-venv/lib/python*/site-packages/open_video -type d \( -name output -o -name artifacts \) | head -1)
+          if [ -n "$extra" ]; then echo "import created state dir in site-packages: $extra"; exit 1; fi
+
   lint-shell:
     name: install.sh policy
     runs-on: ubuntu-latest

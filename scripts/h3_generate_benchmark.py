@@ -22,8 +22,7 @@ SERVER = os.environ.get("OPEN_VIDEO_COMFYUI", "http://127.0.0.1:8188")
 WORKFLOWS = PRODUCT / "backends" / "h3" / "workflows"
 OUT_DIR = ROOT / "output"
 RECEIPT_DIR = ROOT / "artifacts/verify"
-OUT_DIR.mkdir(parents=True, exist_ok=True)
-RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
+# created lazily at write time (no import-time filesystem side effects)
 
 # role -> (node_id, input_key) for workflows/h3_t2v_api.json
 NODE_ROLES = {
@@ -86,6 +85,7 @@ def fetch_output(pid, save_node):
     saved = []
     for fn, sub in files:
         url = f"{SERVER}/view?filename={fn}&subfolder={sub}&type=output"
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
         p = OUT_DIR / f"{int(time.time())}_{fn}"
         urllib.request.urlretrieve(url, p); saved.append(str(p))
     return saved, "ok"
@@ -135,6 +135,7 @@ def run(args):
         "ram_start_mb": round(ram0, 0), "ram_end_mb": round(ram_used_mb(), 0),
         "outputs": out, "fetch_msg": msg,
     }
+    RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
     rp = RECEIPT_DIR / f"bench_{int(t0)}_{args.width}x{args.height}_{args.duration}s.json"
     rp.write_text(json.dumps(receipt, indent=2))
     return receipt
