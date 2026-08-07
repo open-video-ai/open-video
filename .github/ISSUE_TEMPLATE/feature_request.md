@@ -1,32 +1,43 @@
 ---
 name: Feature Request
-about: Suggest a feature for OpenVideo
-title: "[FEATURE] "
-labels: enhancement
----
-
-## Feature description
-What feature would you like?
-
-## Use case
-What problem does this solve? What's your workflow?
-
-## Type
-- [ ] New model backend (e.g., Wan 2.2, LTX-2.3)
-- [ ] New judge plugin (e.g., VideoScore)
-- [ ] New engine adapter (e.g., diffusers)
-- [ ] Community LoRA
-- [ ] Prompt recipe
-- [ ] Coherence recipe template
-- [ ] Core feature (planner/stitcher/quality loop)
-- [ ] Website/App UI
-- [ ] Other
-
-## Proposed solution
-How would you like it to work?
-
-## Alternatives considered
-Any alternatives you've considered.
-
-## Additional context
-Screenshots, links, examples, related issues.
+description: Propose a feature, model backend, or library contribution path
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What user need does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should it work? Plugin point if known (backend / judge / engine / library).
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Contribution surface
+      options:
+        - Model backend (backends/)
+        - Judge plugin (judges/)
+        - Engine adapter (engines/)
+        - Prompt / recipe (library/)
+        - CLI / install
+        - Docs
+        - Other
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a PR for this
+        - label: This is a request only

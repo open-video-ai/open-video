@@ -1,58 +1,42 @@
 # Changelog
 
-## v0.1.0-alpha (2026-08-07)
+All notable changes to **open-video** (core) are documented here.  
+Site changes: see [`open-video-web`](https://github.com/open-video-ai/open-video-web).  
+Internal strategy: private `open-video-ops` only.
 
-The first public release of OpenVideo — the open-source autonomous video generation platform.
+Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning aims at [SemVer](https://semver.org/) with pre-release tags (`a`/`b`/`rc`).
 
-### What works
-- **H3 video generation** via ComfyUI (T2V + I2V + FL2VA chain for multi-shot films)
-- **Quality loop** (generate → judge → refine — the core IP; judge v0 stub, ready for VLM wiring)
-- **Multi-shot pipeline** (plan → generate → FL2VA chain → stitch → embed recipe → deliver)
-- **Recipe-in-render** (embed full generation metadata in output MP4 — self-documenting + remixable)
-- **LoRA support** (community fine-tuned style/domain enhancers via LoraLoader)
-- **CLI** (`open-video "prompt"` + list-models + list-presets + serve + dry-run)
-- **Plugin architecture** (ModelBackend + EngineAdapter + QualityJudge contracts)
-- **One-click installer** (scripts/install.sh — 783 lines)
-- **Pinokio** one-click config
-- **pip-installable** (`pip install -e .`)
-- **Benchmark harness** (bench/profile.py — model-agnostic)
-- **9 coherence recipe presets** (cinematic short, product ad, music video, trailer, etc.)
-- **7 validated prompt recipes** (official H3 prompts + Seedance-ported)
-- **Demo film** verified GOOD (18s, 2-shot lighthouse, 1344×768, native stereo audio)
+## [0.1.0a1] — 2026-08-07
 
-### What's v0 / known limitations
-- "Try it" web page is a UI mockup (no live backend yet)
-- Quality judge is a stub (PASS only — vision model wiring is v1)
-- Planner prompts are templates (LLM crafter wiring is v1)
-- Recipe embed via ffmpeg stream-copy may not persist in all MP4 containers
-- Tests are smoke-level (no end-to-end generation tests in the test suite)
-- No hosted SaaS/API yet (planned — see docs/SAAS_API.md)
-- No 2K upscaling (API-only, not in open weights)
+First release-candidate line for public open source (**Ollama for MiniMax H3**).
 
-### Architecture
-- **11 core modules** (backend, pipeline, judge, planner, validator, crafter, stitcher, selector, config, recipe, __init__)
-- **H3 backend** (3-field prompt grammar, T2V+FL2VA workflows, constraints, settings, LoRA)
-- **ComfyUI adapter** (HTTP API client)
-- **Vision judge plugin** (judges/vision.py)
-- **101 files** · Apache 2.0
+### Added
+- CLI surface aligned with Ollama: `pull`, `run`, `status`/`ps`, `list`, `recommend-quant`, default generate
+- `core/h3_weights.py` — verified INT8 package inventory (resumable pull via installer)
+- `core/resources.py` — VRAM-aware quant recommendation (nf4 / w4 / int8)
+- Skill harnesses: `skill/h3-video` (H3/Ollama) + `skill/open-video` (director)
+- One-click installer `scripts/install.sh` (+ PowerShell) hosted on open-video.ai
+- Plugin architecture: `ModelBackend`, ComfyUI engine adapter, H3 backend + workflows
+- Library: prompt recipes + coherence recipe YAML presets
+- Tests: backend, pipeline, validator, resources, h3_weights, install policy
+- GitHub: CI, release-on-tag, Dependabot, issue/PR templates, SECURITY.md
 
-### Verified
-- 3/3 test suites pass (backend + pipeline + validator + LoRA)
-- All GitHub star claims verified via API
-- Arena Elo (H3 = #2, 1238) verified via Artificial Analysis
-- Cross-model reviewed (8 issues found + fixed)
-- User-tested (3 personas: PM, developer, creator)
-- Pipeline consumes its own modules (no duplication)
+### Changed
+- Product website moved to private repo `open-video-web` (three-repo layout)
+- Canonical GitHub org: `open-video-ai`
 
-### Documentation (19 strategy docs + tutorial + quickstart)
-- POSITIONING · FEATURES · COMMUNITY · SAAS_API · PARTNERSHIPS
-- CONTENT_CALENDAR · LAUNCH_PLAN · TUTORIAL · QUICKSTART
-- OPEN_VS_CLOSED · GROWTH_PLAYBOOK · PLUGIN_REGISTRY
-- COMPETITOR_DEEP_DIVE · REDDIT_LAUNCH_POSTS · X_LAUNCH_THREAD
-- Plus: ARCHITECTURE · GOVERNANCE · CONTRIBUTING · getting-started · model-comparison
+### Known limitations (honest)
+- Quality judge is v0 (stub / partial) — vision wiring is ongoing
+- Planner prompts are template-level without full LLM crafter by default
+- Cloud Studio / 100+ gallery are site/product roadmap, not this core tag
+- End-to-end GPU generation tests are lab-only (not in CI)
+- Model weights are third-party (~54 GB); not shipped in git
 
-### Built on
-- **ComfyUI** (124K★) — generation engine
-- **MiniMax H3** (33B, Arena #2) — baseline model
-- **VideoScore** (TIGER-AI-Lab) — judge primitive (planned)
-- **woodfantasy** methodology (MIT-0) — coherence bible pattern
+### Verified in lab
+- Unit tests: `pytest tests/` green
+- Dry-run CLI path without GPU
+- Weight inventory against known H3 INT8 tree
+
+## [0.0.1] — 2026-08-06
+
+Initial private scaffold: core modules, H3 backend, installer prototype, docs skeleton.

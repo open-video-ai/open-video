@@ -1,0 +1,43 @@
+name: Release
+
+# Create a GitHub Release when a version tag is pushed (e.g. v0.1.0).
+# Does NOT publish the repo — visibility stays owner-controlled.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install + test
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -m pytest tests/ -q --tb=short
+
+      - name: Build sdist/wheel (optional artifact)
+        run: |
+          pip install build
+          python -m build
+        continue-on-error: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

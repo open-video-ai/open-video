@@ -48,17 +48,38 @@ Before writing from scratch, check if an existing project already does it:
 
 ## Quick start for contributors
 ```bash
-git clone open-video && cd open-video
-cp templates/prompt_recipe.md library/prompts/my_recipe.md  # easiest contribution
-# ... fill it in ...
-git commit -m "prompt: add my_recipe" && git push  # PR!
+git clone https://github.com/open-video-ai/open-video.git
+cd open-video
+python -m pip install -e ".[dev]"
+python -m pytest tests/ -q
+
+# Easiest contribution — a prompt recipe
+cp templates/prompt_recipe.md library/prompts/my_recipe.md
+# …fill it in…
+# open a PR from a fork/branch
 ```
 
+### Local CLI smoke (no GPU required)
+```bash
+python cli/open_video.py list-models
+python cli/open_video.py recommend-quant --vram 8192
+python cli/open_video.py "sunset waves" --dry-run
+```
+
+### Agent skill
+- Short clip / H3 harness: `skill/h3-video/SKILL.md`
+- Long film director: `skill/open-video/SKILL.md`
+
+## PR expectations
+- One logical change per PR
+- Tests green (`pytest tests/`)
+- No secrets; no private strategy docs (those belong in `open-video-ops`)
+- Conventional Commits preferred: `feat:`, `fix:`, `docs:`, `test:`, `ci:`
+
 ## Governance
-- **Early stage:** BDFL (founder sets vision, fast decisions).
-- **Growing:** community council + RFC process for architecture.
-- **Recognition:** contributor leaderboard + showcase gallery.
-- **License:** TBD (open-core lean — see PLAN.md).
+- **Early stage:** BDFL (founder sets vision, fast decisions). See `GOVERNANCE.md`.
+- **Growing:** community council + RFC for architecture.
+- **License:** **Apache-2.0** (see `LICENSE`).
 
 ## Code of conduct
-Be kind. Be constructive. Welcome newcomers. We're building the open future of video together.
+See `CODE_OF_CONDUCT.md`. Be kind. Be constructive. Welcome newcomers.

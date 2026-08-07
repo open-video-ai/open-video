@@ -212,3 +212,11 @@ Standing on the shoulders of open giants: **[ComfyUI](https://github.com/comfyan
 ---
 
 <p align="center"><sub>★ Star this repo to follow the build. ⭐ 100K★ north star — the #1 open video community.</sub></p>
+
+## Security
+
+Please see [SECURITY.md](SECURITY.md) for private vulnerability reporting.
+
+## Repos
+
+Core · site · ops map: [REPOS.md](REPOS.md). Public release checklist: [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).

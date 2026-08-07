@@ -1,0 +1,8 @@
+# Default owners for release-critical paths (adjust teams when org teams exist).
+* @robotlearning123
+
+/.github/ @robotlearning123
+/core/ @robotlearning123
+/backends/ @robotlearning123
+/scripts/install.sh @robotlearning123
+/cli/ @robotlearning123

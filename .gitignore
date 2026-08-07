@@ -20,3 +20,7 @@ output/
 
 # Product site lives in open-video-web (not this repo)
 website/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

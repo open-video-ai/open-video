@@ -35,5 +35,6 @@ Any open-video output can be reproduced from its receipt.
 ## Community governance
 - **Early stage:** BDFL (founder sets vision, fast decisions).
 - **Growing:** community council + RFC process for architecture changes.
-- **Contributions:** AGPL/Apache (TBD) — contributors retain copyright; no CLA (like OpenMontage).
-- **Code of conduct:** be kind, be constructive, welcome newcomers.
+- **License:** **Apache-2.0** — contributors retain copyright; **no CLA** required for standard PRs.
+- **Code of conduct:** see `CODE_OF_CONDUCT.md`.
+- **Security:** see `SECURITY.md` (private disclosure for vulns).

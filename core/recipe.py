@@ -1,6 +1,6 @@
 """Recipe-in-render: embed + read generation metadata in output videos.
 
-THE #1 VIRAL GROWTH LEVER (from Growth Playbook). Like ComfyUI embeds the workflow in PNG
+Like ComfyUI embeds the workflow in PNG
 metadata, OpenVideo embeds the full generation recipe (prompt + model + settings + seed +
 LoRA + quality verdict) in the output MP4 metadata. This makes every OpenVideo video:
 - SELF-DOCUMENTING (the recipe is in the file — no external receipt needed)

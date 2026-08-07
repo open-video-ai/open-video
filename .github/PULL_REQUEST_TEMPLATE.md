@@ -1,20 +1,23 @@
-## Description
-Brief description of what this PR does.
+## Summary
+What does this PR change, and why?
 
 ## Type
 - [ ] Bug fix
-- [ ] New feature (model backend / judge / engine / LoRA / recipe)
+- [ ] Feature (backend / judge / engine / library / CLI)
 - [ ] Documentation
-- [ ] Infrastructure (CI / installer / packaging)
+- [ ] Installer / CI / packaging
+- [ ] Refactor (no behavior change)
 
 ## Checklist
-- [ ] Code follows the project style (see CONTRIBUTING.md)
-- [ ] Tests pass (`python tests/test_backend.py`)
-- [ ] If adding a model backend: used `templates/model_backend.py`
-- [ ] If adding a LoRA: included before/after comparison
-- [ ] If adding a prompt recipe: used `templates/prompt_recipe.md`
-- [ ] No secrets / API keys in the code
-- [ ] License: Apache 2.0 compatible
+- [ ] I ran `python -m pytest tests/ -q` locally (or CI will)
+- [ ] No secrets, tokens, or private strategy docs
+- [ ] New backend/judge/engine follows `templates/`
+- [ ] New prompt recipe follows `templates/prompt_recipe.md`
+- [ ] User-facing docs updated if behavior changed (`docs/`, README)
+- [ ] Apache-2.0 compatible
 
-## Related Issues
-Closes #(issue number)
+## Test plan
+How did you verify? (commands / GPU / dry-run)
+
+## Related
+Closes #

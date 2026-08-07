@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: OpenVideo website
+    url: https://open-video.ai
+    about: Product site, install one-liner, and docs UI.
+  - name: Discord
+    url: https://discord.gg/open-video
+    about: Community help, showcase, and chat (verify invite is live before launch).
+  - name: Security vulnerability
+    url: https://github.com/open-video-ai/open-video/security/advisories/new
+    about: Please report security issues privately (see SECURITY.md).
