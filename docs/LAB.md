@@ -38,4 +38,4 @@ Prefer **`scripts/h3_agent.py`** when agents need the battle-tested receipt loop
 
 ## Legacy path
 
-`/mnt/data/workspace/55-ai-video` is **deprecated** as a product root; it may keep symlinks into `lab/` for old scripts.
+`/mnt/data/workspace/open-video-project/lab` is **deprecated** as a product root; it may keep symlinks into `lab/` for old scripts.
