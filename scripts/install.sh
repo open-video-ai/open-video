@@ -37,13 +37,16 @@ MODELS_DIR_OVERRIDE=""
 SOURCE="${OPEN_VIDEO_SOURCE:-hf}"          # hf | modelscope  (download mirror)
 HOST="${OPEN_VIDEO_HOST:-127.0.0.1}"
 PORT="${OPEN_VIDEO_PORT:-8188}"
-QUANT="${OPEN_VIDEO_QUANT:-int8}"           # int8 (default) | nf4 (low-VRAM swap, manual)
+QUANT="${OPEN_VIDEO_QUANT:-auto}"          # auto | int8 | nf4 | w4 — auto picks from VRAM
 FIRST_DURATION="${OPEN_VIDEO_FIRST_DURATION:-5}"
 SKIP_DOWNLOAD=0
 SKIP_COMFYUI_INSTALL=0
 SKIP_SERVER=0
 SKIP_GENERATE=0
 DRY_ONLY=0
+SELF_TEST=0
+USE_LOWVRAM=0
+QUANT_FORCE=""
 KEEP_SERVER=0
 SAGE=0
 ASSUME_YES=0
@@ -124,9 +127,12 @@ OPTIONS
         --source hf|modelscope  Weight download mirror (default: hf; env OPEN_VIDEO_SOURCE)
         --host HOST            ComfyUI bind host  (default: 127.0.0.1; env OPEN_VIDEO_HOST)
         --port PORT            ComfyUI bind port  (default: 8188;   env OPEN_VIDEO_PORT)
-        --quant int8|nf4       H3 quant to fetch (default: int8). nf4 = low-VRAM (~8 GB),
-                               NOTE: nf4 swaps filenames — installer currently fetches int8
-                               (the open-video default); nf4 is documented in docs/h3_ecosystem.md
+        --quant auto|int8|nf4|w4
+                               H3 quant (default: auto = VRAM-aware). auto uses core/resources.py:
+                               <9GiB→nf4, <12GiB→w4, <22GiB→int8+lowvram, else int8.
+                               Weight pull currently stages the verified INT8 package; low-VRAM
+                               hosts get ComfyUI --lowvram. NF4/W4 manual paths: docs/h3_ecosystem.md.
+        --self-test            Detect OS/GPU, print quant recommendation, exit 0 (no download)
         --duration SEC         First test video length in seconds (default: 5)
         --root PATH            open-video checkout to install into (default: auto-detect)
         --comfyui-dir PATH     ComfyUI checkout path (default: <root>/ComfyUI)
@@ -166,7 +172,7 @@ while [[ $# -gt 0 ]]; do
         --source) SOURCE="$2"; shift 2 ;;
         --host) HOST="$2"; shift 2 ;;
         --port) PORT="$2"; shift 2 ;;
-        --quant) QUANT="$2"; shift 2 ;;
+        --quant) QUANT="$2"; QUANT_FORCE="$2"; shift 2 ;;
         --duration) FIRST_DURATION="$2"; shift 2 ;;
         --root) OV_ROOT_OVERRIDE="$2"; shift 2 ;;
         --comfyui-dir) COMFYUI_DIR_OVERRIDE="$2"; shift 2 ;;
@@ -178,6 +184,7 @@ while [[ $# -gt 0 ]]; do
         --skip-server) SKIP_SERVER=1; shift ;;
         --skip-generate) SKIP_GENERATE=1; shift ;;
         --dry-run) DRY_ONLY=1; shift ;;
+        --self-test) SELF_TEST=1; SKIP_DOWNLOAD=1; SKIP_COMFYUI_INSTALL=1; SKIP_SERVER=1; SKIP_GENERATE=1; shift ;;
         --keep-server) KEEP_SERVER=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) err "Unknown option: $1"; usage; exit 2 ;;
@@ -451,6 +458,65 @@ install_engine() {
     ok "open-video orchestrator OK ($(grep -c -E '^[[:space:]]*h3[[:space:]]' /tmp/ov_models.log 2>/dev/null || echo ?) backend(s) visible)"
 }
 
+
+
+# ===========================================================================
+# 1b. Resource-aware quant selection (Ollama-style pull-by-hardware)
+# ===========================================================================
+select_quant() {
+    step "Choosing H3 quant for this machine (resource-aware)"
+    local force="${QUANT_FORCE:-}"
+    local py_bin="python3"
+    [[ -n "${VENVPY:-}" && -x "${VENVPY:-}" ]] && py_bin="$VENVPY"
+    local res_py="$OV_ROOT/core/resources.py"
+    if [[ ! -f "$res_py" ]]; then
+        res_py="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/core/resources.py"
+    fi
+    if [[ ! -f "$res_py" ]]; then
+        warn "core/resources.py missing — defaulting quant=int8 lowvram=1"
+        QUANT="int8"; USE_LOWVRAM=1
+        [[ "${SELF_TEST:-0}" -eq 1 ]] && { ok "--self-test: quant fallback only"; exit 0; }
+        return 0
+    fi
+    local args=(--json)
+    if [[ -n "$force" && "$force" != "auto" ]]; then
+        args+=(--quant "$force")
+    else
+        args+=(--quant auto)
+    fi
+    if [[ "${HAVE_NVIDIA:-0}" -eq 1 && "${VRAM_MIB:-0}" -gt 0 ]]; then
+        args+=(--vram "$VRAM_MIB")
+    elif [[ "${HAVE_NVIDIA:-0}" -ne 1 ]]; then
+        args+=(--no-nvidia)
+    fi
+    local json
+    if ! json=$("$py_bin" "$res_py" "${args[@]}" 2>/tmp/ov_quant_err.log); then
+        warn "quant probe failed; defaulting to int8 + lowvram"
+        QUANT="int8"; USE_LOWVRAM=1
+        [[ "${SELF_TEST:-0}" -eq 1 ]] && exit 0
+        return 0
+    fi
+    QUANT=$(printf '%s
+' "$json" | "$py_bin" -c 'import sys,json;print(json.load(sys.stdin)["quant"])')
+    local low reason profile
+    low=$(printf '%s
+' "$json" | "$py_bin" -c 'import sys,json;print(json.load(sys.stdin)["lowvram"])')
+    reason=$(printf '%s
+' "$json" | "$py_bin" -c 'import sys,json;print(json.load(sys.stdin)["reason"])')
+    profile=$(printf '%s
+' "$json" | "$py_bin" -c 'import sys,json;print(json.load(sys.stdin)["download_profile"])')
+    if [[ "$low" == "True" || "$low" == "true" ]]; then USE_LOWVRAM=1; else USE_LOWVRAM=0; fi
+    ok "Selected quant=$QUANT  lowvram=$USE_LOWVRAM  download_profile=$profile"
+    info "Reason: $reason"
+    printf '%s
+' "$json" | "$py_bin" -c 'import sys,json;d=json.load(sys.stdin);print("[open-video] quant=%s  lowvram=%s  download_profile=%s"%(d["quant"],str(d["lowvram"]).lower(),d["download_profile"]));print("[open-video] reason:",d["reason"]);
+print("[open-video] note:",d["notes"]) if d.get("notes") else None'
+    if [[ "${SELF_TEST:-0}" -eq 1 ]]; then
+        ok "--self-test: OS/GPU probe + quant recommendation complete (no download)."
+        exit 0
+    fi
+}
+
 # ===========================================================================
 # 4. Download H3 weights (aria2c, resumable)
 # ===========================================================================
@@ -465,11 +531,12 @@ url_for() {  # $1 = relative path under repo; honor --source
 }
 
 download_weights() {
-    step "Downloading MiniMax H3 weights (INT8 ConvRot, ~54 GB) via aria2c"
+    step "Downloading MiniMax H3 weights (profile=$QUANT, verified INT8 package ~54 GB) via aria2c"
 
     if [[ "$QUANT" != "int8" ]]; then
-        warn "--quant $QUANT requested: this installer fetches the INT8 set (the open-video default)."
-        warn "For NF4/W4 swaps, see docs/h3_ecosystem.md and place files under $MODELS_DIR manually."
+        warn "Selected quant=$QUANT — installer stages the verified INT8 weight set + --lowvram."
+        warn "For native NF4/W4 files, see docs/h3_ecosystem.md (manual place under $MODELS_DIR)."
+        info "Why: resource probe chose $QUANT for this GPU; generation still works via INT8 offload."
     fi
     if [[ "$SKIP_DOWNLOAD" -eq 1 ]]; then
         ok "--skip-download: skipping weight fetch. Make sure the 4 files are in place under $MODELS_DIR"
@@ -730,6 +797,7 @@ print_success() {
 
 ${C_BOLD}${C_GREEN}==============================================================${C_RESET}
 ${C_BOLD}${C_GREEN}  ✓ open-video is ready. Welcome to OpenVideo!${C_RESET}
+${C_BOLD}Quant:${C_RESET} ${QUANT:-int8}   lowvram=${USE_LOWVRAM:-0}
 ${C_BOLD}${C_GREEN}==============================================================${C_RESET}
 
 ${vid_line}${C_BOLD}Generate more:${C_RESET}
@@ -760,6 +828,13 @@ main() {
 
     resolve_root
     detect_platform
+    select_quant
+
+    if [[ "${SELF_TEST:-0}" -eq 1 ]]; then
+        # select_quant already exits 0 on self-test; belt-and-suspenders:
+        ok "--self-test complete."
+        exit 0
+    fi
 
     make_venv
     install_engine

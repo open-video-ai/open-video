@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-video"
-version = "0.1.0"
+version = "0.0.1"
 description = "Open-source autonomous video generation — the agent director layer on ComfyUI + open models (MiniMax H3 baseline)."
 readme = "README.md"
 requires-python = ">=3.10"

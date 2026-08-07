@@ -61,9 +61,24 @@ results on hardware you own, with models you control.**
 ## One-command quickstart
 
 ```bash
-curl -fsSL https://open-video.ai/install | bash           # same pattern as opencode.ai/install
-open-video "A lone astronaut planting a flag on a red dune at dusk" --duration 60
+# Linux / macOS (Ollama-style one-liner)
+curl -fsSL https://open-video.ai/install | bash
+
+# Windows (PowerShell) — prefers WSL2 for full H3 GPU path
+irm https://open-video.ai/install.ps1 | iex
+
+# Then generate (one prompt → video). Dry-run validates without GPU:
+open-video "A lone astronaut planting a flag on a red dune at dusk" --duration 8
+open-video "sunset waves" --dry-run
+open-video recommend-quant          # resource-aware H3 quant (nf4/w4/int8)
 ```
+
+| OS | Install | Generate |
+|---|---|---|
+| **Linux** | `curl …/install \| bash` | NVIDIA GPU · full H3 |
+| **macOS** | same curl (setup + dry-run) | H3 gen community/MLX; not default |
+| **Windows** | `irm …/install.ps1 \| iex` | **WSL2** for H3 GPU; native dry-run OK |
+
 
 That's it. OpenVideo plans the film, generates each shot, judges every frame, refines the weak
 ones, stitches the cuts, and hands you `output/film.mp4`. **Local-first by default; bring your

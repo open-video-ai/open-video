@@ -43,7 +43,7 @@ DEFAULT_ASPECT = "16:9"
 DEFAULT_OUTPUT = "output/film.mp4"
 DEFAULT_SERVER = os.environ.get("OPEN_VIDEO_COMFYUI", "http://127.0.0.1:8188")
 VALID_MODES = ("t2v", "i2v", "flf2v")
-SUBCOMMANDS = ("list-models", "list-presets", "serve")
+SUBCOMMANDS = ("list-models", "list-presets", "serve", "recommend-quant")
 
 # Explicit registry (alias -> module path, class name). Discovery below is the
 # fallback for new models dropped into backends/<name>/backend.py.
@@ -182,6 +182,7 @@ def print_plan(plan, backend):
 # generate (default command)
 # =============================================================================#
 def cmd_generate(args) -> int:
+    print("[open-video] [1/5] loading backend + validating prompt…", flush=True)
     # 1. prompt validation
     if not args.prompt or not args.prompt.strip():
         print("[open-video] error: prompt is empty", file=sys.stderr)
@@ -249,6 +250,7 @@ def cmd_generate(args) -> int:
         shot0_mode = "i2v"
 
     # 8. build the plan
+    print("[open-video] [2/5] planning shots…", flush=True)
     from core.planner import Planner
     planner = Planner(backend=backend)
     plan = planner.plan_from_concept(args.prompt, target_duration_s=args.duration,
@@ -279,14 +281,24 @@ def cmd_generate(args) -> int:
               f"your prompt verbatim.", file=sys.stderr)
 
     # 11. show the plan
+    print("[open-video] [3/5] plan ready", flush=True)
     print_plan(plan, backend)
 
+    # Optional: show resource-aware quant hint (never blocks)
+    try:
+        from core.resources import format_recommendation, recommend_for_host
+        print(format_recommendation(recommend_for_host()), flush=True)
+    except Exception:
+        pass
+
     if args.dry_run:
-        print("[open-video] --dry-run: prompt + plan validated. No generation performed.",
+        print("[open-video] [4/5] --dry-run: prompt + plan validated. No generation performed.",
               flush=True)
+        print("[open-video] [5/5] done (dry-run).", flush=True)
         return 0
 
     # 12. engine + pipeline
+    print("[open-video] [4/5] connecting ComfyUI + generating…", flush=True)
     out_path = Path(args.output)
     out_dir = str(out_path.parent) if str(out_path.parent) not in ("", ".") else "output"
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -305,7 +317,7 @@ def cmd_generate(args) -> int:
     if not film:
         print("[open-video] error: pipeline did not produce a film.", file=sys.stderr)
         return 4
-    print(f"[open-video] DONE -> {film}", flush=True)
+    print(f"[open-video] [5/5] DONE -> {film}", flush=True)
     return 0
 
 
@@ -492,6 +504,39 @@ def build_serve_parser():
     return p
 
 
+def build_recommend_quant_parser():
+    p = argparse.ArgumentParser(
+        prog="open_video recommend-quant",
+        description="Resource-aware H3 quant recommendation (Ollama-style pull-by-hardware).",
+    )
+    p.add_argument("--vram", type=int, default=None, help="Override VRAM MiB (fixture mode).")
+    p.add_argument("--no-nvidia", action="store_true", help="Simulate no NVIDIA GPU.")
+    p.add_argument("--quant", default="auto", help="Force quant or auto (default).")
+    p.add_argument("--json", action="store_true", help="Emit JSON.")
+    return p
+
+
+def cmd_recommend_quant(args) -> int:
+    print("[open-video] [1/1] probing host resources for H3 quant…", flush=True)
+    from core.resources import (
+        format_recommendation,
+        recommend_for_host,
+        recommend_quant,
+    )
+    import json as _json
+    if args.vram is not None or args.no_nvidia:
+        has = not args.no_nvidia
+        vram = 0 if args.no_nvidia else int(args.vram or 0)
+        rec = recommend_quant(vram, has_nvidia=has, force_quant=args.quant)
+    else:
+        rec = recommend_for_host(force_quant=args.quant)
+    if args.json:
+        print(_json.dumps(rec.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(format_recommendation(rec))
+    return 0
+
+
 # =============================================================================#
 # dispatch
 # =============================================================================#
@@ -505,6 +550,8 @@ def main(argv=None) -> int:
             return cmd_list_presets(build_list_presets_parser().parse_args(rest))
         if sub == "serve":
             return cmd_serve(build_serve_parser().parse_args(rest))
+        if sub == "recommend-quant":
+            return cmd_recommend_quant(build_recommend_quant_parser().parse_args(rest))
     return cmd_generate(build_generate_parser().parse_args(argv))
 
 
