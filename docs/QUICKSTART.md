@@ -11,7 +11,7 @@
 
 ### 1. Clone
 ```bash
-git clone https://github.com/robotlearning123/open-video.git
+git clone https://github.com/open-video-ai/open-video.git
 cd open-video
 ```
 

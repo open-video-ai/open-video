@@ -10,14 +10,25 @@ Two ways to run (from the repo root):
     # shim points here:
     python -m open_video "A cinematic shot of waves at sunset" [options]
 
-Subcommands:
+Subcommands (Ollama-shaped where it helps):
+    pull [h3]      Fetch / verify MiniMax H3 weights (resumable via install.sh)
+    run "…"        Alias for generate (ollama run → open-video run)
+    status | ps    ComfyUI health + H3 weight inventory + quant recommendation
     list-models    List available backends discovered under backends/.
     list-presets   List prompt presets in library/prompts/.
+    recommend-quant  Resource-aware H3 quant (pull-by-hardware)
     serve          Start the open-video HTTP server (if installed).
 
 The default action (no subcommand) is `generate`: validate the prompt -> build a
 Planner plan -> run LongFilmPipeline (plan -> per-shot generate via the backend ->
 FL2VA continuity chain -> judge -> stitch) -> write the film to --output.
+
+Ollama mental model::
+
+    curl -fsSL https://open-video.ai/install | bash   # install + pull
+    open-video pull h3                                # (re)fetch weights
+    open-video run "sunset waves" --duration 5        # generate
+    open-video status                                 # engine + weights
 """
 from __future__ import annotations
 import argparse
@@ -25,6 +36,7 @@ import importlib
 import inspect
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -43,7 +55,18 @@ DEFAULT_ASPECT = "16:9"
 DEFAULT_OUTPUT = "output/film.mp4"
 DEFAULT_SERVER = os.environ.get("OPEN_VIDEO_COMFYUI", "http://127.0.0.1:8188")
 VALID_MODES = ("t2v", "i2v", "flf2v")
-SUBCOMMANDS = ("list-models", "list-presets", "serve", "recommend-quant")
+# Ollama-style aliases included (run/pull/status/ps/list).
+SUBCOMMANDS = (
+    "list-models",
+    "list-presets",
+    "list",  # alias → list-models
+    "serve",
+    "recommend-quant",
+    "pull",
+    "run",
+    "status",
+    "ps",  # alias → status
+)
 
 # Explicit registry (alias -> module path, class name). Discovery below is the
 # fallback for new models dropped into backends/<name>/backend.py.
@@ -537,6 +560,200 @@ def cmd_recommend_quant(args) -> int:
     return 0
 
 
+def build_pull_parser():
+    p = argparse.ArgumentParser(
+        prog="open_video pull",
+        description="Fetch MiniMax H3 weights (Ollama-style pull). "
+                    "Verifies the INT8 package; resumes via scripts/install.sh + aria2c.",
+        epilog="examples:\n"
+               "  open-video pull h3\n"
+               "  open-video pull h3 --check-only\n"
+               "  open-video pull h3 --models-dir /data/ComfyUI/models\n",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument(
+        "model",
+        nargs="?",
+        default="h3",
+        help="Model id to pull (default: h3). Only h3 is shipped today.",
+    )
+    p.add_argument(
+        "--models-dir",
+        default=None,
+        help="Weights root (default: OPEN_VIDEO_MODELS or <repo>/ComfyUI/models).",
+    )
+    p.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Only inventory files; do not invoke the installer download.",
+    )
+    p.add_argument("--quant", default="auto", help="Quant profile hint (auto|nf4|w4|int8).")
+    p.add_argument("--json", action="store_true", help="Emit inventory JSON.")
+    return p
+
+
+def cmd_pull(args) -> int:
+    """Ollama ``pull`` analogue — verify / download H3 weights."""
+    from core.h3_weights import (
+        default_models_dir,
+        format_inventory,
+        inventory_h3_int8,
+        known_models,
+    )
+    from core.resources import format_recommendation, recommend_for_host
+
+    model = (args.model or "h3").strip().lower()
+    if model not in known_models():
+        print(
+            f"[open-video] error: unknown model {model!r}. "
+            f"Known: {', '.join(known_models())}",
+            file=sys.stderr,
+        )
+        return 2
+
+    models_dir = (
+        Path(args.models_dir).expanduser().resolve()
+        if args.models_dir
+        else default_models_dir(REPO_ROOT)
+    )
+    print(f"[open-video] [1/3] pull {model} → {models_dir}", flush=True)
+    rec = recommend_for_host(force_quant=args.quant)
+    print(format_recommendation(rec), flush=True)
+
+    inv = inventory_h3_int8(models_dir)
+    if args.json:
+        payload = inv.to_dict()
+        payload["quant"] = rec.to_dict()
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(format_inventory(inv), flush=True)
+
+    if inv.ready:
+        print("[open-video] [3/3] already pulled — nothing to download.", flush=True)
+        return 0
+
+    if args.check_only:
+        print("[open-video] [3/3] --check-only: not downloading.", flush=True)
+        return 1  # incomplete
+
+    install = REPO_ROOT / "scripts" / "install.sh"
+    if not install.is_file():
+        print(
+            f"[open-video] error: installer not found at {install}. "
+            f"Clone the repo or run: curl -fsSL https://open-video.ai/install | bash",
+            file=sys.stderr,
+        )
+        return 2
+
+    print(
+        "[open-video] [2/3] downloading via install.sh (aria2c, resumable, ~54 GB)…",
+        flush=True,
+    )
+    env = os.environ.copy()
+    env["OPEN_VIDEO_QUANT"] = rec.quant if rec.quant in ("nf4", "w4", "int8") else "int8"
+    # Force download even on no-GPU hosts when user explicitly pulls.
+    env["OPEN_VIDEO_FORCE_DOWNLOAD"] = "1"
+    cmd = [
+        "bash",
+        str(install),
+        "--root",
+        str(REPO_ROOT),
+        "--models-dir",
+        str(models_dir),
+        "--skip-server",
+        "--skip-generate",
+        "--yes",
+    ]
+    # Prefer not re-cloning ComfyUI if present; still allow install to create it for path layout.
+    if (REPO_ROOT / "ComfyUI" / "main.py").is_file():
+        cmd.append("--skip-comfyui-install")
+    try:
+        proc = subprocess.run(cmd, cwd=str(REPO_ROOT), env=env, check=False)
+    except OSError as e:
+        print(f"[open-video] error: failed to run installer: {e}", file=sys.stderr)
+        return 2
+
+    inv2 = inventory_h3_int8(models_dir)
+    print(format_inventory(inv2), flush=True)
+    if inv2.ready:
+        print("[open-video] [3/3] pull complete.", flush=True)
+        return 0
+    print(
+        f"[open-video] [3/3] pull incomplete (installer exit {proc.returncode}). "
+        f"Re-run `open-video pull {model}` to resume.",
+        file=sys.stderr,
+    )
+    return proc.returncode or 1
+
+
+def build_status_parser():
+    p = argparse.ArgumentParser(
+        prog="open_video status",
+        description="Engine + weights status (Ollama-style ps/status).",
+    )
+    p.add_argument(
+        "--server",
+        default=DEFAULT_SERVER,
+        help=f"ComfyUI URL (default {DEFAULT_SERVER}).",
+    )
+    p.add_argument("--models-dir", default=None, help="Override models directory.")
+    p.add_argument("--json", action="store_true", help="Emit JSON.")
+    return p
+
+
+def cmd_status(args) -> int:
+    """Ollama ``ps`` / status — ComfyUI health + H3 inventory + quant."""
+    from core.h3_weights import default_models_dir, format_inventory, inventory_h3_int8
+    from core.resources import format_recommendation, recommend_for_host
+    from engines.comfyui.adapter import ComfyUIAdapter
+
+    models_dir = (
+        Path(args.models_dir).expanduser().resolve()
+        if args.models_dir
+        else default_models_dir(REPO_ROOT)
+    )
+    rec = recommend_for_host()
+    inv = inventory_h3_int8(models_dir)
+    engine = ComfyUIAdapter(server=args.server)
+    healthy = engine.health()
+
+    payload = {
+        "server": args.server,
+        "comfyui_ok": healthy,
+        "quant": rec.to_dict(),
+        "weights": inv.to_dict(),
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(
+            f"[open-video] ComfyUI {args.server}: "
+            f"{'up' if healthy else 'down (start engine or use --dry-run)'}",
+            flush=True,
+        )
+        print(format_recommendation(rec), flush=True)
+        print(format_inventory(inv), flush=True)
+        if healthy and inv.ready:
+            print(
+                '[open-video] ready — try: open-video run "a red panda in mist" --duration 5',
+                flush=True,
+            )
+        elif not inv.ready:
+            print("[open-video] next: open-video pull h3", flush=True)
+        elif not healthy:
+            print(
+                "[open-video] next: start ComfyUI "
+                "(install.sh starts it, or python ComfyUI/main.py --lowvram)",
+                flush=True,
+            )
+    # exit 0 if engine up and weights ready; 1 if usable dry-run only; 2 hard fail
+    if healthy and inv.ready:
+        return 0
+    if inv.ready or healthy:
+        return 1
+    return 1
+
+
 # =============================================================================#
 # dispatch
 # =============================================================================#
@@ -544,7 +761,7 @@ def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] in SUBCOMMANDS:
         sub, rest = argv[0], argv[1:]
-        if sub == "list-models":
+        if sub in ("list-models", "list"):
             return cmd_list_models(build_list_models_parser().parse_args(rest))
         if sub == "list-presets":
             return cmd_list_presets(build_list_presets_parser().parse_args(rest))
@@ -552,6 +769,13 @@ def main(argv=None) -> int:
             return cmd_serve(build_serve_parser().parse_args(rest))
         if sub == "recommend-quant":
             return cmd_recommend_quant(build_recommend_quant_parser().parse_args(rest))
+        if sub == "pull":
+            return cmd_pull(build_pull_parser().parse_args(rest))
+        if sub in ("status", "ps"):
+            return cmd_status(build_status_parser().parse_args(rest))
+        if sub == "run":
+            # ollama run → generate
+            return cmd_generate(build_generate_parser().parse_args(rest))
     return cmd_generate(build_generate_parser().parse_args(argv))
 
 

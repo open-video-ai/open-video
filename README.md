@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"/></a>
-  <a href="https://github.com/robotlearning123/open-video/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/robotlearning123/open-video?style=social"/></a>
+  <a href="https://github.com/open-video-ai/open-video/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/open-video-ai/open-video?style=social"/></a>
   <a href="https://discord.gg/open-video"><img alt="Discord" src="https://img.shields.io/discord/0?style=social&logo=discord&label=Discord&color=5865F2"/></a>
   <a href="https://open-video.ai"><img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fopen-video.ai&label=open-video.ai"/></a>
   <a href="https://huggingface.co/spaces/ArtificialAnalysis/Video-Generation-Arena"><img alt="H3 Arena" src="https://img.shields.io/badge/H3-Arena%20%231%20open-FBBF24.svg"/></a>
@@ -58,19 +58,22 @@ OpenVideo is that director — the **autonomous agent layer** no open engine shi
 plans, crafts prompts, validates, judges, refines, stitches, and delivers. You get **Runway-grade
 results on hardware you own, with models you control.**
 
-## One-command quickstart
+## One-command quickstart (Ollama for H3)
 
 ```bash
-# Linux / macOS (Ollama-style one-liner)
+# Linux / macOS — install engine + pull H3 weights (resumable ~54 GB)
 curl -fsSL https://open-video.ai/install | bash
 
 # Windows (PowerShell) — prefers WSL2 for full H3 GPU path
 irm https://open-video.ai/install.ps1 | iex
 
-# Then generate (one prompt → video). Dry-run validates without GPU:
-open-video "A lone astronaut planting a flag on a red dune at dusk" --duration 8
-open-video "sunset waves" --dry-run
-open-video recommend-quant          # resource-aware H3 quant (nf4/w4/int8)
+# Same mental model as Ollama: pull → status → run
+open-video pull h3                  # verify / resume H3 weights
+open-video status                   # ComfyUI health + weight inventory (alias: ps)
+open-video recommend-quant          # resource-aware quant (nf4 / w4 / int8)
+
+open-video run "A lone astronaut planting a flag on a red dune at dusk" --duration 8
+open-video "sunset waves" --dry-run # plan + validate without GPU
 ```
 
 | OS | Install | Generate |
@@ -78,7 +81,6 @@ open-video recommend-quant          # resource-aware H3 quant (nf4/w4/int8)
 | **Linux** | `curl …/install \| bash` | NVIDIA GPU · full H3 |
 | **macOS** | same curl (setup + dry-run) | H3 gen community/MLX; not default |
 | **Windows** | `irm …/install.ps1 \| iex` | **WSL2** for H3 GPU; native dry-run OK |
-
 
 That's it. OpenVideo plans the film, generates each shot, judges every frame, refines the weak
 ones, stitches the cuts, and hands you `output/film.mp4`. **Local-first by default; bring your
@@ -88,9 +90,11 @@ own GPU or run on our managed cloud.**
 <summary><b>Prefer manual?</b></summary>
 
 ```bash
-git clone https://github.com/robotlearning123/open-video && cd open-video
-python cli/open_video.py "waves at sunset, golden hour" --duration 10 --model h3 --output out.mp4
-# requires a running ComfyUI at http://127.0.0.1:8188 (OPEN_VIDEO_COMFYUI=...)
+git clone https://github.com/open-video-ai/open-video && cd open-video
+pip install -e .
+open-video pull h3
+open-video run "waves at sunset, golden hour" --duration 10 --model h3 --output out.mp4
+# ComfyUI at http://127.0.0.1:8188 (env OPEN_VIDEO_COMFYUI)
 ```
 
 </details>
@@ -100,8 +104,8 @@ python cli/open_video.py "waves at sunset, golden hour" --duration 10 --model h3
 | Interface | For | Experience |
 |---|---|---|
 | 🖥️ **App** *(primary)* | Everyone — creators, PMs, non-technical users | Natural language → video. Storyboard preview, presets, one-click render. Like ChatGPT for film. |
-| ⌨️ **CLI / API** | Developers | `open-video "concept" --duration 300` or REST. Automate, integrate, build on top. |
-| 🤖 **Skill** | Agent hosts (Claude Code, Cursor, MCP) | Drop-in `SKILL.md` — let any agent direct video end-to-end, fully autonomous. |
+| ⌨️ **CLI / API** | Developers | `open-video pull/run/status` (Ollama-shaped) or REST. Automate, integrate, build on top. |
+| 🤖 **Skill** | Agent hosts (Claude Code, Cursor, MCP) | `skill/h3-video` (Ollama/H3 harness) + `skill/open-video` (full director). |
 
 ## The quality loop (the part no open project has)
 
