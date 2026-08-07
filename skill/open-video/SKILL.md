@@ -24,9 +24,13 @@ into a finished film by running the loop no open engine ships natively:
   ComfyUI is the hands.
 
 It is NOT a video engine (ComfyUI is the engine) and NOT a model (H3/Wan/LTX are backends). It is
-the agent brain ComfyUI lacks: the judge→refine loop + multi-shot stitcher + coherence planner.
-Flagship output: a multi-minute coherent film from a concept (impossible with any single open
-model, which all cap at ≤15–30s).
+the agent brain ComfyUI lacks: judge→refine + multi-shot stitch + coherence planning **as they
+land**.
+
+**v0.0.1 honesty:** prefer [`skill/h3-video`](../h3-video/SKILL.md) for reliable high-quality
+single clips. Multi-minute film is the flagship *design*. `core/judge.py` is a **stub/scaffold** —
+without a wired `vision_fn` it may PASS by default; do not treat auto-PASS as a live vision loop.
+Single open models still cap ~15s/shot; longer output needs multi-shot orchestration (partial).
 
 ## 2. Agentic procedure — run these steps in order
 
@@ -65,10 +69,10 @@ Confirm the server is up first (§3). H3 defaults: 1344×768, 20 steps, `res_mul
 scheduler, `shift_video=12.0` / `shift_audio=3.0`, INT8 ConvRot quants, engine flags
 `--lowvram --use-sage-attention`. `length` snaps to the 17k+5 grid.
 
-**Step 6 — Judge the output** (`core/judge.py` — the core IP). Extract ~5 frames; vision-assess
-each vs the prompt intent + a quality bar (drift, dropped element, bad motion, identity break,
-audio/video desync). Verdict: **PASS / REFINE / FAIL**. Record frames + verdict in the receipt.
-This loop — not the model — is open-video's reason to exist.
+**Step 6 — Judge the output** (`core/judge.py` — design core; **stub without `vision_fn`**).
+Extract frames; if a real vision backend is wired, assess vs prompt intent + quality bar.
+Verdict: **PASS / REFINE / FAIL**. If no vision is wired, expect auto-PASS — you must
+**manually** review frames or call an external vision model. Record frames + verdict in the receipt.
 
 **Step 7 — Refine if REFINE or FAIL.** Diagnose the *specific* issue, apply a *targeted* fix (prompt
 tweak / +steps / different mode / ref-pack for identity lock / different seed), regenerate. Strategy

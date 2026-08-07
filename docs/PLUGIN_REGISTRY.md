@@ -38,12 +38,12 @@ metadata-only assets, not just code.
    with an official channel (`openvideo/*`) and a community channel (`<publisher>/*`).
 4. **Reproducibility** — every install pins to a content hash in a lock file so any open-video film
    can be rebuilt from its receipt (a hard governance requirement, `GOVERNANCE.md` → Reproducibility).
-5. **A marketplace** — free + premium plugins, creator profiles, download counts — that compounds the
-   moat closed video platforms structurally cannot match (`docs/library-and-loras.md` §5).
+5. **Optional future marketplace metadata** — free listings first; premium fields reserved so the
+   schema need not break later. **Not a current product or revenue claim** (`PLAN.md`).
 
 ### Non-goals (for v0)
 - Running our own binary blob store (we use HF / Civitai / author hosts; the registry points at them).
-- A payments backend in v0 (premium listing is a metadata field; checkout is Phase 3, `PLAN.md`).
+- A payments backend (premium is schema-only; no take-rate business model in product docs).
 - A full web IDE / visual plugin builder (use the templates in `templates/`).
 - Replacing ComfyUI custom nodes — open-video **drives** ComfyUI; a plugin *may* ship ComfyUI custom
   nodes alongside its backend, but the registry is open-video's, not ComfyUI's.
@@ -549,60 +549,31 @@ installer warns and refuses unless `--include-deprecated`.
 
 ---
 
-## 6. The marketplace vision
+## 6. Marketplace (future idea only)
 
-The registry is the substrate; the marketplace is the product surface on top. It turns the library
-flywheel (`docs/library-and-loras.md` §5) into a creator economy — and it's the Phase 3 revenue
-surface (`PLAN.md`).
+> **Not shipped. Not a revenue plan in public product docs.**  
+> Schema may reserve fields so a later marketplace need not break clients. Do not market take-rates,
+> payouts, or “creator economy” as current OpenVideo product.
 
-### 6.1 Free + premium
+### 6.1 Free + optional premium metadata
 
 | Tier | License | Listing | Discovery |
 |---|---|---|---|
 | **Free (open)** | Apache-2.0 / MIT / CC-BY | Always free; `premium: null` | Default gallery + search |
-| **Free (restricted)** | CC-BY-NC / commercial-restricted | `license_restricted: true`, `premium: null` | Excluded from "remix freely"; shown with a license badge |
-| **Premium** | creator-set | `premium: { price_usd, currency }` | Shown with price; install requires a purchase/license token |
+| **Free (restricted)** | CC-BY-NC / commercial-restricted | `license_restricted: true` | License badge |
+| **Premium (future)** | creator-set | `premium: { price_usd, currency }` | Optional later |
 
-Premium metadata is just a field in the manifest — the registry stores it; checkout is Phase 3 (target
-Stripe Connect for creator payouts). A premium plugin's tarball is gated by a license token at the
-HTTP layer; the manifest stays public so discovery works.
+`premium` on the manifest is reserved. Checkout, payments, and any platform fee are **out of
+scope** for v0 and not product claims.
 
-### 6.2 Creator profiles
+### 6.2 Creator profiles (future)
 
-A `publisher` namespace **is** a profile page at `open-video.ai/<publisher>`:
-- Display name, bio, links, "verified creator" badge (issued by the council — distinct from per-plugin
-  `verified`).
-- All their plugins (free + premium), aggregate download counts, follower count.
-- A `/registry/<publisher>.json` API for programmatic access.
+Publisher namespaces *could* map to profile pages and download stats. Implementation tracks registry
+work; not a live surface today.
 
-This is the npm-maintainer + Civitai-creator pattern. The publisher of record is set at first publish
-and bound to a GitHub identity; transfers require council sign-off (anti-squatter / anti-hijack).
+### 6.3 Download counts + stats (future)
 
-### 6.3 Download counts + stats
-
-`stats` in the index (§4.2) is fed by the HTTP mirror logging install events (anonymized:
-plugin + version + timestamp + channel, no user data). Surfaced on:
-- the marketplace listing (30-day + total downloads),
-- creator profiles (aggregate),
-- a public leaderboard (`open-video.ai/leaderboard`) — the seed of the "best community LoRAs" social
-  signal that closed platforms can't replicate.
-
-### 6.4 The take rate (Phase 3, owner-decided)
-
-The lean target is a single-digit-to-low-teens take rate on premium plugins (the owner decides the
-exact number; this spec only fixes the *field*). The creator sets the price; open-video routes
-payment; the registry records the license token. This is deliberately out of scope for v0 — the
-manifest just carries `premium` so the schema doesn't change when checkout lands.
-
-### 6.5 Why this compounds (the moat, restated)
-
-Closed video platforms ship **one** model and forbid community models outright
-(`docs/library-and-loras.md` §5). A registry + marketplace makes the open side a **long-tail
-economy**: every aesthetic, every character lock, every product SKU, every niche motion style becomes
-a plugin someone can ship and price. The marketplace doesn't create the moat — the *community library*
-does (`docs/library-and-loras.md`) — but it gives contributors a profile, a download count, and
-(eventually) revenue, which is what turns a one-off LoRA into a sustained creator habit. That habit is
-the thing closed platforms can't match.
+`stats` in the index (§4.2) *may* be fed by anonymized install events later.
 
 ---
 

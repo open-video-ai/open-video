@@ -1,87 +1,84 @@
-# Reference products — what OpenVideo steals (and what it doesn't)
+# Reference products — related open projects
 
-> Living map of the projects we deliberately **refer to** when designing the product, site, and go-to-market.
-> Update numbers before press; Elo and star counts drift.
+> Public map of projects OpenVideo learns from (product UX, install patterns, local-agent
+> surfaces). Update star counts and URLs before press.  
+> **No private GTM / positioning docs are linked from product.** Strategy lives in ops only.
 
 ## Canonical references
 
 | Project | URL | Repo | Role for OpenVideo |
 |---|---|---|---|
-| **OpenCode** | [opencode.ai](https://opencode.ai/) | [anomalyco/opencode](https://github.com/anomalyco/opencode) (aka sst lineage) | **Business DNA + install UX.** Open AI coding agent; multi-surface (TUI / desktop / IDE); `curl …/install \| bash`; model-agnostic open brain. |
-| **Open Design** | [open-design.ai](https://open-design.ai/) | [nexu-io/open-design](https://github.com/nexu-io/open-design) | **Local-first agent product pattern.** Open-source Claude Design alternative; desktop + skills + MCP; Apache-2.0; “one system, many surfaces”; official brand page. |
-| **OpenArt** | [openart.ai](https://openart.ai/) | [OpenArt-AI](https://github.com/OpenArt-AI) (partial) | **Product DNA.** Polished creator studio; gallery / models / free start; “for everyone,” not just node-graph engineers. |
-| **Cursor** | cursor.com | closed | Closed **code** incumbent in the analogy. |
-| **Runway / Seedance** | runwayml.com / seedance | closed | Closed **video** incumbents. Runway = category shorthand; Seedance = technical peer for long-film agent. |
+| **OpenCode** | [opencode.ai](https://opencode.ai/) | [anomalyco/opencode](https://github.com/anomalyco/opencode) | Install UX + multi-surface open agent pattern. |
+| **Open Design** | [open-design.ai](https://open-design.ai/) | [nexu-io/open-design](https://github.com/nexu-io/open-design) | Local-first agent product; skills; Apache-2.0. |
+| **OpenArt** | [openart.ai](https://openart.ai/) | [OpenArt-AI](https://github.com/OpenArt-AI) (partial) | Creator-facing studio DNA (product, not only node-graph). |
+| **Cursor** | cursor.com | closed | Closed code incumbent (analogy only). |
+| **Runway / Seedance** | runwayml.com / seedance | closed | Closed video incumbents (analogy / technical peers). |
 
-## The family analogy (site + pitch)
+## Family analogy (site-friendly)
 
-| Domain | Closed product | Open alternative | What the open layer is |
-|---|---|---|---|
-| **Code** | Cursor | **OpenCode** | Open coding *agent* on any model |
-| **Design** | Claude Design / closed design agents | **Open Design** | Open design *workspace* driven by local agents |
-| **Video** | Runway / Seedance | **OpenVideo** | Open video *director* on ComfyUI + open models (H3) |
+| Domain | Closed product | Open alternative |
+|---|---|---|
+| **Code** | Cursor | **OpenCode** |
+| **Design** | Claude Design / closed agents | **Open Design** |
+| **Video** | Runway / Seedance | **OpenVideo** |
 
-One-liner (from `POSITIONING.md`):
+One-liner:
 
 > **OpenCode → Cursor. Open Design → Claude Design. OpenVideo → Runway.**
 
 ## Patterns we copy
 
 ### From OpenCode
-- Ultra-clear H1: *what it is in one breath* (“The open source AI coding agent”).
-- **One install command** on the site + docs: `curl -fsSL https://opencode.ai/install | bash`.
-- Multi-surface: terminal · desktop · IDE (for us: App · CLI · Skill).
-- Model-agnostic framing (we swap video backends, not only LLMs).
-- Social proof block when numbers are real (stars / contributors / users).
+- Clear one-breath product H1.
+- One install command on the site.
+- Multi-surface thinking (for us: CLI + Skill first; App later).
+- Model-agnostic framing.
 
 ### From Open Design
-- **“Open-source X alternative”** SEO + hero clarity ([open-design.ai](https://open-design.ai/)).
-- Local-first desktop + agent hosts (Claude Code, Codex, Cursor, OpenCode, …).
-- Apache-2.0, free local use, optional cloud/pricing later.
-- Dedicated **Download / Install / Docs / Official naming** surfaces.
-- Skills / MCP packaging so agents consume the product natively.
+- “Open-source X alternative” clarity.
+- Local-first + agent hosts.
+- Apache-2.0, free local use.
+- Skills packaging for agents.
 
 ### From OpenArt
-- Ship a **product**, not a node-graph manual.
-- Gallery + models library + “start free” as the first click.
-- Creator language (story, brand, character) over researcher jargon.
-- Presets and one-shot success paths for non-developers.
+- Ship a **product** story, not only a node-graph manual.
+- Gallery / models library when they exist.
+- Creator language over pure research jargon.
 
 ## Patterns we deliberately do **not** copy
 
 | Source | Pattern | Why not |
 |---|---|---|
-| OpenArt | All-modality studio (image + video + audio + music as equals) | OpenVideo is **video-only** (native audio with the clip is in-scope; standalone image/music is out). See `POSITIONING.md` §4. |
-| OpenArt | Hosted-only / credit economy as the default | We are **local-first**; hosted is phase-2 open-core, not the core identity. |
-| Closed Runway | Black-box API, per-second metering as the only path | We lead with ownership, no region lock, no watermark. |
-| Generic “AI studio” | Feature soup | Focus: director loop (plan → craft → generate → judge → refine → stitch). |
+| OpenArt | All-modality studio as equals | OpenVideo stays **video-focused** (native audio-with-clip is in-scope). |
+| Hosted-only studios | Credits as the only path | We are **local-first**. |
+| Closed Runway | Black-box API only | Lead with ownership and local runs. |
+| Generic “AI studio” | Feature soup | Focus: H3 quality path now; director loop as roadmap. |
 
-## Install UX parity (must match OpenCode / Open Design)
+## Install UX parity
 
 | Surface | OpenCode | Open Design | OpenVideo |
 |---|---|---|---|
 | One-liner | `curl -fsSL https://opencode.ai/install \| bash` | `curl -fsSL https://open-design.ai/install.sh \| sh` | `curl -fsSL https://open-video.ai/install \| bash` |
-| Docs | opencode.ai/docs | open-design.ai (docs in product) | open-video.ai/docs |
-| Desktop | Download page | open-design.ai/download | App *planned* (CLI + Try mockup first) |
-| Agent skill | — | Skills + MCP for coding agents | `skill/open-video/SKILL.md` for Claude/Cursor/MCP |
+| Docs | opencode.ai/docs | open-design.ai | open-video.ai/docs |
+| Desktop | Download page | Download page | **Not primary** today (CLI + Try mockup) |
+| Agent skill | — | Skills / MCP | `skill/h3-video` + `skill/open-video` (MCP **planned**, not current) |
 
-## Repo / brand hygiene (from Open Design “official”)
+## Repo / brand hygiene
 
-- **Canonical site:** `https://open-video.ai`
-- **Canonical code:** prefer one public GitHub path (canonical: `open-video-ai/open-video`).
-- Names that all mean this project: **OpenVideo**, **open-video**, **open-video.ai**.
-- Canonical GitHub is `open-video-ai/open-video`. Avoid foreign Pages projects (`open-video.pages.dev` name collision) — use `open-video.ai` or the project `*.pages.dev` only.
+- **Site:** `https://open-video.ai`
+- **Code:** `open-video-ai/open-video`
+- Names: **OpenVideo**, **open-video**, **open-video.ai**
+- Avoid bare `open-video.pages.dev` name collisions — use `open-video.ai`
 
 ## How to use this doc
 
-1. **Website copy** — hero, analogy strip, install, three interfaces: follow OpenCode + Open Design clarity.
-2. **README** — OpenCode-style badges + one-liner install + analogy subhead.
-3. **Pitch / HN / Reddit** — OpenArt product story + OpenCode open-core story; never “we’re a ComfyUI wrapper.”
-4. **Roadmap** — desktop download page (Open Design), gallery (OpenArt), hosted tier (OpenCode).
+1. Website copy — install clarity, honest v0.0.1 scope.
+2. README — one-liner install + analogy without fake shipped features.
+3. Pitch — product story; never “we’re only a ComfyUI wrapper,” and never claim free cloud GPU.
 
 ## Sources checked (2026-08-06)
 
-- https://open-design.ai/ · https://open-design.ai/download/ · https://github.com/nexu-io/open-design  
-- https://opencode.ai/ · https://opencode.ai/docs/ · https://github.com/sst/opencode / anomalyco  
+- https://open-design.ai/ · https://github.com/nexu-io/open-design  
+- https://opencode.ai/ · https://github.com/sst/opencode / anomalyco  
 - https://openart.ai/ · https://github.com/OpenArt-AI  
-- Local: `README.md`, `REPOS.md`; positioning/strategy in private `open-video-ops`; site in `open-video-web`
+- Local: `README.md`, `REPOS.md`, `PLAN.md`; site in `open-video-web`

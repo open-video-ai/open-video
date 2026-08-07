@@ -4,11 +4,10 @@ Adopted (as principles, reimplemented — not copied) from the best of the open 
 ecosystem (OpenMontage's honest governance + woodfantasy's validation discipline).
 
 ## Quality-first doctrine
-**open-video's product IS quality.** Unlike pipelines that cap revisions and ship-with-warnings
-("perfectionism kills pipelines"), open-video's identity is: **the quality loop (judge → best-of-N
-→ refine) runs until the output meets the bar — or the user is honestly told it can't.**
-This is the differentiation vs OpenMontage (advisory 2-round reviewer, no VLM judge) and ViMax
-(closed-API, creative-loop not quality-loop).
+**open-video optimizes for honest delivered quality**, not silent downgrades. The **design**
+identity is: when quality-gated mode is on, the judge → refine (optional best-of-N) loop runs until
+the bar is met — or the user is told it cannot. **v0.0.1:** the judge is a scaffold (auto-PASS
+without a wired vision backend); do not pretend silent PASS is a real review.
 
 ## Hard prohibitions (non-negotiable — silent violation = critical bug)
 1. **Silent quality downgrade is forbidden.** Never quietly reduce resolution, swap to a weaker

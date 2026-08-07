@@ -1,21 +1,18 @@
 # Library & LoRA Contribution Guide
 
-> The community library is open-video's compounding moat. Prompts, LoRAs, reference packs,
-> coherence recipes, and showcases — all open, all remixable. This guide covers how the library
-> is laid out, how to train and contribute a community H3 LoRA, how open-video loads LoRAs at
-> runtime, and why community-trained models are the thing closed platforms structurally cannot
-> match.
+> Shared **prompts, LoRAs, reference packs, coherence recipes, and showcases** — open and
+> remixable. This guide covers layout, how to train/contribute an H3 LoRA, and how loading is
+> intended to work. Much of the UX (`lora pull`, gallery) is **planned**; weights stay off-repo.
 >
 > **Audience:** creators training LoRAs, developers wiring LoRA loading, anyone contributing to
 > `library/`. For prompt-only contributions see `CONTRIBUTING.md` + `templates/prompt_recipe.md`.
 
 ---
 
-## 1. The library — five directories, one flywheel
+## 1. The library — five directories
 
-`library/` is the shared, versioned, community-owned asset store. Every asset is a file (or small
-bundle) + a metadata header, PR'd in like code. The five subdirectories each capture a different
-kind of know-how that closed vendors keep internal:
+`library/` is the shared, versioned asset store. Every asset is a file (or small bundle) +
+metadata, PR'd like code:
 
 | Directory | What lives here | Format | Smallest unit |
 |---|---|---|---|
@@ -25,10 +22,8 @@ kind of know-how that closed vendors keep internal:
 | `library/coherence_recipes/` | Pre-built coherence bibles for common film types (trailer, ad, micro-drama…) | `.yaml` | one film type → one file |
 | `library/showcase/` | Flagship outputs that prove a recipe works (prompt + LoRA + result + verdict) | `.md` + linked media | one showcase → one file |
 
-**Why a flywheel:** every prompt gets generated + vision-judged on H3 and shown on
-`open-video.ai/gallery` (see `PLAN.md` Phase 1). Every LoRA recipe gets a before/after pair. Every
-showcase links the prompt + LoRA + reference pack that produced it. Browsing → remixing →
-contributing → browsing. This is the SD1.5/SDXL LoRA explosion, but for video and open.
+**Goal:** good recipes are tested, shown with results when possible, and easy to remix. A public
+gallery is Phase 1+ work (`PLAN.md`) — not required to contribute a prompt or LoRA recipe today.
 
 ### What goes where (decision tree)
 
@@ -183,38 +178,18 @@ the loader and the sampler in the workflow dict, and PR. See `CONTRIBUTING.md` �
 
 ---
 
-## 5. Why community LoRAs are our moat
+## 5. Why community LoRAs matter
 
-Closed video platforms (**Runway, Seedance, Sora, Veo, Kling**) ship **one** model, gated behind
-their API, trained on data their users can't see, for aesthetics their product team decided. Their
-users cannot train, share, or remix models. Every closed platform is, structurally, a model
-monoculture curated top-down.
+Closed video APIs usually ship a fixed model with no user-trained adapters. Open image ecosystems
+(e.g. Stable Diffusion + community LoRAs) showed that **permissionless training + sharing** covers
+more niches than one vendor catalog: product kits, anime looks, characters (with consent), regional
+styles, brand packs.
 
-The open image world went the other way and won the long tail. **Stable Diffusion 1.5 → SDXL's LoRA
-ecosystem** (Civitai alone hosts tens of thousands of community LoRAs) is the canonical proof: a
-base model + a permissionless training surface + a sharing culture produced more total aesthetic
-coverage than any single closed image model. Anime, product photography, specific celebrities (with
-consent), architectural rendering, regional art styles, niche fetish content, brand kits — none of
-those came from the base model vendor. They came from contributors with a GPU and a specific need.
+open-video wants the same pattern **for video on H3**: train a LoRA, publish a recipe + weights
+link, others remix. That is a product thesis, not a claim that thousands of LoRAs already exist
+here.
 
-**open-video's bet: that exact dynamic, for video, on top of H3.** H3 is the base (Arena parity with
-closed #1). The community library is the training + sharing surface. The result we expect:
-
-- A creator needs their product in 40 ad variants → trains a `product` LoRA once, gets every shot
-  on-brand. Closed platforms charge per-render and never learn the SKU.
-- An indie animator wants a specific 90s-cel look → finds/contributes an `anime` LoRA, remixes
-  freely. Closed platforms ship one anime mode, top-down.
-- A studio locks a hero character across a 5-min film → `character` LoRA + reference pack +
-  coherence recipe, all shared. Closed platforms can't accept community models at all.
-
-Closed platforms will always have a slightly newer base model on any given day. They will **never**
-have 10,000 community-trained aesthetics, because their business model forbids it. That gap
-compounds: every contributed LoRA is a video a closed platform can't make. The library is the moat;
-this guide is how contributors fill it.
-
-This is also why open-video is **video-only** (not all-modalities): the LoRA flywheel is deepest
-where the community focuses. A generalist "open everything" dilutes it. A video-focused library is
-where the SDXL-style explosion actually happens.
+Keep contributions **video-focused** and consent-first (§7).
 
 ---
 
@@ -282,4 +257,4 @@ git commit -m "lora: add acme__my_character (character, Inline Studio QLoRA)"
 git push
 ```
 
-Welcome to the moat.
+Thanks for contributing.

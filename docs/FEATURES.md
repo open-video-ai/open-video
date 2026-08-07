@@ -1,54 +1,43 @@
 # open-video — Product Feature Roadmap
 
-> Product feature roadmap for OpenVideo (open-source video generation), plus the
-> **Quality Loop** (judge → refine → best-of-N) as core product IP.
+> **This document is a roadmap, not a shipped feature list.**  
+> OpenVideo v0.0.1 delivers local MiniMax H3 + agent skill harness. Items below describe intent,
+> scaffolds, and phases. Aligned with `PLAN.md`. Prefer short technical plans over competitive
+> essays.
 >
-> Status: v0 / planning. Aligned with `PLAN.md` phases. Each feature lists **what it is**, **which
-> competitor validates demand**, **our open implementation plan**, and **MVP vs later** priority.
+> Status: v0 / planning. Each feature lists **what it is**, **why demand exists**, **open
+> implementation plan**, and **MVP vs later**.
 
 ## Priority legend
-- **MVP / Phase 0–1** — ship with the open-source core launch. Without these, open-video is not usable as a product.
-- **Phase 2** — hosted SaaS / API era. Needed for revenue and non-technical scale.
-- **Phase 3** — marketplace / community era. The flywheel that compounds past closed vendors.
+- **MVP / Phase 0–1** — needed for a usable open core (local H3 + honest agent path).
+- **Phase 2** — optional hosted / App convenience (not current product).
+- **Phase 3** — marketplace / community packaging (future; not a current business claim).
 
 ---
 
-## The Unique IP — the Quality Loop (judge → refine → best-of-N)
+## Design target — the Quality Loop (judge → refine → best-of-N)
 
 **What it is.** Every generated shot is scored by a vision judge against the prompt intent + a
-quality bar. Below bar → **diagnose** (dropped element? bad motion? inconsistency?) → **targeted
-refine** (prompt tweak / mode swap / more steps / add reference-pack) → regenerate. Optionally run
-**best-of-N** and let the judge pick the winner (VISTA tournament / triple-eval). Productized as
-`core/judge.py` + `core/pipeline.py`.
+quality bar. Below bar → **diagnose** → **targeted refine** → regenerate. Optionally **best-of-N**
+and keep the winner. Target surface: `core/judge.py` + `core/pipeline.py`.
 
-**Why it is the moat (competitor validation):**
-- **Google VISTA** (2025) proved judge + best-of-N tournament + triple-eval delivers **+46.3% win
-  rate** over single-shot generation — the largest single quality lever in open video research.
-- **VideoWeaver** proved an evidence-grounded agent-as-judge closes the open/closed adherence gap.
-- **No open video project ships this.** ComfyUI = manual node-graph (no judge); OpenMontage (45K★)
-  lacks it; ViMax (11.7K★) is closed-API-only; MiniMax H3 ships as a single-shot engine. Closed
-  products (Seedance 2.x, Sora, Veo) have internal judge loops — invisible, unfixable, unauditable.
-- **open-video owns this for open models**, and ships it **auditable** (every verdict + receipt
-  is in the open `library/`).
+**Why build it (research / product context):**
+- Judge + best-of-N / refine patterns (e.g. Google VISTA research) improve win rate vs single-shot.
+- Most open tools stop at “generate once” (ComfyUI node-graph, raw model engines). Closed products
+  often hide internal QC. An **open, auditable** loop is a reasonable open-source goal.
+- **v0.0.1 honesty:** the judge is a **scaffold**. Without a wired `vision_fn`, verdicts may PASS
+  by default. Do not claim a live quality loop “ships today.”
 
 **Implementation plan:**
-1. **Refine-primary loop (MVP, Phase 0).** Extract frames → judge via vision model
-   (`analyze_image` + cross-model `cx` GPT-5.6 / Opus 4.8 per `cross-model-review.md`) → if REFINE,
-   structured diagnosis → targeted fix → regenerate. Cheapest path; H3 quality is already at Arena
-   parity so the loop fixes adherence/length/consistency, not raw fidelity.
-2. **Best-of-N tournament (Phase 1, optional flag).** `--best-of N` — generate K candidates, judge
-   ranks them, keep winner. Cost = GPU × K; reserved for high-stakes shots (shot 1 of a film,
-   hero shots) where one bad generation breaks continuity.
-3. **Judge-LoRA / open judge (Phase 2).** Replace paid vision API with a fine-tuned open judge
-   (VideoScore / Qwen2.5-VL) so the loop is free at hosted scale. Unit economics of the hosted tier
-  hinge on this.
-4. **Receipts as community IP.** Every judge verdict + refine trajectory is logged to
-   `library/judge_logs/` → the community studies *what fixes what* → compounding know-how closed
-   vendors cannot match.
+1. **Refine-primary loop (MVP).** Extract frames → real vision judge → if REFINE, structured
+   diagnosis → targeted fix → regenerate. H3 raw fidelity is already strong; the loop targets
+   adherence / length / consistency.
+2. **Best-of-N (Phase 1, optional flag).** `--best-of N` for hero shots; cost = GPU × K.
+3. **Open judge (Phase 2).** Prefer local/open vision (e.g. VideoScore / Qwen-VL) over paid APIs
+   when possible.
+4. **Receipts.** Log verdicts + refine trajectories for debugging and later community study.
 
-**Decision (locked, from `PLAN.md`):** **refine-primary, best-of-N optional.** H3 is already at
-parity; the loop fixes the agent-layer gap (adherence, length, consistency), which is what differs
-between a single shot and a delivered film.
+**Decision (from `PLAN.md`):** refine-primary, best-of-N optional.
 
 ---
 
@@ -61,22 +50,18 @@ English/Chinese; the agent plans, crafts, validates, generates, judges, refines,
 delivers — no node graphs, no prompt engineering, no mode selection. Chat-style refinement ("make
 shot 3 slower", "change the lighting to golden hour") works on the project, not just one clip.
 
-**Competitor validation:**
-- **Seedance 2.x** — closed agentic long-video pipeline; the bar open-video matches open.
-- **Sora (ChatGPT)** — conversational generation inside ChatGPT;证明了 NL UX beats node-graph for non-technical users.
-- **Runway Gen-3** — polished NL prompt box; but single-shot, no plan/judge/stitch.
+**Demand signal:** closed tools (Seedance, Sora chat, Runway) prove natural-language → video UX
+beats node-graphs for non-technical users.
 
 **open-video implementation:**
-- `core/pipeline.py` is the director; the UX layer is a thin chat front-end that calls it.
-- Three surfaces share one brain: **App** (chat GUI), **CLI** (`open-video "..."`), **Skill**
-  (SKILL.md for Claude Code / Cursor). All three already enumerated in `README.md`.
-- Refinement is **project-scoped**, not clip-scoped: the agent edits the coherence bible and
-  re-runs only affected shots (state-vector handoff keeps the rest stable).
+- `core/pipeline.py` is the long-film orchestrator **scaffold**; single-shot path is reliable today.
+- Surfaces today: **CLI** + **Skill** (`h3-video` / `open-video`). **App** and hosted try-as-GPU
+  are not shipped (`/try` is a browser mockup).
+- Future: project-scoped refine (edit bible, re-run affected shots only).
 
 **MVP vs later:**
-- **MVP (Phase 0–1):** CLI + Skill. Free, ships with the open-source core, targets developers first.
-- **Phase 2:** App (web GUI) — the ChatGPT-for-video surface for PMs/creators. This is the
-  `open-video.ai/try` page from `PLAN.md`.
+- **MVP (Phase 0–1):** CLI + Skill.
+- **Phase 2:** App / hosted convenience — not a current claim.
 
 ---
 
@@ -86,24 +71,18 @@ shot 3 slower", "change the lighting to golden hour") works on the project, not 
 H3 for audio + prompt adherence; Wan 2.2 for physics; LTX-2.3 for real-time drafts; FLUX3-Dev when
 open-weighted. The director survives model churn — the community never has to throw away recipes.
 
-**Competitor validation:**
-- **ComfyUI** — multi-model but manual (user wires the node-graph). Validates demand, not the UX.
-- **Pika / Runway** — single-model wrappers; brittle when their model ages.
-- **MiniMax / Kling / Hailuo** — each a single closed model behind a paywall.
+**Demand signal:** multi-model tools (e.g. ComfyUI) show users want choice; single-model wrappers
+age poorly.
 
 **open-video implementation:**
 - `backends/<model>/` plugin contract (`backend.py` ABC + Capabilities + ShotRequest/Result).
-- H3 = plugin #1 (ported, proven from early lab).
-- Add a model = write a backend plugin (capabilities, prompt_grammar, modes→workflow, constraints).
-  Core never changes — this is the architectural seam from `ARCHITECTURE.md`.
-- Routing signals: shot needs audio? → H3. Needs long continuous motion? → Wan 2.2. Draft
-  iteration? → LTX. Hero shot? → H3 + best-of-N.
+- H3 = plugin #1 (working).
+- Add a model = one backend plugin; core stays stable (`ARCHITECTURE.md`).
 
 **MVP vs later:**
-- **MVP (Phase 0):** H3 only (single backend) — but the contract is in place from day 1.
-- **Phase 1:** 2nd backend (Wan 2.2 or FLUX3-Dev) to prove model-agnostic. **This is a flagship
-  proof-point**: open-video is the only project where the *director* is model-agnostic.
-- **Phase 2:** selector.py auto-routing from declared `Capabilities.strengths`.
+- **MVP (Phase 0):** H3 only — contract in place.
+- **Phase 1:** 2nd backend to prove the seam.
+- **Phase 2:** selector auto-routing from `Capabilities.strengths`.
 
 ---
 
@@ -114,22 +93,17 @@ the coherence bible's act/scene structure. Users drag, reorder, branch (variants
 **reflects the director's plan** — not a blank node-graph like ComfyUI, but a populated storyboard
 the agent built and the user can edit. Branches = best-of-N variants side by side.
 
-**Competitor validation:**
-- **Krea** — real-time canvas, proved the spatial-editing UX beats timeline-only for generative work.
-- **Runway (Frames / Gen-3 canvas)** — spatial timeline for sequences.
-- **ComfyUI** — infinite canvas but for *wires*, not *story*; this is the gap.
+**Demand signal:** spatial storyboards (Krea, Runway canvas) beat wire-only graphs for creators.
 
 **open-video implementation:**
-- Render `planner.py`'s coherence bible as a canvas of shot cards (thumbnail + prompt + verdict).
-- Each card is editable: change prompt → re-craft → re-validate → re-judge just that card.
-- Branching: right-click a card → "variants" → best-of-N candidates spawn as children; pick one to
-  promote. This is the VISTA tournament, visualized.
-- FL2VA chain visualized as edges (last-frame → first-frame handoff), making the long-film
-  pipeline legible to non-technical users.
+- Render planner output as shot cards (thumbnail + prompt + verdict).
+- Card edit → re-craft / re-validate / re-judge that shot only.
+- Optional branching for best-of-N variants.
+- FL2VA handoff as edges between cards.
 
 **MVP vs later:**
-- **MVP (Phase 0–1):** linear storyboard preview (PNG thumbnails per shot, sequential). No canvas.
-- **Phase 2:** infinite canvas in the App. The differentiator vs ComfyUI's wire-canvas: **story-canvas**.
+- **MVP (Phase 0–1):** linear storyboard preview (thumbnails). No canvas.
+- **Phase 2:** infinite story-canvas in an App (App itself is Phase 2).
 
 ---
 
@@ -140,25 +114,21 @@ the agent built and the user can edit. Branches = best-of-N variants side by sid
 - **I2V** — image to video (keyframe or uploaded image → motion).
 - **V2V** — video to video (style/subject transform of existing clip).
 - **Extend** — continue a clip beyond the model's native ceiling (15s for H3).
-- **Multi-shot** — chain shots into a multi-minute film (the flagship).
+- **Multi-shot** — chain shots toward longer films (**design flagship**; partial scaffold today).
 
-**Competitor validation:**
-- **Runway Gen-3 / Pika** — ship all five modes; this is the table-stakes matrix.
-- **MiniMax H3** — ships T2V/I2V/R2V natively but **single-shot only**; the agent layer is what
-  turns these modes into a film.
+**Demand signal:** commercial tools expose T2V/I2V/extend matrices; H3 natively covers short
+T2V/I2V/R2V shots.
 
 **open-video implementation:**
-- Each mode = a `ShotRequest` mode flag dispatched to the backend's `modes→workflow` map.
-- **Extend = FL2VA with first_frame = clip's last frame** (the same primitive as multi-shot).
-- **Multi-shot = the flagship `core/pipeline.py`** — FL2VA chain + coherence-bible state-vector
-  handoff + per-shot judge. This is the 5-min film engine from `PLAN.md`.
-- Validator (`core/validator.py`) is **mode-aware** — duration/ref-counts/timeline/dialogue rules
-  differ per mode, hard-gated before generation.
+- Each mode = a `ShotRequest` mode flag → backend workflow map.
+- **Extend / multi-shot** share FL2VA last-frame → first-frame chaining in `core/pipeline.py`
+  (partial).
+- Validator is mode-aware (duration / refs / timeline).
 
 **MVP vs later:**
-- **MVP (Phase 0):** T2V + I2V + multi-shot (the long-film pipeline). These three prove the thesis.
-- **Phase 1:** extend (cheap once FL2VA chain exists — it's the same primitive).
-- **Phase 2:** V2V (style transfer — needs a second model class or control-net adapter).
+- **MVP (Phase 0):** reliable T2V + I2V single-shot; multi-shot as best-effort scaffold.
+- **Phase 1:** extend + solid multi-shot.
+- **Phase 2:** V2V.
 
 ---
 
@@ -169,44 +139,33 @@ frame 12 onward") and the edit propagates coherently across the shot — and, wh
 bible says it should, across downstream shots. This is the successor to inpainting: edit at
 frame granularity, get temporal consistency for free.
 
-**Competitor validation:**
-- **Runway Gen-3 (Director Mode)** — frame-level inpainting + region editing; the category leader.
-- **Descript (for video)** — text-based edit propagation proved the demand for "edit one place, fix everywhere".
-- **Pika (Pikaffects / modify region)** — region-targeted edits.
+**Demand signal:** frame/region edit tools (Runway, Pika, Descript-style) show users want
+edit-once consistency.
 
-**open-video implementation:**
-- Per-frame edit → mask + edit prompt → **regenerate the affected shot** with the edited frame as
-  a keyframe (I2V-from-edited-frame) → judge re-checks temporal coherence.
-- Cross-shot propagation: if the edit touches a state-vector field (identity / wardrobe / geography
-  / story-knowledge / audio), the planner rewrites the bible and flags downstream shots for re-judge.
-- Receipts: every propagated edit is logged so the user can audit *why* shot 7 regenerated.
+**open-video implementation (roadmap):**
+- Edit frame → regenerate shot from keyframe → re-check coherence when judge is live.
+- Cross-shot propagation via state-vector fields later.
+- Receipts for audit.
 
 **MVP vs later:**
-- **Phase 2:** shot-scoped frame edits (regenerate shot from edited keyframe).
-- **Phase 3:** cross-shot state-vector propagation (full "edit once, fix everywhere"). Requires the
-  judge loop to re-certify downstream shots — non-trivial GPU cost.
+- **Phase 2:** shot-scoped frame edits.
+- **Phase 3:** cross-shot propagation (expensive; needs live judge).
 
 ---
 
 ### 6. Reference consistency (identity / style / prop lock)
 
-**What it is.** A character, style, or prop stays the same across every shot of a multi-minute
-film — the single hardest problem in long-video and the one that most visibly separates amateur
-from professional output. Implemented via **reference-packs** (turnaround sheets, lighting boards,
-style frames) that the backend consumes as R2V / FL2VA inputs.
+**What it is.** A character, style, or prop stays consistent across shots — hard problem in long
+video. Implemented via **reference-packs** (turnaround sheets, lighting boards, style frames) that
+the backend consumes as R2V / FL2VA inputs.
 
-**Competitor validation:**
-- **Seedance 2.x** — strong character consistency in closed long-video; the bar.
-- **Runway (References / Characters)** — explicit "character" inputs for identity lock.
-- **MiniMax H3** — ships R2V (reference-to-video) natively; the primitive is there.
+**Demand signal:** closed tools expose character/reference locks; H3 already has R2V primitives.
 
 **open-video implementation:**
-- `library/reference_packs/` — curated turnaround sheets + lighting boards (official seed +
-  community contributions). The compounding-moat artifact.
-- Planner attaches the relevant reference-pack to each shot's `ShotRequest`; backend maps it to
-  H3's R2V mode or FL2VA-with-reference.
-- Validator enforces backend ref-count limits (H3: hard cap) before generation.
-- Judge includes a **consistency dimension** — does the character in shot N match the reference-pack?
+- `library/reference_packs/` — curated packs + community contributions (as they land).
+- Planner attaches packs to `ShotRequest`; backend maps to R2V / FL2VA-with-reference.
+- Validator enforces ref-count limits.
+- Future judge: consistency dimension vs reference pack.
 
 **MVP vs later:**
 - **MVP (Phase 0):** reference-pack input → R2V on H3. Proves the primitive.
@@ -222,23 +181,16 @@ style frames) that the backend consumes as R2V / FL2VA inputs.
 VHS, anime-style, etc. — that compose into the prompt as *camera prose* and *style modifiers*
 rather than post-processing filters. The effect changes generation, not the output.
 
-**Competitor validation:**
-- **Pika (Pikaffects)** — one-click visual effects as the brand hook; proved virality of effects.
-- **Runway (Gen-3 effects + LUTs)** — cinematic presets.
-- **CapCut / Canva** — one-click templates for non-technical creators (the UX bar).
+**Demand signal:** one-click effects/presets are table stakes in creator tools.
 
 **open-video implementation:**
-- `library/style_profiles/` + an `effects/` catalog — each entry is a *prompt fragment* + *mode
-  hint* + *validator-aware constraint delta* (e.g. "anime-style" flips style field, "long-take"
-  relaxes cut count).
-- The crafter (`core/crafter.py`) merges the user's concept + selected effects into the final
-  model-specific 3-field prompt — effects are first-class in the prompt, not post-hoc.
-- Judge checks effect adherence ("did we actually get a dolly zoom?") — closes the loop.
+- `library/style_profiles/` + effects as prompt fragments + mode hints (generation-time, not only
+  post filters).
+- Crafter merges concept + effects into the model-specific prompt.
 
 **MVP vs later:**
-- **Phase 1:** ~20 curated effects (camera moves + transitions + 5 style profiles) ship in `library/`.
-- **Phase 2:** effect marketplace (community-contributed, curated, with judge-verified thumbnails).
-- **Phase 3:** premium effect packs (style LoRAs) — the marketplace revenue line.
+- **Phase 1:** curated effects in `library/`.
+- **Phase 2+:** community effects / style packs (not a revenue claim).
 
 ---
 
@@ -249,51 +201,34 @@ vertical TikTok", "2-minute documentary cold open", "movie trailer" — each a p
 **coherence bible** + shot list + style profile + reference-pack. One click → the user's concept
 fills the slots → film generates. Templates lower the floor from "describe a film" to "pick a film".
 
-**Competitor validation:**
-- **Canva** — template catalog is the entire product; proved templates are how non-technical users
-  adopt a creative tool.
-- **CapCut** — video templates drove its billions of users.
-- **Runway (Templates)** — genre-based starting points for ads/trailers.
+**Demand signal:** template catalogs lower the floor for non-technical creators.
 
 **open-video implementation:**
-- `library/coherence_recipes/` — pre-built coherence bibles for common film types (the
-  `PLAN.md` flywheel seed).
-- Each template = a parameterized bible: slots for {subject, brand, mood, duration}. User fills
-  slots via chat or form; planner instantiates the full shot list.
-- Templates are **community-contributable** under Apache 2.0 — the catalog grows with the community.
+- `library/coherence_recipes/` — YAML templates for common film types.
+- Parameterized slots ({subject, brand, mood, duration}) when planner UX exists.
+- Community-contributable under Apache 2.0.
 
 **MVP vs later:**
 - **Phase 1:** ~10 official templates (ad / trailer / explainer / vertical social / documentary).
-- **Phase 3:** template marketplace (premium coherence-recipes = first take-rate revenue line,
-  per `PLAN.md` Phase 3).
+- **Phase 3:** optional template marketplace (future idea only — not a product claim today).
 
 ---
 
 ### 9. Community gallery (verified prompt → video)
 
-**What it is.** `open-video.ai/gallery` — every prompt in `library/prompts/` is **tested on H3
-and the output is shown alongside the prompt** (prompt → video → quality verdict + judge receipt).
-Browsability + one-click remix. This is both the flywheel seed and the **public proof that
-open-video works**.
+**What it is.** A public gallery of prompts + rendered results (when the site is ready). Not live
+as a full product surface in v0.0.1.
 
-**Competitor validation:**
-- **Civitai** — gallery + prompts + LoRAs = the community flywheel that made Stable Diffusion
-  win. The single most-copied playbook in open generative.
-- **OpenArt** — prompt gallery as product surface (the "OpenArt" half of our positioning).
-- **Hugging Face Spaces** — community-runnable demos.
+**Demand signal:** Civitai / OpenArt-style galleries help discovery and remix.
 
-**open-video implementation:**
-- Auto-render every merged `library/prompts/` entry on the official GPU; publish video + judge
-  verdict + receipts to the gallery.
-- One-click "remix" → opens the prompt in `open-video.ai/try` pre-filled.
-- Provenance labels (per `data-integrity.md`): each gallery item shows model + settings + GPU +
-  judge verdict — honest, reproducible, not a cherry-picked highlight reel.
+**open-video implementation (roadmap):**
+- Publish tested `library/prompts/` with media + settings + provenance.
+- Remix into local CLI / future App — `/try` stays a mockup until real cloud gen exists.
 
 **MVP vs later:**
-- **Phase 1:** static gallery (prompts + rendered videos) — the proof-point that ships with the
-  open-source launch.
-- **Phase 2:** interactive remix-in-place.
-- **Phase 3:** creator profiles + tipping / paid packs (the community-as-platform layer).
+- **Phase 1:** static gallery when prompts + assets are ready.
+- **Phase 2:** interactive remix.
+- **Phase 3:** creator profiles (optional; not a marketplace claim).
 
 ---
 
@@ -304,16 +239,13 @@ Reels / Shorts, 1:1 for feed, 16:9 for YouTube, with correct duration caps, code
 zones, and caption burn-in. The director plans for the target platform from the start (shot count
 and duration budget per platform), not just resizes at the end.
 
-**Competitor validation:**
-- **CapCut** — platform export presets are table stakes for any creator tool.
-- **Runway / Pika** — export dialogs with aspect + duration presets.
-- **Adobe Premiere (Social Media presets)** — the professional bar.
+**Demand signal:** platform export presets are table stakes in creator tools.
 
 **open-video implementation:**
 - Platform presets as a `library/platforms/` data table (aspect, max duration, codec, bitrate,
   safe-zone, caption style).
-- The **planner consumes the target platform up front** — a 30s TikTok gets a different coherence
-  bible (3 × 8s shots, vertical framing, hook in first 1s) than a 2-min YouTube short.
+- Planner *can* consume target platform up front when multi-shot planning is solid — a 30s TikTok
+  gets a different shot budget than a 2-min YouTube cut.
 - `stitcher.py` applies the final encode + caption burn-in via ffmpeg (already a dependency).
 
 **MVP vs later:**
@@ -341,16 +273,12 @@ and duration budget per platform), not just resizes at the end.
 
 ## What we explicitly do NOT build (focus guardrails)
 
-- **Not an all-modalities platform.** Video generation ONLY — no image-only, no audio-only, no code.
-  Closed competitors spread thin; open-video goes deep on the agent layer for video.
-- **Not a video editor.** No multi-track NLE, no color grading UI — that's Resolve/Premiere/CapCut.
-  We export to them. The canvas is for *story*, not for *cutting*.
-- **Not a model trainer.** No training infra — we consume open models (H3, Wan, LTX, FLUX). Style
-  LoRAs come from the community via the marketplace, not from us.
-- **Not a closed SaaS.** Everything ships Apache 2.0; the hosted tier is convenience, not lock-in.
+- **Not an all-modalities platform.** Video generation focus — not a general image/music studio.
+- **Not a video editor.** No multi-track NLE; export to Resolve/Premiere/CapCut.
+- **Not a model trainer.** Consume open models; community may train LoRAs elsewhere.
+- **Not a closed SaaS.** Apache 2.0 core; any hosted tier is convenience, not lock-in.
 
-## Success metric (unchanged from PLAN.md)
+## Success metric (from PLAN.md)
 
-**An open-video-generated open film, vision-judged (cx GPT-5.6 + Opus 4.8) as coherent and at least
-on-par with a Seedance-generated short on the same concept.** Every feature above exists to make
-that true at scale — and to make the next 10,000 such films community-generated.
+A coherent multi-shot open demo with a **real** vision review (not the PASS stub), documented with
+receipts — not vanity star-count goals on public docs.
