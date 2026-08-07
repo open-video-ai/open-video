@@ -26,7 +26,7 @@
 
 ---
 
-Brand system: [`BRAND.md`](BRAND.md) · public strings: [`docs/PUBLIC_COPY.md`](docs/PUBLIC_COPY.md).
+Brand: [`BRAND.md`](BRAND.md) · Design: [`DESIGN.md`](DESIGN.md) · Copy: [`docs/PUBLIC_COPY.md`](docs/PUBLIC_COPY.md).
 
 ## What v0.0.1 is
 
