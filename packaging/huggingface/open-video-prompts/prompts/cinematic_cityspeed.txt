@@ -1,0 +1,5 @@
+integrated_multimodal_description: [Shot 1] Live-action, cinematic, a medium-wide shot frames a solitary violinist in a weathered dark coat standing on a rain-slicked city overpass at dusk. The camera pushes in with small amplitude at slow speed as he lifts the bow and draws the first long note, warm streetlamps flaring behind him. [Shot 2] At 00:04.000, the camera cuts to a low tracking shot moving past his hands, rosin dust drifting through the beam of a passing car's headlights, the distant skyline softly blurred behind him.
+
+overall_soundscape: Light rain patters on wet asphalt with occasional distant tire hiss. A faint metallic rattle as the violin's chin rest settles, and the creak of the bow hair tightening under pressure. Breath slow and steady between phrases.
+
+non_diegetic_music: A solo violin sustains a slow, aching minor-key melody, joined near the end by a soft low cello drone and a gentle swell that fades as the final note releases.

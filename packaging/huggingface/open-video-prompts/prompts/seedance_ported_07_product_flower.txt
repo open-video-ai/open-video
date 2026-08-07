@@ -1,0 +1,5 @@
+integrated_multimodal_description: [Shot 1] Live-action, cinematic, high-impact technology-brand commercial aesthetic, a single locked-off continuous macro shot in darkness beginning on a metallic flower bud, realistic physical lighting with refined metallic and glass materials. The camera pushes in with small amplitude at slow speed, gliding through the petals into the precise mechanical structure inside — interlocking gears, polished steel stems, glass filaments — as the mechanical flower progressively blooms, each petal unfolding with delicate mechanical motion, internal light building and radiating outward until the full bloom glows at the center of the frame, cinematic color grading, stable composition throughout.
+
+overall_soundscape: Fine metallic clicks and ratchets, a low gear-whir, and the soft crystalline ring of glass filaments settling as the bloom opens.
+
+non_diegetic_music: A minimal ambient pad at a slow tempo, a single sustained synth tone swelling gently as the bloom opens, then fading.
