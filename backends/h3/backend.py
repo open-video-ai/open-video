@@ -1,6 +1,6 @@
 """MiniMax H3 backend for open-video.
 
-Ports the proven H3 generation (from sibling repo 55-ai-video) behind the model-agnostic
+Ports the proven H3 generation (from early lab) behind the model-agnostic
 ModelBackend interface. H3 = the #1 open video model (Arena T2V #2 / I2V #3 overall, #1 open,
 at parity with closed). Baseline backend for open-video.
 """

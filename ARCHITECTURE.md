@@ -21,7 +21,7 @@ User concept ──→ [core: planner] ──→ coherence bible (acts/scenes/st
 ### core/ (model-agnostic — the brain)
 - **planner.py** — concept → coherence bible (5 state groups: identity/wardrobe/geography/story-knowledge/audio) + acts→scenes with time allocation + per-transition state vectors. Ported from woodfantasy methodology.
 - **crafter.py** — intent → model-specific prompt (calls backend.craft_prompt / prompt_guide). LLM-driven; structured per the official model guide.
-- **validator.py** — mode-aware hard constraint check (backend.constraints + timeline/refs/dialogue). Ported from 55-ai-video/scripts/validate_prompt.py.
+- **validator.py** — mode-aware hard constraint check (backend.constraints + timeline/refs/dialogue). Ported from early lab/scripts/validate_prompt.py.
 - **judge.py** — the QUALITY LOOP (core IP). Extracts frames → vision-assesses (via analyze_image / cross-model cx+Opus) vs prompt intent + quality bar → diagnoses issues → returns verdict (PASS/refine-issues) + targeted fix suggestions. This is the VISTA/VideoWeaver pattern productized for open models.
 - **pipeline.py** — the LONG-FILM ORCHESTRATOR (flagship). Orchestrates: plan → craft → validate → generate (w/ FL2VA chaining) → judge → refine → stitch. The 5-min film engine.
 - **stitcher.py** — ffmpeg concat + cross-shot audio continuity (music theme/dialogue language/ambient crossfade) + optional 2K API upscale.
@@ -29,13 +29,13 @@ User concept ──→ [core: planner] ──→ coherence bible (acts/scenes/st
 - **backend.py** — the contract (ModelBackend ABC + Capabilities + ShotRequest/Result + EngineAdapter).
 
 ### backends/<model>/ (plugins — one per open model)
-- **h3/** — MiniMax H3: 3-field prompt grammar, FL2VA/T2V/R2V workflows, constraints (17k+5, 4-15s, ref limits), int8_convrot settings, ComfyUI generate. **Ported from 55-ai-video (proven working).**
+- **h3/** — MiniMax H3: 3-field prompt grammar, FL2VA/T2V/R2V workflows, constraints (17k+5, 4-15s, ref limits), int8_convrot settings, ComfyUI generate. **Ported from early lab (proven working).**
 - **wan2/** — (future) Wan 2.2: Apache-2.0 clean-license global anchor.
 - **ltx/** — (future) LTX-2.3: real-time speed tier.
 - Each backend: `backend.py` (implements ModelBackend) + `workflows/` + `PROMPT_GRAMMAR.md` + `__init__.py`.
 
 ### engines/<engine>/ (adapters — open-video drives the engine)
-- **comfyui/** — ComfyUI HTTP API client (submit/wait/fetch). **Ported from 55-ai-video (proven working).**
+- **comfyui/** — ComfyUI HTTP API client (submit/wait/fetch). **Ported from early lab (proven working).**
 - (future) diffusers/, sglang/ — direct engine adapters.
 
 ### interfaces/ (user entry points)
@@ -50,7 +50,7 @@ User concept ──→ [core: planner] ──→ coherence bible (acts/scenes/st
 - **style_profiles/** — style LoRAs + aesthetic presets.
 
 ### bench/ (evidence-based defaults)
-- Auto-profiles each model+GPU → optimal settings (steps/sampler/quant/offload). Ported from 55-ai-video/scripts/h3_full_benchmark.py.
+- Auto-profiles each model+GPU → optimal settings (steps/sampler/quant/offload). Ported from early lab/scripts/h3_full_benchmark.py.
 
 ## The quality loop (core IP — how open delivers closed-grade quality)
 ```

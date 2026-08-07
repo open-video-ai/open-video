@@ -107,7 +107,7 @@ req = ShotRequest(prompt=<3-field prompt string>, mode="t2v",
 result = backend.generate(req, engine=engine)   # → ShotResult(ok, video_path, receipt)
 ```
 - User-facing CLI (planned in `cli/`): `open-video "<concept>" --duration 300 --model h3`.
-- Proven baseline scripts (same workflows, ported from the sibling 55-ai-video repo):
+- Proven baseline scripts (same workflows, ported from the early lab):
   - Single shot: `scripts/h3_agent.py --request "<simple NL>" --duration 5 --width 1344 --height 768`
     (use `--prompt "<full 3-field prompt>"` for best quality; `--first-frame`/`--last-frame` for I2V/FL2VA).
   - Validate: `scripts/validate_prompt.py` (exit 0 = clean, 1 = issues).

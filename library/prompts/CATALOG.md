@@ -16,7 +16,7 @@ Each will be generated + verified on H3 + displayed on `open-video.ai/gallery`.
 | 9 | Steampunk inventor mechanical heart | I2VA | default | cushycrux ex1 | TODO |
 | 10 | Ginger cat + butterfly (windowsill) | I2VA | default | cushycrux ex2 | TODO |
 | 11 | Michael Scott office sitcom | I2VA | default | cushycrux ex3 | TODO |
-| — | Lighthouse keeper (our demo film) | T2VA+I2VA | 10s+8s | original | `demo/` (55-ai-video) |
+| — | Lighthouse keeper (our demo film) | T2VA+I2VA | 10s+8s | original | `library/prompts/demo/` |
 | — | Cityspeed racing | T2VA | 8s | Seedance-port | `seedance_ported_03_racing.txt` ✓ |
 | — | Romance micro-expression | T2VA | 10s | Seedance-port | `seedance_ported_01_romance.txt` ✓ |
 | — | Product flower bloom | T2VA | 6s | Seedance-port | `seedance_ported_07_product_flower.txt` ✓ |

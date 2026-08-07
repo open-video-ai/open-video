@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# Reuse the validator from core/ (ported from 55-ai-video/scripts/validate_prompt.py)
+# Reuse the validator from core/ (ported from early lab/scripts/validate_prompt.py)
 # The validator checks: 3 required fields, duration range, mode-specific constraints,
 # timeline cut times, dialogue tags.
 from core.validator import validate, detect_mode

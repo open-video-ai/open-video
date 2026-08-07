@@ -1,1 +1,1 @@
-"""ComfyUI HTTP API adapter (submit / poll / fetch). Ported from 55-ai-video."""
+"""ComfyUI HTTP API adapter (submit / poll / fetch). Ported from early lab."""

@@ -4,7 +4,7 @@ A backend is a plugin that adapts ONE open video model (H3, Wan3, FLUX3-Dev, ...
 model-agnostic core. The core (planner/crafter/validator/judge/stitcher) never touches a model
 directly — it goes through this interface. Adding a model = implement this contract; core unchanged.
 
-Inspired by what we learned shipping H3 (see sibling repo 55-ai-video): each model has its own
+Inspired by what we learned shipping H3 (see early lab): each model has its own
 prompt grammar, modes, workflow, constraints, and optimal settings.
 """
 from __future__ import annotations

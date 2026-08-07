@@ -93,7 +93,7 @@ open-weighted. The director survives model churn — the community never has to 
 
 **open-video implementation:**
 - `backends/<model>/` plugin contract (`backend.py` ABC + Capabilities + ShotRequest/Result).
-- H3 = plugin #1 (ported, proven from `55-ai-video`).
+- H3 = plugin #1 (ported, proven from early lab).
 - Add a model = write a backend plugin (capabilities, prompt_grammar, modes→workflow, constraints).
   Core never changes — this is the architectural seam from `ARCHITECTURE.md`.
 - Routing signals: shot needs audio? → H3. Needs long continuous motion? → Wan 2.2. Draft

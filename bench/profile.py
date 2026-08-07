@@ -14,7 +14,7 @@ Writes incremental + resumable JSON to bench/results/<model>-<gpu>-<date>.json
 
 The profiling primitives — nvidia-smi VRAM sampler thread, /proc/meminfo RAM read,
 ComfyUI server-log per-step parsing, incremental result writes, resumable skip —
-are ported from the sibling repo 55-ai-video/scripts/h3_full_benchmark.py and
+are ported from the early lab/scripts/h3_full_benchmark.py and
 lifted behind the model-agnostic ModelBackend interface, so any backend plugin
 can be profiled without editing this file.
 
@@ -79,7 +79,7 @@ def _load_cli():
 
 
 # =============================================================================#
-# Proven profiling primitives (ported from 55-ai-video h3_full_benchmark.py)
+# Proven profiling primitives (ported from early lab h3_full_benchmark.py)
 # =============================================================================#
 def ram_used_mb() -> int:
     """Current system RAM used (MB), from /proc/meminfo."""

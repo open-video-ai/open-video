@@ -48,9 +48,12 @@ won't accept a local 768p render. See OFFICIAL_FEATURES.md.
 
 ## Quickstart
 ```bash
-cd /mnt/data/workspace/55-ai-video
+export OPEN_VIDEO_ROOT=/mnt/data/workspace/open-video-project/open-video
+export OPEN_VIDEO_LAB=/mnt/data/workspace/open-video-project/lab
+export OPEN_VIDEO_MODELS=$OPEN_VIDEO_LAB/h3_models
+cd "$OPEN_VIDEO_ROOT"
 # craft prompt → validate → generate → review
-./venv/bin/python scripts/h3_agent.py --prompt "$(cat prompts/cinematic_cityspeed.txt)" \
+python scripts/h3_agent.py --prompt "$(cat library/prompts/cinematic_cityspeed.txt 2>/dev/null || cat prompts/cinematic_cityspeed.txt)" \
   --width 1344 --height 768 --duration 5 --seed 0
 # or all official examples:
 bash scripts/run_official_examples.sh
