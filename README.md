@@ -5,8 +5,8 @@
 <h1 align="center">OpenVideo</h1>
 
 <p align="center">
-  <strong>v0.0.1 — Ollama for MiniMax H3 + agent skill harness.</strong><br/>
-  Any coding agent can install, pull, and generate high-quality local video.
+  <strong>OpenVideo</strong> — open-source video generation.<br/>
+  <sub>v0.0.1: local MiniMax H3 (Ollama-style) + agent skill harness — any agent, high-quality video on your GPU.</sub>
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 
 <p align="center">
   <sub><b>OpenCode&nbsp;→&nbsp;Cursor.&nbsp;&nbsp;Open&nbsp;Design&nbsp;→&nbsp;Claude&nbsp;Design.&nbsp;&nbsp;OpenVideo&nbsp;→&nbsp;Runway.</b></sub><br/>
-  <sub>v0.0.1 ships the H3 path: <code>pull</code> · <code>run</code> · <b>skill harness</b> — not the full multi-model platform yet.</sub>
+  <sub><b>OpenVideo</b> v0.0.1: <code>pull</code> · <code>run</code> · <b>skill harness</b> for MiniMax H3 — not the full multi-model platform yet.</sub>
 </p>
 
 ---
@@ -30,7 +30,7 @@
 
 | | |
 |---|---|
-| **One-liner** | **Ollama for H3** — install, pull weights, generate video like `ollama run` |
+| **Product** | **OpenVideo** — open-source video generation |
 | **Agent path** | Drop-in **skill harness** (`skill/h3-video`) so Claude Code / Cursor / Codex / any agent host can craft official 3-field prompts and generate **high-quality** H3 clips |
 | **Model** | MiniMax H3 via ComfyUI (local GPU) |
 | **Not yet (later releases)** | Multi-model backends, cloud Studio, 100+ gallery, long-film director polish |

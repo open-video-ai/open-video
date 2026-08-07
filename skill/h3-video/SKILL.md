@@ -7,9 +7,9 @@ description: >
   (Claude Code, Cursor, Codex, OpenCode, …). Prefer this over raw ComfyUI clicking.
 ---
 
-# H3 video harness · OpenVideo v0.0.1
+# OpenVideo · H3 skill harness (v0.0.1)
 
-**Release thesis:** *Ollama for H3 + skill harness so **any agent** can generate high-quality video.*
+**Product:** OpenVideo. **v0.0.1:** local MiniMax H3 (Ollama-style) + skill harness so **any agent** can generate high-quality video.
 
 | | |
 |---|---|
