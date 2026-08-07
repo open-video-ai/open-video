@@ -222,7 +222,7 @@ Standing on the shoulders of open giants: **[ComfyUI](https://github.com/comfyan
 
 ---
 
-<p align="center"><sub>OpenVideo · open-video.ai · 100K★ north star — the #1 open video community.</sub></p>
+<p align="center"><sub>OpenVideo · open-video.ai · Apache-2.0</sub></p>
 
 ## Security
 

@@ -1,7 +1,7 @@
 # open-video — Product Feature Roadmap
 
-> The 10 must-have features to be the #1 open video generation community + platform, plus the
-> **Quality Loop** (judge → refine → best-of-N) as our unique IP.
+> Product feature roadmap for OpenVideo (open-source video generation), plus the
+> **Quality Loop** (judge → refine → best-of-N) as core product IP.
 >
 > Status: v0 / planning. Aligned with `PLAN.md` phases. Each feature lists **what it is**, **which
 > competitor validates demand**, **our open implementation plan**, and **MVP vs later** priority.
