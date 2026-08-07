@@ -1,9 +1,7 @@
-"""open-video quality judge — the CORE IP (generate→judge→refine loop).
+"""open-video quality judge scaffold (generate → judge → refine design).
 
-This is what NO open video project has: OpenMontage (45K★) lacks it; ViMax (11.7K★) is
-closed-API-only. Proven effective by Google VISTA (+46.3% win rate via best-of-N + triple-eval +
-deep-thought refine) and VideoWeaver (evidence-grounded agent-as-judge). open-video owns this
-for open models.
+v0.0.1: frame extraction + PASS stub unless a real vision_fn is provided.
+Not a shipped multi-minute film product — wire a vision model for real scores.
 
 Usage:
     judge = QualityJudge(vision_fn=my_vision_api)
@@ -11,7 +9,7 @@ Usage:
     if v.verdict == "REFINE": apply(v.issues)  # fix + regenerate
 
 v0: frame extraction + PASS stub (ready for vision wiring).
-v1: vision model (analyze_image / cx+Opus cross-model) → score + diagnose.
+v1: vision model → score + diagnose (planned).
 """
 import subprocess, json
 from pathlib import Path

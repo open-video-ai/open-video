@@ -1,6 +1,6 @@
 {
   "title": "OpenVideo",
-  "description": "Open-source autonomous video generation. One click installs MiniMax H3 (the #1 open video model, at Arena parity with closed) on ComfyUI, then opens the OpenVideo interface. Describe a concept; OpenVideo plans, generates, judges, refines, and delivers a finished film. Apache 2.0. Domain: open-video.ai.",
+  "description": "OpenVideo — open-source video generation. Install MiniMax H3 (Arena #1 open model) on ComfyUI and generate local clips via OpenVideo CLI/skill. Apache 2.0. https://open-video.ai",
   "icon": "icon.png",
   "version": "0.1.0",
   "homepage": "https://open-video.ai",

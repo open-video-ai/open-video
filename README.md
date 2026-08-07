@@ -121,41 +121,41 @@ open-video run "waves at sunset, golden hour" --duration 10 --model h3 --output 
 | ⌨️ **CLI** | Developers / scripts | `open-video pull` · `status` · `run` (Ollama-shaped) |
 | 🖥️ **Site** | Discovery | [open-video.ai](https://open-video.ai) — install + docs UI (product site repo) |
 
-## The quality loop (the part no open project has)
+## What works today vs what is designed next
 
-```
-   generate ──→ judge ──→ refine ──→ best-of-N ──↻ repeat until it clears the bar
-                  │
-                  └─ a vision model scores every shot vs. your intent + a quality bar.
-                     Below bar → diagnose → targeted fix → regenerate. Only the best take ships.
-```
-
-This loop — proven by Google VISTA (+46.3% win rate) and VideoWeaver — is what turns a
-single-shot open model (≤15s) into a **coherent multi-minute film**. Closed products
-(Seedance, Sora) ship this layer internally. **OpenVideo ships it open.**
-
-## Why open beats closed
-
-| | Open | Closed (Runway / Seedance / Sora) |
+| | v0.0.1 (shipped) | Designed (not default yet) |
 |---|---|---|
-| **Quality** | H3 = Arena parity with #1 closed | Reference ceiling |
-| **Cost** | Free locally; cheap SaaS optional | $0.50–$2+/second |
-| **Ownership** | Your models, your prompts, your data | Vendor lock-in, region bans |
-| **Longevity** | Model-agnostic core survives churn | Model changes when they say |
-| **Community** | Shared prompts, LoRAs, reference-packs (a moat they can't match) | Internal know-how |
+| **Generate** | Local MiniMax H3 via ComfyUI — `pull` / `status` / `run` | Multi-model backends (Wan, etc.) |
+| **Agent path** | `skill/h3-video` crafts official prompts + drives CLI | Full multi-shot director agent |
+| **Judge loop** | Scaffold in `core/judge.py` (PASS stub without a vision fn) | Vision score → refine → best-of-N |
+| **Long film** | Single clips (H3 shot length) | Planner → stitch multi-minute film |
+| **Hosted try** | Site is install + docs; `/try` is a **browser mockup** | Real free/paid GPU generate |
 
-## How it compares
+The **generate → judge → refine** loop is the long-term design (same class of idea as
+VISTA / VideoWeaver-style refine). It is **not** a live vision judge in v0.0.1 — do not treat
+README architecture diagrams as “already ships multi-minute judged film.”
 
-| | What | Open? | Long-film agent | Quality loop | Notes |
-|---|---|:--:|:--:|:--:|---|
-| **OpenVideo** | Director agent on ComfyUI + open models | ✅ Apache-2.0 | ✅ | ✅ judge→refine→best-of-N | **this project** |
-| **Runway** | Closed SaaS, Gen-4 | ❌ | ✅ | internal | the brand to beat |
-| **Seedance 2.x** | Closed, native 180s agent | ❌ | ✅ native | internal | the closed target we match |
-| **OpenMontage** | Open editor, 45K★ | ✅ | ❌ | ❌ | great editor, no director brain |
-| **ComfyUI** | Node-graph engine, 124K★ | ✅ GPL | ❌ | ❌ | **our partner** — we drive it, not replace it |
+## Local vs closed SaaS (facts only)
 
-> OpenVideo isn't a model (H3/Wan/LTX are backends) and isn't an engine (ComfyUI is). It's the
-> **agent brain** those layers lack.
+| | OpenVideo (local) | Typical closed SaaS |
+|---|---|---|
+| **Model** | MiniMax H3 (open weights; Arena #1 open — see model card / Arena) | Vendor-hosted only |
+| **Cost** | Your GPU + electricity | Per-second API / subscription |
+| **Data** | Stays on your machine | Vendor pipeline |
+| **License** | Apache-2.0 software | ToS / region limits |
+
+## How it compares (honest)
+
+| | What | Open software? | Local open model? | Notes |
+|---|---|:--:|:--:|---|
+| **OpenVideo** | CLI + skill + H3 on ComfyUI (v0.0.1) | ✅ Apache-2.0 | ✅ H3 | **this project** — director/judge loop is scaffolding |
+| **Runway** | Closed SaaS | ❌ | ❌ | Hosted product |
+| **Seedance** | Closed agentic long video | ❌ | ❌ | Hosted product |
+| **OpenMontage** | Open editor | ✅ | n/a | Editor, not a local H3 pull/run path |
+| **ComfyUI** | Node-graph engine | ✅ GPL | via custom nodes | **Runtime we drive** — not a competitor to replace |
+
+> OpenVideo is not a foundation model and not a replacement for ComfyUI. v0.0.1 is the
+> **install → pull → run** layer plus an agent skill on top of H3.
 
 ## Community
 
@@ -177,37 +177,34 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for templates and [`GOVERNANCE.md`](GOV
 how decisions get made. **We integrate, we don't reinvent** — if a working project already does
 it, we wrap it as a plugin.
 
-## Architecture
+## Architecture (v0.0.1 + design target)
+
+**Shipped path:**
 
 ```
-concept ──→ [core: planner]   ── coherence bible (acts → scenes → ≤15s shots)
-           [core: crafter]    ── model-specific 3-field prompts
-           [core: validator]  ── hard-gate (duration / refs / dialogue / timeline)
-           [backends/<model>] ── generate shot (via engines/<engine>)  ── FL2VA chain
-           [core: judge]      ── vision-assess vs intent + quality bar  ── refine ↻
-           [core: stitcher]   ── concat + audio continuity + 2K upscale (opt)
-                              ── delivered multi-minute film + per-shot receipts
+prompt / skill ──→ open-video CLI ──→ backends/h3 ──→ engines/comfyui ──→ mp4
 ```
 
-- **`core/`** — model-agnostic brain: planner, crafter, validator, judge-loop, stitcher, selector.
-- **`backends/<model>/`** — one plugin per open model. H3 today; Wan 2.2 / Hunyuan / LTX next.
-- **`engines/<engine>/`** — adapters. ComfyUI today (via its HTTP API); diffusers/SGLang later.
-- **`interfaces/`** — `skill/` (SKILL.md), `cli/` (`open-video`), web app (planned).
+**Design target** (modules exist or are sketched; not all wired end-to-end):
 
-Add a model = write a backend. Add an engine = write an adapter. **The core never changes.**
-Full design in [`ARCHITECTURE.md`](ARCHITECTURE.md); roadmap + open decisions in
-[`PLAN.md`](PLAN.md).
+```
+concept ──→ planner → crafter → validator → backend → judge → stitcher → film
+```
+
+- **`backends/h3/`** — MiniMax H3 (baseline).
+- **`engines/comfyui/`** — ComfyUI HTTP adapter.
+- **`skill/h3-video`** — agent harness for prompts + generate.
+- **`core/`** — shared types + judge/planner scaffolding for later phases.
+
+Full design notes: [`ARCHITECTURE.md`](ARCHITECTURE.md). Short public roadmap: below.
+Internal planning detail lives in the private ops repo, not in star-count vanity on this README.
 
 ## Status & roadmap
 
-**v0 / planning** — H3 backend + ComfyUI adapter + core loop, proving the thesis: an open,
-vision-judged, multi-minute film that holds up next to a Seedance short.
+**v0.0.1 — shipped:** local H3 pull/run, skill harness, install path, product site.
 
-- **Phase 0 — thesis proof:** a real 1–5 min open film, judge-verified coherent.
-- **Phase 1 — open + community:** `library/` flywheel, Discord, a 2nd backend (Wan 2.2) to prove
-  model-agnostic, prompt gallery at `open-video.ai/gallery`.
-- **Phase 2 — hosted:** managed SaaS/API (bring-your-key or our GPUs) + enterprise license.
-- **Phase 3 — marketplace:** premium coherence-recipes, style LoRAs, reference-packs.
+- **Next:** real vision judge wiring, multi-shot continuity, 2nd backend, contributor gallery when ready.
+- **Later (maybe):** hosted generate, desktop packaging, marketplace-style sharing — only when real.
 
 ## Acknowledgments
 
