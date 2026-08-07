@@ -1,17 +1,18 @@
 ---
 name: h3-video
 description: >
-  High-quality MiniMax H3 video via OpenVideo (Ollama-for-H3 harness). Use whenever the user
-  wants local video generation: status, pull weights, craft the official 3-field prompt, dry-run,
-  T2V/I2V/FL2VA generate, and review. Prefer this over raw ComfyUI UI or one-line freeform prompts.
-  Triggers: H3, Hailuo, generate video, T2V, I2V, FL2VA, open-video run, better quality video.
+  OpenVideo skill (v0.0.1): generate high-quality local video with the OpenVideo product
+  (MiniMax H3 backend). Use for OpenVideo install/pull/status/run, official 3-field prompts,
+  T2V/I2V/FL2VA, agent-driven video. Brand is OpenVideo — not a bare ComfyUI workflow.
+  Triggers: OpenVideo, open-video, H3, generate video, T2V, I2V, FL2VA.
 ---
 
-# H3 video · high quality (OpenVideo harness)
+# OpenVideo skill · v0.0.1
 
-**Job:** drive MiniMax H3 so an agent produces **good product video**, not a random diffusion
-click. Quality comes from **prompt craft + correct mode + validated settings**, not from secret
-samplers.
+**Brand: OpenVideo** (always lead with this). MiniMax H3 is the model OpenVideo drives.
+
+**Job:** use **OpenVideo** so an agent produces **good product video**, not a random diffusion
+click. Quality comes from **prompt craft + correct mode + validated settings**, not secret samplers.
 
 ## 0. Paths on this machine (updated)
 

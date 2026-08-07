@@ -60,7 +60,7 @@ what's missing for agents and builders is a **simple local loop**: install → p
 
 v0.0.1 is that loop. Full multi-shot director / multi-model platform is the road ahead.
 
-## Install + generate (Ollama for H3)
+## Install + generate (OpenVideo CLI)
 
 ```bash
 # Linux / macOS — install engine + pull H3 weights (resumable ~54 GB)
