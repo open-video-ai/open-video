@@ -4,7 +4,7 @@
 
 | Version | Supported |
 |---|---|
-| `0.1.x` (main / master) | ✅ |
+| `0.0.x` (main / master) | ✅ |
 | Older tags | Best-effort |
 
 ## Reporting a vulnerability

@@ -48,9 +48,9 @@ won't accept a local 768p render. See OFFICIAL_FEATURES.md.
 
 ## Quickstart
 ```bash
-export OPEN_VIDEO_ROOT=/mnt/data/workspace/open-video-project/open-video
-export OPEN_VIDEO_LAB=/mnt/data/workspace/open-video-project/lab
-export OPEN_VIDEO_MODELS=$OPEN_VIDEO_LAB/h3_models
+export OPEN_VIDEO_ROOT="${OPEN_VIDEO_ROOT:-$(pwd)}"   # product checkout
+export OPEN_VIDEO_LAB="${OPEN_VIDEO_LAB:-$OPEN_VIDEO_ROOT/../lab}"
+export OPEN_VIDEO_MODELS="${OPEN_VIDEO_MODELS:-$OPEN_VIDEO_LAB/h3_models}"
 cd "$OPEN_VIDEO_ROOT"
 # craft prompt → validate → generate → review
 python scripts/h3_agent.py --prompt "$(cat library/prompts/cinematic_cityspeed.txt 2>/dev/null || cat prompts/cinematic_cityspeed.txt)" \

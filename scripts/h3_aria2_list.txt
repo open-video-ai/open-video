@@ -1,12 +1,15 @@
+# Example aria2 input for MiniMax H3 weights.
+# Replace $OPEN_VIDEO_MODELS with your weights root (e.g. ../lab/h3_models or
+# $HOME/open-video-models). Prefer: open-video pull h3
 https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors
-  dir=/mnt/data/workspace/open-video-project/lab/h3_models/diffusion_models
+  dir=$OPEN_VIDEO_MODELS/diffusion_models
   out=minimax_h3_fl2va_pruned_int8_convrot.safetensors
 https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors
-  dir=/mnt/data/workspace/open-video-project/lab/h3_models/text_encoders
+  dir=$OPEN_VIDEO_MODELS/text_encoders
   out=qwen3vl_32b_minimax_h3_int8_convrot.safetensors
 https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=vae/minimax_h3_video_vae_fp16.safetensors
-  dir=/mnt/data/workspace/open-video-project/lab/h3_models/vae
+  dir=$OPEN_VIDEO_MODELS/vae
   out=minimax_h3_video_vae_fp16.safetensors
 https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=vae/minimax_h3_audio_vae_fp32.safetensors
-  dir=/mnt/data/workspace/open-video-project/lab/h3_models/vae
+  dir=$OPEN_VIDEO_MODELS/vae
   out=minimax_h3_audio_vae_fp32.safetensors

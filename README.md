@@ -12,8 +12,6 @@
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"/></a>
   <img alt="Version" src="https://img.shields.io/badge/version-0.0.1-informational.svg"/>
-  <a href="https://github.com/open-video-ai/open-video/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/open-video-ai/open-video?style=social"/></a>
-  <a href="https://discord.gg/open-video"><img alt="Discord" src="https://img.shields.io/discord/0?style=social&logo=discord&label=Discord&color=5865F2"/></a>
   <a href="https://open-video.ai"><img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fopen-video.ai&label=open-video.ai"/></a>
   <a href="https://huggingface.co/open-video-ai"><img alt="Hugging Face" src="https://img.shields.io/badge/HuggingFace-open--video--ai-yellow.svg"/></a>
   <a href="https://huggingface.co/spaces/ArtificialAnalysis/Video-Generation-Arena"><img alt="H3 Arena" src="https://img.shields.io/badge/H3-Arena%20%231%20open-FBBF24.svg"/></a>
@@ -27,6 +25,10 @@
 ---
 
 Brand: [`BRAND.md`](BRAND.md) · Design: [`DESIGN.md`](DESIGN.md) · Copy: [`docs/PUBLIC_COPY.md`](docs/PUBLIC_COPY.md).
+
+**Primary CTA is Install** (site + CLI). Source lives at
+[`open-video-ai/open-video`](https://github.com/open-video-ai/open-video) — use the install
+path below; clone when the org opens the tree for contributors.
 
 ## What v0.0.1 is
 
@@ -157,11 +159,8 @@ single-shot open model (≤15s) into a **coherent multi-minute film**. Closed pr
 
 ## Community
 
-<p>
-  <a href="https://discord.gg/open-video"><img alt="Discord" src="https://img.shields.io/discord/0?style=for-the-badge&logo=discord&label=Join%20Discord&color=5865F2"/></a>
-  &nbsp;
-  <a href="CONTRIBUTING.md"><img alt="Contributing" src="https://img.shields.io/badge/PRs-welcome-FBBF24.svg"/></a>
-</p>
+PRs welcome once the source tree is open for contributors — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Chat/Discord may land later; until then use GitHub Issues on this repo.
 
 **OpenVideo is a plugin platform — contribute what you're good at:**
 
@@ -223,7 +222,7 @@ Standing on the shoulders of open giants: **[ComfyUI](https://github.com/comfyan
 
 ---
 
-<p align="center"><sub>★ Star this repo to follow the build. ⭐ 100K★ north star — the #1 open video community.</sub></p>
+<p align="center"><sub>OpenVideo · open-video.ai · 100K★ north star — the #1 open video community.</sub></p>
 
 ## Security
 

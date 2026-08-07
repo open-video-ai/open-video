@@ -823,7 +823,7 @@ ${C_BOLD}Browse prompt recipes & backends:${C_RESET}
   $ov_cmd list-presets && $ov_cmd list-models
 
 ${C_BOLD}Help & docs:${C_RESET}  https://open-video.ai   (docs/getting-started.md, docs/h3_ecosystem.md)
-${C_BOLD}Community:${C_RESET}     Discord / GitHub Discussions linked from the README.
+${C_BOLD}Community:${C_RESET}     https://open-video.ai  ·  GitHub Issues on open-video-ai/open-video
 
 ${C_DIM}Re-run this installer any time to update or repair — every step is resumable.${C_RESET}
 EOF

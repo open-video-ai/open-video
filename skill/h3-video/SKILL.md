@@ -14,46 +14,43 @@ description: >
 **Job:** use **OpenVideo** so an agent produces **good product video**, not a random diffusion
 click. Quality comes from **prompt craft + correct mode + validated settings**, not secret samplers.
 
-## 0. Paths on this machine (updated)
+## 0. Paths (env-first)
 
-Workspace layout (canonical):
+Recommended sibling layout (absolute host path optional):
 
 ```text
-/mnt/data/workspace/open-video-project/          # umbrella (not a git repo)
+open-video-project/            # optional umbrella (not a git repo)
 ├── open-video/       # THIS product — CLI, backends, skills  ← work here
 ├── open-video-web/   # open-video.ai static site
-└── open-video-ops/   # private strategy / verify
-
-Compat symlink:
-  /mnt/data/workspace/open-video  →  open-video-project/open-video
+├── open-video-ops/   # private ops (maintainers)
+└── lab/              # ComfyUI + weights (not git)
 ```
 
 | What | Path / env |
 |---|---|
-| **Product root (CLI, skills)** | `$OPEN_VIDEO_ROOT` or `/mnt/data/workspace/open-video-project/open-video` |
+| **Product root (CLI, skills)** | `$OPEN_VIDEO_ROOT` (this checkout) |
 | **Install / pull / run** | From product root: `./scripts/install.sh`, `python -m open_video …` |
-| **Lab engine + weights (this host)** | `/mnt/data/workspace/open-video-project/lab` (ComfyUI + `h3_models/`) |
-| **Weights env** | `export OPEN_VIDEO_MODELS=/mnt/data/workspace/open-video-project/lab/h3_models` |
+| **Lab engine + weights** | `$OPEN_VIDEO_LAB` / `$H3_LAB` (sibling `lab/` with ComfyUI + `h3_models/`) |
+| **Weights env** | `export OPEN_VIDEO_MODELS=$H3_LAB/h3_models` |
 | **ComfyUI URL** | `export OPEN_VIDEO_COMFYUI=http://127.0.0.1:8188` (default) |
 
-**Resolve product root in scripts** (never hardcode old paths):
+**Resolve product root** (never hardcode a machine path):
 
 ```bash
-# Prefer env, then symlink, then project tree
-export OPEN_VIDEO_ROOT="${OPEN_VIDEO_ROOT:-/mnt/data/workspace/open-video}"
+# Prefer env, else directory of this skill → repo root
+export OPEN_VIDEO_ROOT="${OPEN_VIDEO_ROOT:-$(cd "$(dirname "$0")/../.." 2>/dev/null && pwd)}"
 cd "$OPEN_VIDEO_ROOT"
 ```
 
-Lab harness (same ComfyUI, proven agent script) lives next door:
+Lab harness (same ComfyUI) when you keep a sibling runtime:
 
 ```bash
-export OPEN_VIDEO_LAB="${OPEN_VIDEO_LAB:-/mnt/data/workspace/open-video-project/lab}"
+export OPEN_VIDEO_LAB="${OPEN_VIDEO_LAB:-$OPEN_VIDEO_ROOT/../lab}"
 export H3_LAB="${H3_LAB:-$OPEN_VIDEO_LAB}"
-# optional: open-video pull uses OPEN_VIDEO_MODELS
 export OPEN_VIDEO_MODELS="${OPEN_VIDEO_MODELS:-$H3_LAB/h3_models}"
 ```
 
-Do **not** assume `open-video-project/lab` is the product root anymore. Product = `open-video-project/open-video`.
+Product = `open-video/` checkout. `lab/` is runtime only — never the product root.
 
 ---
 
@@ -95,7 +92,7 @@ Proven on this host: wall ~10–15 min / 10 s clip @ 1344×768, peak VRAM ~22–
 ### A. Host ready
 
 ```bash
-cd "${OPEN_VIDEO_ROOT:-/mnt/data/workspace/open-video}"
+cd "${OPEN_VIDEO_ROOT:?set OPEN_VIDEO_ROOT to this product checkout}"
 python -m open_video status          # or: open-video status / ps
 python -m open_video recommend-quant
 ```
@@ -104,7 +101,7 @@ python -m open_video recommend-quant
 - ComfyUI down → start lab server:
 
 ```bash
-cd "${H3_LAB:-/mnt/data/workspace/open-video-project/lab}"
+cd "${H3_LAB:-$OPEN_VIDEO_ROOT/../lab}"
 curl -sf http://127.0.0.1:8188/system_stats || (
   cd ComfyUI && nohup ../venv/bin/python main.py \
     --listen 127.0.0.1 --port 8188 --lowvram --use-sage-attention \
@@ -294,6 +291,6 @@ non_diegetic_music: …
 
 ## 9. Commit / path hygiene
 
-- Product commits: inside `open-video-project/open-video` only (own git repo).
-- Do not hardcode `/mnt/data/workspace/open-video-project/lab` as the **product** root in new code; use `Path(__file__).resolve()` or `OPEN_VIDEO_ROOT` / `H3_LAB`.
-- Lab scripts under `open-video-project/lab/scripts/` should resolve `ROOT` from `__file__` (relative), not a frozen absolute path.
+- Product commits: inside the `open-video` git checkout only.
+- Do not hardcode host-absolute lab paths as the **product** root; use `Path(__file__).resolve()` or `OPEN_VIDEO_ROOT` / `H3_LAB`.
+- Lab scripts should resolve `ROOT` from `__file__` (relative), not a frozen absolute path.

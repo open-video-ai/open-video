@@ -8,7 +8,8 @@ export ROOT
 # Re-runnable: snapshot_download resumes partial files.
 set -u
 cd "$ROOT"
-PY=/home/robot/miniconda3/bin/python
+# Prefer active venv / PATH; no machine-specific hardcode
+PY="${OPEN_VIDEO_PYTHON:-${PYTHON:-$(command -v python3 || command -v python)}}"
 LOCAL=h3_models
 HEART=logs/h3_download_heartbeat.log
 STATUS=logs/h3_download.status

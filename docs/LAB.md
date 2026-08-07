@@ -36,6 +36,8 @@ open-video-project/
 Prefer **OpenVideo CLI** for users: `open-video pull|status|run`.  
 Prefer **`scripts/h3_agent.py`** when agents need the battle-tested receipt loop.
 
-## Legacy path
+## Notes
 
-`/mnt/data/workspace/open-video-project/lab` is **deprecated** as a product root; it may keep symlinks into `lab/` for old scripts.
+- Product root is **this repo** — never treat `lab/` as the product.
+- Set `OPEN_VIDEO_LAB` / `OPEN_VIDEO_MODELS` on hosts that keep a sibling runtime tree.
+- Historical lab workspace name `55-ai-video` is retired (merged 2026-08-07).
