@@ -1,40 +1,47 @@
-# OpenVideo Quickstart
+# OpenVideo Quickstart (v0.0.1)
 
-> **v0.0.1:** Ollama for MiniMax H3 + `skill/h3-video` harness — any agent can generate high-quality local video.
-
-
-> This is the ONE official quickstart. All docs (README, website, tutorial) should use these exact commands.
+> **v0.0.1 = Ollama for MiniMax H3 + `skill/h3-video` harness** — any agent can generate high-quality local video.  
+> Canonical commands for README / site / tutorial.
 
 ## Prerequisites
 - **NVIDIA GPU** (8GB+ VRAM for NF4, 32GB+ for INT8 ConvRot)
 - **Linux or macOS** (Windows via WSL2)
 - **~60GB disk** (for ComfyUI + H3 weights)
 
-## 3 Steps
+## 3 Steps (human / CLI)
 
-### 1. Clone
+### 1. Install
 ```bash
-git clone https://github.com/open-video-ai/open-video.git
-cd open-video
+curl -fsSL https://open-video.ai/install | bash
+# or: git clone … && bash scripts/install.sh
 ```
+First run downloads ~54GB of H3 weights (resumable).
 
-### 2. Install (one-click: sets up venv + ComfyUI + downloads H3 weights)
+### 2. Pull / status (Ollama-shaped)
 ```bash
-bash scripts/install.sh
+open-video pull h3
+open-video status
 ```
-> First run downloads ~54GB of model weights (~30 min on fast connection). Subsequent runs skip completed steps.
 
 ### 3. Generate
 ```bash
-open-video "a cinematic lighthouse on a cliff at dusk, golden light, stormy sea, camera pushing in"
+open-video run "a cinematic lighthouse on a cliff at dusk, golden light, stormy sea"
+# dry-run without GPU:
+open-video "sunset waves" --dry-run
 ```
 
-## What happens
-1. OpenVideo plans the shot (coherence bible + prompt crafting)
-2. H3 generates the video (1344×768, 24fps, native stereo audio)
-3. The quality judge extracts frames + assesses vs prompt intent
-4. If below bar → diagnose + refine + regenerate
-5. Output: `output/film.mp4` with embedded recipe metadata
+## Agent path (any host)
+
+1. Load **`skill/h3-video/SKILL.md`**
+2. Agent runs install/pull/status as needed
+3. Agent crafts **official 3-field H3 prompt** (not a bare one-liner)
+4. Agent runs `open-video run …` and returns the mp4
+
+## What happens (v0.0.1)
+1. Weights + ComfyUI ready (`pull` / `status`)
+2. Skill or human crafts H3 3-field prompt (quality lever)
+3. H3 generates clip (local GPU; typical 5–10s, 1344×768-class)
+4. Output under `output/` — review and refine prompt if needed
 
 ## Try more
 
