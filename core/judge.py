@@ -1,15 +1,15 @@
-"""open-video quality judge scaffold (generate → judge → refine design).
+"""open-video quality judge (generate → judge → refine).
 
-v0.0.1: frame extraction + PASS stub unless a real vision_fn is provided.
-Not a shipped multi-minute film product — wire a vision model for real scores.
+Frame extraction + vision assessment. A real vision model activates via env
+(OPEN_VIDEO_VLM_URL / OPEN_VIDEO_VLM_MODEL / OPEN_VIDEO_VLM_KEY — see
+judges/openai_compat.py) or an explicit ``vision_fn``. Without either, the
+judge is an honest PASS stub.
 
 Usage:
-    judge = QualityJudge(vision_fn=my_vision_api)
+    judge = QualityJudge.from_env()          # env-wired (or PASS stub)
+    judge = QualityJudge(vision_fn=my_api)   # explicit
     v = judge.assess(video_path, prompt, shot_id=1)
     if v.verdict == "REFINE": apply(v.issues)  # fix + regenerate
-
-v0: frame extraction + PASS stub (ready for vision wiring).
-v1: vision model → score + diagnose (planned).
 """
 import subprocess, json
 from pathlib import Path
@@ -41,6 +41,14 @@ class QualityJudge:
         self.bar = quality_bar
         self.n = n_frames
         self.vision_fn = vision_fn   # callable(frames: list[str], prompt: str) → dict
+
+    @classmethod
+    def from_env(cls, **kwargs) -> "QualityJudge":
+        """Judge wired to the env-configured VLM, or the PASS stub when unset."""
+        if "vision_fn" not in kwargs:
+            from open_video.judges.openai_compat import vision_fn_from_env
+            kwargs["vision_fn"] = vision_fn_from_env()
+        return cls(**kwargs)
 
     def extract_frames(self, video_path: str, shot_id: int, frames_dir: str = "output/frames") -> list:
         """Extract N evenly-spaced frames from the video for the judge."""
