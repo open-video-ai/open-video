@@ -11,3 +11,7 @@ prune .git
 prune artifacts
 global-exclude __pycache__
 global-exclude *.py[cod]
+recursive-include backends *.md
+include scripts/install.sh
+include scripts/h3_download.sh
+include scripts/h3_aria2_list.txt
