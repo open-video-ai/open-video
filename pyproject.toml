@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "open-video"
 version = "0.0.1"
-description = "Open-source autonomous video generation — the agent director layer on ComfyUI + open models (MiniMax H3 baseline)."
+description = "v0.0.1: Ollama for MiniMax H3 + agent skill harness — any agent can generate high-quality local video."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }

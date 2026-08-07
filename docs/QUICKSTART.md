@@ -1,4 +1,7 @@
-# OpenVideo Quickstart (Canonical)
+# OpenVideo Quickstart
+
+> **v0.0.1:** Ollama for MiniMax H3 + `skill/h3-video` harness — any agent can generate high-quality local video.
+
 
 > This is the ONE official quickstart. All docs (README, website, tutorial) should use these exact commands.
 

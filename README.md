@@ -5,12 +5,13 @@
 <h1 align="center">OpenVideo</h1>
 
 <p align="center">
-  <strong>The open-source video generation platform — Ollama for video.</strong><br/>
-  From concept to finished film, for everyone.
+  <strong>v0.0.1 — Ollama for MiniMax H3 + agent skill harness.</strong><br/>
+  Any coding agent can install, pull, and generate high-quality local video.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"/></a>
+  <img alt="Version" src="https://img.shields.io/badge/version-0.0.1-informational.svg"/>
   <a href="https://github.com/open-video-ai/open-video/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/open-video-ai/open-video?style=social"/></a>
   <a href="https://discord.gg/open-video"><img alt="Discord" src="https://img.shields.io/discord/0?style=social&logo=discord&label=Discord&color=5865F2"/></a>
   <a href="https://open-video.ai"><img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fopen-video.ai&label=open-video.ai"/></a>
@@ -20,46 +21,44 @@
 
 <p align="center">
   <sub><b>OpenCode&nbsp;→&nbsp;Cursor.&nbsp;&nbsp;Open&nbsp;Design&nbsp;→&nbsp;Claude&nbsp;Design.&nbsp;&nbsp;OpenVideo&nbsp;→&nbsp;Runway.</b></sub><br/>
-  <sub>One open director brain that turns open video models into a finished film — local, free, and yours.</sub>
+  <sub>v0.0.1 ships the H3 path: <code>pull</code> · <code>run</code> · <b>skill harness</b> — not the full multi-model platform yet.</sub>
 </p>
 
 ---
 
-<p align="center">
-  <video controls width="100%" src="https://open-video.ai/demo.mp4" poster="https://open-video.ai/logo.svg">
-    Demo film — watch on <a href="https://open-video.ai">open-video.ai</a>.
-  </video>
-</p>
-<p align="center"><sub>A concept → a coherent, multi-shot film. Site (private repo <code>open-video-web</code>): <a href="https://open-video.ai">open-video.ai</a>.</sub></p>
+## What v0.0.1 is
 
----
+| | |
+|---|---|
+| **One-liner** | **Ollama for H3** — install, pull weights, generate video like `ollama run` |
+| **Agent path** | Drop-in **skill harness** (`skill/h3-video`) so Claude Code / Cursor / Codex / any agent host can craft official 3-field prompts and generate **high-quality** H3 clips |
+| **Model** | MiniMax H3 via ComfyUI (local GPU) |
+| **Not yet (later releases)** | Multi-model backends, cloud Studio, 100+ gallery, long-film director polish |
 
-## References (OpenCode · Open Design · OpenArt)
+```text
+  Human or Agent
+        │
+        ▼
+  skill/h3-video  ──or──  open-video CLI
+        │
+        ▼
+  pull h3 → status → craft prompt → run → mp4
+        │
+        ▼
+  ComfyUI + MiniMax H3 (local)
+```
 
-We deliberately mirror sibling open products:
+Site: [open-video.ai](https://open-video.ai) · demo: [demo.mp4](https://open-video.ai/demo.mp4)
 
-| Project | Domain | Closed peer |
-|---|---|---|
-| [OpenCode](https://opencode.ai/) | Code agent | Cursor |
-| [Open Design](https://open-design.ai/) | Design workspace | Claude Design |
-| [OpenArt](https://openart.ai/) | Creator studio DNA | (product polish) |
-| **OpenVideo** | **Video director** | **Runway / Seedance** |
+## Why this release
 
-Details: [`docs/REFERENCES.md`](docs/REFERENCES.md) · positioning: [`docs/POSITIONING.md`](docs/POSITIONING.md).
+Closed tools charge per second and lock models. Open **H3** already has Arena-tier quality —
+what's missing for agents and builders is a **simple local loop**: install → pull → run, plus a
+**skill** that encodes best-practice prompting so quality is not left to chance.
 
-## Why OpenVideo
+v0.0.1 is that loop. Full multi-shot director / multi-model platform is the road ahead.
 
-Closed video tools sell you a black box: per-second fees, region locks, watermarks, and a model
-that changes when the vendor says so. **Open models already closed the quality gap** —
-[**MiniMax H3**](https://huggingface.co/MiniMaxAI) sits at **Artificial Analysis Arena ([artificialanalysis.ai/video](https://artificialanalysis.ai/video/leaderboard/text-to-video)) T2V #2 /
-I2V #3 overall, and #1 open** (Elo 1238 / 1189), within noise of closed #1 (Gemini Omni Flash
-1244 / Seedance 1197). The raw quality is there. **What's missing is the director.**
-
-OpenVideo is that director — the **autonomous agent layer** no open engine ships natively. It
-plans, crafts prompts, validates, judges, refines, stitches, and delivers. You get **Runway-grade
-results on hardware you own, with models you control.**
-
-## One-command quickstart (Ollama for H3)
+## Install + generate (Ollama for H3)
 
 ```bash
 # Linux / macOS — install engine + pull H3 weights (resumable ~54 GB)
@@ -83,12 +82,22 @@ open-video "sunset waves" --dry-run # plan + validate without GPU
 | **macOS** | same curl (setup + dry-run) | H3 gen community/MLX; not default |
 | **Windows** | `irm …/install.ps1 \| iex` | **WSL2** for H3 GPU; native dry-run OK |
 
-That's it. OpenVideo plans the film, generates each shot, judges every frame, refines the weak
-ones, stitches the cuts, and hands you `output/film.mp4`. **Local-first by default; bring your
-own GPU or run on our managed cloud.**
+**Local-first.** Bring your own NVIDIA GPU. Weights ~54 GB (resumable pull).
+
+### Agent harness (any agent host)
+
+Point your agent at the skill — it will install/pull if needed, craft the **official H3 3-field
+prompt**, validate, generate, and review:
+
+| Skill | Use when |
+|---|---|
+| **[`skill/h3-video/SKILL.md`](skill/h3-video/SKILL.md)** | **v0.0.1 default** — high-quality single/short H3 clips (T2V / I2V / FL2VA) |
+| [`skill/open-video/SKILL.md`](skill/open-video/SKILL.md) | Longer director path (plan → judge → stitch) — evolving |
+
+Works with Claude Code, Cursor, Codex, OpenCode, and any host that loads `SKILL.md`.
 
 <details>
-<summary><b>Prefer manual?</b></summary>
+<summary><b>Prefer manual clone?</b></summary>
 
 ```bash
 git clone https://github.com/open-video-ai/open-video && cd open-video
@@ -100,13 +109,13 @@ open-video run "waves at sunset, golden hour" --duration 10 --model h3 --output 
 
 </details>
 
-## Three ways to use it
+## Three ways to use it (v0.0.1)
 
 | Interface | For | Experience |
 |---|---|---|
-| 🖥️ **App** *(primary)* | Everyone — creators, PMs, non-technical users | Natural language → video. Storyboard preview, presets, one-click render. Like ChatGPT for film. |
-| ⌨️ **CLI / API** | Developers | `open-video pull/run/status` (Ollama-shaped) or REST. Automate, integrate, build on top. |
-| 🤖 **Skill** | Agent hosts (Claude Code, Cursor, MCP) | `skill/h3-video` (Ollama/H3 harness) + `skill/open-video` (full director). |
+| 🤖 **Skill harness** | **Any agent** | Load `skill/h3-video` → agent generates high-quality H3 video end-to-end |
+| ⌨️ **CLI** | Developers / scripts | `open-video pull` · `status` · `run` (Ollama-shaped) |
+| 🖥️ **Site** | Discovery | [open-video.ai](https://open-video.ai) — install + docs UI (product site repo) |
 
 ## The quality loop (the part no open project has)
 

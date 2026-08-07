@@ -9,25 +9,34 @@ tags:
   - minimax-h3
   - open-source
   - agent
+  - ollama
   - local-first
+  - skill
 pipeline_tag: text-to-video
 ---
 
 # OpenVideo · v0.0.1
 
-**Ollama for video** — open-source director layer on [ComfyUI](https://github.com/comfyanonymous/ComfyUI) + open models (baseline: **MiniMax H3**).
+## Scope (this release)
+
+> **Ollama for MiniMax H3 + agent skill harness.**  
+> Any coding agent (Claude Code, Cursor, Codex, OpenCode, …) can install, pull, and generate **high-quality local video**.
 
 | | |
 |---|---|
 | **Website** | https://open-video.ai |
 | **GitHub** | https://github.com/open-video-ai/open-video |
-| **Org (HF)** | https://huggingface.co/open-video-ai |
+| **HF org** | https://huggingface.co/open-video-ai |
 | **License (code)** | Apache-2.0 |
-| **Version** | **0.0.1** (first release line) |
+| **Version** | **0.0.1** |
 
-> OpenCode → Cursor · Open Design → Claude Design · **OpenVideo → Runway**
+```text
+Agent or human → skill/h3-video or CLI → pull h3 → run → mp4
+                      ↓
+              ComfyUI + MiniMax H3 (your GPU)
+```
 
-This Hub page is the **software / integration card**. It does **not** re-host MiniMax H3 weights (~54 GB). Weights are pulled by the installer from upstream (e.g. Comfy-Org / ModelScope) — see install docs.
+This Hub page is a **software card**. It does **not** re-host H3 weights (~54 GB). The installer pulls upstream quants (Comfy-Org / ModelScope).
 
 ## Install (Ollama-style)
 
@@ -37,45 +46,32 @@ curl -fsSL https://open-video.ai/install | bash
 open-video pull h3
 open-video status
 open-video run "a red panda in mist" --duration 5
-open-video "sunset waves" --dry-run   # no GPU
 ```
 
-Windows: `irm https://open-video.ai/install.ps1 | iex` (WSL2 for full H3 GPU).
+## Agent harness
 
-## What v0.0.1 includes
+Copy or load from the repo:
 
-- CLI: `pull` / `run` / `status` / `recommend-quant` / dry-run generate
-- H3 backend + ComfyUI engine adapter
-- Skill harnesses for agents (`skill/h3-video`, `skill/open-video`)
-- Prompt library + coherence recipe YAML presets
-- Unit tests (no GPU required in CI)
+- **[`skill/h3-video/SKILL.md`](https://github.com/open-video-ai/open-video/blob/master/skill/h3-video/SKILL.md)** — default for v0.0.1 (high-quality H3 clips)
+- Official 3-field grammar: `backends/h3/PROMPT_GRAMMAR.md`
 
-## What it is not
+The skill tells the agent to: check `status` → craft prompt correctly → `run` → review output.
 
-- Not a re-upload of MiniMax / Comfy-Org weight files
-- Not a hosted cloud GPU product (cloud Studio is roadmap)
-- Judge / long-film planner still early (honest alpha)
+## What v0.0.1 is / is not
 
-## Upstream models (weights)
+| Is | Is not |
+|---|---|
+| Ollama-like local H3 loop | Multi-model platform (later) |
+| Skill for **any** agent host | Hosted cloud GPU (roadmap) |
+| High-quality prompt path for H3 | Re-upload of MiniMax weights |
 
-Use OpenVideo to **drive** these — do not confuse with this software card:
-
-- MiniMax / Comfy-Org H3 quants (INT8 ConvRot default in installer)
-- Future: Wan, LTX, etc. as pluggable backends
-
-## Citation / links
+## Citation
 
 ```bibtex
 @software{openvideo_0_0_1,
   title  = {OpenVideo},
   year   = {2026},
   url    = {https://github.com/open-video-ai/open-video},
-  note   = {Version 0.0.1}
+  note   = {v0.0.1 — Ollama for H3 + agent skill harness}
 }
 ```
-
-- Docs: https://open-video.ai/docs  
-- Demo film: https://open-video.ai/demo.mp4  
-- Security: see `SECURITY.md` on GitHub  
-
-**GitHub may be private during preview** — install one-liner on open-video.ai still works when scripts are hosted on Pages.

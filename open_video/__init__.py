@@ -1,30 +1,26 @@
-"""open-video — open-source autonomous video generation.
+"""open-video — Ollama for MiniMax H3 + agent skill harness (v0.0.1).
 
-The agent director layer on ComfyUI + open models (MiniMax H3 baseline).
-"Ollama for video": one-command local run + cheap SaaS + community LoRAs +
-a judge->refine->best-of-N quality loop.
+v0.0.1 scope: local install/pull/run for H3, plus ``skill/h3-video`` so any
+agent host can generate high-quality video. Longer director pipelines exist
+in-tree but are not the release thesis.
 
-This package is a thin facade over the top-level ``core`` / ``backends`` /
-``engines`` packages (kept flat so the existing ``from core.backend import ...``
-imports work both from source and when pip-installed). It exposes the
-high-level objects users and integrators import.
+Thin facade over top-level ``core`` / ``backends`` / ``engines`` packages.
 
 Public API:
-    Planner          -- concept -> coherence bible + shot plan        (core.planner)
-    LongFilmPipeline -- plan -> per-shot generate+judge -> FL2VA chain (core.pipeline)
-                        -> stitch -> film  (the flagship 5-min-film orchestrator)
-    H3Backend        -- MiniMax H3 model plugin                       (backends.h3.backend)
-    ComfyUIAdapter   -- ComfyUI HTTP engine adapter                   (engines.comfyui.adapter)
+    H3Backend        -- MiniMax H3 model plugin
+    ComfyUIAdapter   -- ComfyUI HTTP engine adapter
+    Planner          -- concept -> shot plan
+    LongFilmPipeline -- multi-shot orchestrator (evolving)
 
-Run the CLI via ``python -m open_video`` or the installed ``open-video`` script:
+CLI::
 
-    open-video "A cinematic shot of waves at sunset" --duration 10 --model h3
-    open-video gen "..."            # `gen` is accepted as an alias of the default action
-    open-video list-models
+    open-video pull h3
+    open-video run "waves at sunset" --duration 5
+    open-video status
 """
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.0.1"
 
 # --- re-export the key classes (the public surface the task pins) -----------
 # These imports are side-effect-free (all stdlib at import time); safe to eager-load.

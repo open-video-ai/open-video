@@ -1,72 +1,92 @@
 ---
 name: h3-video
 description: >
-  Ollama-style MiniMax H3 local video via OpenVideo. Use when the user wants to
-  install/pull H3, check status, generate a single shot or short film (T2V/I2V/FL2VA),
-  craft the official 3-field prompt, validate, or run the open-video H3 harness.
-  Prefer this for "just generate a clip"; use skill open-video for multi-minute director films.
+  OpenVideo v0.0.1 harness — Ollama for MiniMax H3. Use whenever the user (or you as an agent)
+  should generate high-quality local video: install/pull H3, status check, craft the official
+  3-field prompt, validate, T2V/I2V/FL2VA generate, and review. Default skill for any agent host
+  (Claude Code, Cursor, Codex, OpenCode, …). Prefer this over raw ComfyUI clicking.
 ---
 
-# H3 video harness (Ollama for MiniMax H3)
+# H3 video harness · OpenVideo v0.0.1
 
-**Product:** OpenVideo · **Model:** MiniMax H3 · **Engine:** ComfyUI  
-**Repo:** `https://github.com/open-video-ai/open-video` (private until owner opens)  
-**Site / install:** `https://open-video.ai`
+**Release thesis:** *Ollama for H3 + skill harness so **any agent** can generate high-quality video.*
 
-This skill is the **agent harness** around the open-video CLI + H3 backend — same mental model as Ollama:
+| | |
+|---|---|
+| Product | OpenVideo |
+| Version | **0.0.1** |
+| Model | MiniMax H3 |
+| Engine | ComfyUI |
+| Repo | https://github.com/open-video-ai/open-video |
+| Install | https://open-video.ai/install |
+
+You are the **agent driver**. Do not invent prompt formats — follow this file and `backends/h3/PROMPT_GRAMMAR.md`.
 
 ```text
-install  →  pull h3  →  status  →  run "prompt"
+install → pull h3 → status → craft 3-field prompt → run → review mp4
 ```
 
-## 1. Ollama-shaped commands (do these first)
+## 0. Non-negotiables (quality)
 
-From a checkout (or after one-line install):
+1. **Always** use the official **3-field** H3 prompt (not a bare one-liner) for final generates.
+2. **Validate** before spending GPU (`--dry-run` or validator issues = fix first).
+3. Respect **4–15s / shot**, 17k+5 frame grid, short edge ≤768 local, **no NVFP4 on 5090**.
+4. Prefer **INT8 ConvRot** unless `recommend-quant` says otherwise.
+5. Record output path + short receipt for the user.
+
+## 1. Ollama-shaped commands
 
 ```bash
-# One-line host setup (engine + weights + first dry-run)
-curl -fsSL https://open-video.ai/install | bash
+curl -fsSL https://open-video.ai/install | bash   # once per machine
+# or: ./scripts/install.sh --yes
 
-# Or from repo root
-./scripts/install.sh --yes
-
-# Weight inventory / resume download (~54 GB INT8 package)
-open-video pull h3
+open-video pull h3                 # ~54 GB, resumable
 open-video pull h3 --check-only
-
-# Engine + weights + quant recommendation
-open-video status          # alias: open-video ps
+open-video status                  # alias: ps
 open-video recommend-quant
 
-# Generate (aliases)
-open-video run "a red panda eating bamboo in mist" --duration 5
-open-video "sunset waves" --duration 8 --dry-run   # plan only, no GPU
+open-video run "<concept or full 3-field prompt>" --duration 5
+open-video "sunset waves" --dry-run
 ```
 
-**Env (optional):**
-
-| Var | Meaning |
+| Env | Meaning |
 |---|---|
-| `OPEN_VIDEO_MODELS` | Weights root (else `<repo>/ComfyUI/models`) |
-| `OPEN_VIDEO_COMFYUI` | ComfyUI base URL (default `http://127.0.0.1:8188`) |
-| `OPEN_VIDEO_MODEL` | Default backend (default `h3`) |
-| `OPEN_VIDEO_REPO` | Git clone URL override for install |
+| `OPEN_VIDEO_MODELS` | Weights root |
+| `OPEN_VIDEO_COMFYUI` | ComfyUI URL (default `http://127.0.0.1:8188`) |
+| `OPEN_VIDEO_MODEL` | Default `h3` |
+| `OPEN_VIDEO_REPO` | Clone URL override for install |
 
-## 2. Agentic procedure (best quality single shot)
+## 2. Procedure (run in order)
 
-1. **`open-video status`** — if weights incomplete → `pull h3`; if ComfyUI down → start engine (install.sh or `python ComfyUI/main.py --lowvram --use-sage-attention`).
-2. **Mode:** text only → T2V; 1 image → I2V; 2 images → FL2VA.
-3. **Craft 3-field prompt** (see `backends/h3/PROMPT_GRAMMAR.md`):
-   - optional instruction line (I2V/FL2VA)
-   - `integrated_multimodal_description:` style first, shots, camera prose
-   - `overall_soundscape:`
-   - `non_diegetic_music:` (instrumentation/tempo — no vague mood words)
-4. **Validate / plan:** `open-video run "…" --dry-run` or pass a full `--prompt` path via library presets.
-5. **Generate:** `open-video run "…" --duration 5 --width` via defaults (1344×768 when backend allows).
-6. **Review:** extract frames; refine prompt if needed. Ship-quality → cross-model visual review.
-7. **Receipts:** pipeline writes under `output/` and prefer `artifacts/verify/` for agent logs.
+**Step A — Host ready.** `open-video status`.  
+- Weights incomplete → `open-video pull h3`  
+- ComfyUI down → start via install or `python ComfyUI/main.py --lowvram --use-sage-attention`
 
-Python contract (same as skill `open-video`):
+**Step B — Mode.** Text only → T2V; 1 image → I2V; first+last → FL2VA.
+
+**Step C — Craft prompt** (quality lever #1). Structure:
+
+```text
+[<instruction line for I2V/FL2VA only>]
+
+integrated_multimodal_description: [Shot 1] <style first>, …
+overall_soundscape: …
+non_diegetic_music: …   # instrumentation/tempo — no vague mood words
+```
+
+Full rules: `backends/h3/PROMPT_GRAMMAR.md`.  
+Simple NL → expand into 3-field; never ship a bare phrase as the only prompt for “high quality.”
+
+**Step D — Dry-run** when unsure: `open-video run "…" --dry-run`
+
+**Step E — Generate:** `open-video run "…" --duration 5` (defaults favor 1344×768-class when backend allows).
+
+**Step F — Review.** Spot-check motion/identity/audio; refine prompt and re-run if weak.  
+Ship bar (optional): cross-model visual review if the user’s rules require it.
+
+**Step G — Deliver** `output/*.mp4` path + seed/settings if known.
+
+### Python (same contract)
 
 ```python
 from backends.h3.backend import H3Backend
@@ -75,32 +95,33 @@ from engines.comfyui.adapter import ComfyUIAdapter
 
 engine = ComfyUIAdapter(server="http://127.0.0.1:8188")
 backend = H3Backend()
-req = ShotRequest(prompt=<3-field>, mode="t2v", width=1344, height=768, duration_s=5.0, seed=0)
+req = ShotRequest(
+    prompt=<3-field string>, mode="t2v",
+    width=1344, height=768, duration_s=5.0, seed=0,
+)
 result = backend.generate(req, engine=engine)
 ```
 
-## 3. Hard constraints (do not violate)
+## 3. Hard constraints
 
-- **Duration 4–15s / shot**; longer → multi-shot director (`skill/open-video` / `LongFilmPipeline`).
-- **Frame grid 17k+5 @ 24fps**; resolution multiple of 32; local short edge ≤768.
-- **Quant:** default **INT8 ConvRot** (~54 GB). Resource-aware: `recommend-quant` (nf4/w4/int8). **No NVFP4 on RTX 5090** (ComfyUI #14157).
-- **2K** = API upscale only, not local H3.
-- Weights license / regional terms follow MiniMax — not Apache-2.0 for the model files.
+- Duration **4–15s** per shot; longer → multi-shot / `skill/open-video` (later)
+- Frame grid **17k+5 @ 24fps**; resolution multiple of **32**
+- **2K** = API upscale only (not local H3)
+- Weight licenses follow MiniMax / upstream — code is Apache-2.0
 
-## 4. Docs map
+## 4. Docs
 
-| Doc | Use |
+| Doc | Why |
 |---|---|
-| `backends/h3/PROMPT_GRAMMAR.md` | Official 3-field craft |
-| `docs/h3_ecosystem.md` | Quants, known issues |
-| `docs/QUICKSTART.md` | User install path |
-| `skill/open-video/SKILL.md` | Full director (plan→judge→stitch) |
-| `ARCHITECTURE.md` | Core / backends / engines |
+| `backends/h3/PROMPT_GRAMMAR.md` | Official craft |
+| `docs/h3_ecosystem.md` | Quants / known issues |
+| `docs/QUICKSTART.md` | Human install |
+| `skill/open-video/SKILL.md` | Long director (beyond 0.0.1 focus) |
 
-## 5. When to use which skill
+## 5. Skill choice
 
-| Request | Skill |
+| User intent | Skill |
 |---|---|
-| Pull / status / one clip / H3 prompt craft | **h3-video** (this) |
-| Multi-minute film, judge loop, stitch | **open-video** |
-| New model backend plugin | CONTRIBUTING + `templates/model_backend.py` |
+| High-quality H3 clip / agent generate video | **h3-video (this) — v0.0.1 default** |
+| Multi-minute film, judge loop, stitch | `open-video` |
+| New model backend | CONTRIBUTING + templates |

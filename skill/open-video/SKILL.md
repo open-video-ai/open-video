@@ -5,6 +5,10 @@ description: Generate, edit, or direct videos via open-source models (MiniMax H3
 
 # open-video — autonomous director skill
 
+> **v0.0.1 default for high-quality H3 clips is [`skill/h3-video`](../h3-video/SKILL.md)**  
+> (Ollama for H3 + harness). Use **this** skill when the user wants multi-shot / long-film
+> director behavior (plan → judge → stitch) beyond a single strong clip.
+
 ## 1. What open-video does
 
 open-video is the **autonomous director** layer on top of open video models. It turns a concept
