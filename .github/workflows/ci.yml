@@ -41,11 +41,11 @@ jobs:
 
       - name: Import smoke
         run: |
-          python -c "from core.backend import ModelBackend, ShotRequest, Capabilities; print('core OK')"
-          python -c "from core.pipeline import LongFilmPipeline, Shot; print('pipeline OK')"
-          python -c "from core.judge import QualityJudge, Verdict; print('judge OK')"
-          python -c "from core.h3_weights import inventory_h3_int8, known_models; assert 'h3' in known_models(); print('h3_weights OK')"
-          python -c "from core.resources import recommend_quant; print(recommend_quant(32768, has_nvidia=True).quant)"
+          python -c "from open_video.core.backend import ModelBackend, ShotRequest, Capabilities; print('core OK')"
+          python -c "from open_video.core.pipeline import LongFilmPipeline, Shot; print('pipeline OK')"
+          python -c "from open_video.core.judge import QualityJudge, Verdict; print('judge OK')"
+          python -c "from open_video.core.h3_weights import inventory_h3_int8, known_models; assert 'h3' in known_models(); print('h3_weights OK')"
+          python -c "from open_video.core.resources import recommend_quant; print(recommend_quant(32768, has_nvidia=True).quant)"
 
       - name: CLI smoke (no GPU)
         run: |
@@ -53,6 +53,38 @@ jobs:
           python cli/open_video.py recommend-quant --vram 8192 --json
           python cli/open_video.py pull h3 --check-only || true
           python cli/open_video.py "sunset waves" --dry-run
+
+  wheel-smoke:
+    name: wheel smoke (installed, non-editable)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --wheel
+      - name: Install in clean venv, smoke away from the source tree
+        run: |
+          python -m venv /tmp/wheel-venv
+          /tmp/wheel-venv/bin/pip install --quiet dist/*.whl
+          cd /tmp
+          /tmp/wheel-venv/bin/python -c "
+          import open_video, open_video.judges as j
+          from open_video import H3Backend, ComfyUIAdapter
+          assert 'site-packages' in open_video.__file__, open_video.__file__
+          assert j.JUDGES, j.JUDGES
+          print('wheel import OK:', sorted(j.JUDGES))
+          "
+          /tmp/wheel-venv/bin/open-video list-models
+          /tmp/wheel-venv/bin/open-video list-presets
+          /tmp/wheel-venv/bin/open-video "sunset waves" --dry-run
+      - name: Only open_video may ship top-level
+        run: |
+          stray=$(ls /tmp/wheel-venv/lib/python*/site-packages | grep -vE '^(open_video|.*\.dist-info|pip|setuptools|wheel|pkg_resources|__pycache__)$' || true)
+          if [ -n "$stray" ]; then echo "stray top-level packages: $stray"; exit 1; fi
 
   lint-shell:
     name: install.sh policy

@@ -47,7 +47,7 @@ from pathlib import Path
 # (python cli/open_video.py) needs the sys.path insert so `open_video.*`
 # resolves; as an imported module the package machinery already handles it.
 REPO_ROOT = Path(__file__).resolve().parent.parent
-if __package__ in (None, "") and str(REPO_ROOT) not in sys.path:
+if not __package__ and str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 # --- defaults / constants -----------------------------------------------------

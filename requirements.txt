@@ -1,11 +1,3 @@
-# open-video runtime dependencies: NONE — the core path is Python stdlib only.
-# It talks to ComfyUI over HTTP (urllib) and to ffmpeg/ffprobe via subprocess;
-# see pyproject.toml `dependencies = []`, which is authoritative.
-#
-# This file is kept as an intentionally empty manifest because
-# scripts/install.sh and docs/getting-started.md reference
-# `pip install -r requirements.txt` as a fallback path; it is a no-op.
-#
-# NOT listed here (installed by scripts/install.sh, not pip):
-#   torch / ComfyUI stack — the generation engine's own dependencies.
-# Dev tooling (pytest, ruff) lives in pyproject.toml [project.optional-dependencies].dev.
+# No runtime deps — stdlib only (authoritative: pyproject.toml dependencies = []).
+# Kept because scripts/install.sh and docs reference `pip install -r requirements.txt`
+# as a fallback; installing this file is a no-op by design.
