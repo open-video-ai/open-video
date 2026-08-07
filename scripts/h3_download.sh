@@ -10,9 +10,10 @@ set -u
 cd "$ROOT"
 # Prefer active venv / PATH; no machine-specific hardcode
 PY="${OPEN_VIDEO_PYTHON:-${PYTHON:-$(command -v python3 || command -v python)}}"
-LOCAL=h3_models
-HEART=logs/h3_download_heartbeat.log
-STATUS=logs/h3_download.status
+LOCAL="${OPEN_VIDEO_MODELS:-h3_models}"
+HEART="${OPEN_VIDEO_DOWNLOAD_HEARTBEAT:-logs/h3_download_heartbeat.log}"
+STATUS="${OPEN_VIDEO_DOWNLOAD_STATUS:-logs/h3_download.status}"
+mkdir -p "$LOCAL" "$(dirname "$HEART")" "$(dirname "$STATUS")"
 
 declare -A WANT=(
   ["diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors"]=20970379616

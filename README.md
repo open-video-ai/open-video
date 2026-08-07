@@ -124,6 +124,7 @@ pull → run, with best-practice prompting built in. v0.0.1 is that loop.
 
 ## Licenses — read this before commercial use
 
+- Detailed weights terms: [docs/WEIGHTS_LICENSE.md](docs/WEIGHTS_LICENSE.md).
 - **Code (this repo): [Apache-2.0](LICENSE).** Use it freely.
 - **Model weights are NOT covered by this repo's license.** MiniMax H3 weights are distributed
   under the **MiniMax H3 Community License** (see the

@@ -1,0 +1,33 @@
+# Verified lab runtime snapshot captured 2026-08-07.
+# Hardware: NVIDIA RTX 5090; driver: 580.95.05; ComfyUI: 14b0522
+# Runtime record only; this file is not an install requirement.
+# Curated to the packages the ComfyUI/H3 generation runtime actually imports;
+# the complete environment freeze is archived in the private ops repo.
+
+accelerate==1.12.0
+aiohttp==3.13.3
+av==18.0.0
+einops==0.8.0
+gguf==0.17.1
+huggingface_hub==1.26.0
+kornia==0.8.2
+librosa==0.11.0
+modelscope==1.32.0
+numpy==2.2.0
+pillow==12.1.1
+psutil==7.2.2
+PyYAML==6.0.2
+safetensors==0.6.2
+sageattention==1.0.6
+scipy==1.15.3
+sentencepiece==0.2.1
+soundfile==0.13.1
+spandrel==0.4.2
+tokenizers==0.22.2
+torch==2.10.0
+torchaudio==2.10.0
+torchsde==0.2.6
+torchvision==0.25.0
+tqdm @ file:///croot/tqdm_1738943501192/work
+transformers==5.3.0
+yarl==1.22.0

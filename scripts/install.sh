@@ -51,6 +51,11 @@ KEEP_SERVER=0
 SAGE=0
 ASSUME_YES=0
 REPO_URL="${OPEN_VIDEO_REPO:-https://github.com/open-video-ai/open-video.git}"
+COMFYUI_REPO_URL="https://github.com/comfyanonymous/ComfyUI.git"
+# Verified against the RTX 5090 lab runtime on 2026-08-07.
+# To bump this pin, verify the full commit SHA upstream and refresh the lab
+# freeze record in docs/lab-freeze-2026-08-07.txt.
+COMFYUI_COMMIT="14b05228cef127ce529bc0c08660770d4af3e9a8"
 
 # Verified byte sizes for the 4 default H3 INT8-ConvRot files (HF == ModelScope).
 # Source: HF HEAD content-length + proven sibling-repo download receipt (53,889,785,072 B total ≈ 54 GB).
@@ -414,14 +419,25 @@ install_engine() {
         ok "--skip-comfyui-install: using existing ComfyUI at $COMFYUI_DIR"
         [[ -f "$COMFYUI_DIR/main.py" ]] || die "--skip-comfyui-install but no ComfyUI/main.py at $COMFYUI_DIR"
     else
-        if [[ -f "$COMFYUI_DIR/main.py" ]]; then
-            ok "ComfyUI already cloned at $COMFYUI_DIR (reusing)"
+        if [[ -d "$COMFYUI_DIR/.git" ]]; then
+            ok "ComfyUI checkout found at $COMFYUI_DIR (reusing)"
+        elif [[ -e "$COMFYUI_DIR" ]]; then
+            die "ComfyUI path exists but is not a git checkout: $COMFYUI_DIR"
         else
             mkdir -p "$(dirname "$COMFYUI_DIR")"
-            git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git "$COMFYUI_DIR" \
+            git clone --depth 1 "$COMFYUI_REPO_URL" "$COMFYUI_DIR" \
                 || die "ComfyUI clone failed."
-            ok "ComfyUI cloned to $COMFYUI_DIR"
         fi
+        current_comfyui_commit=$(git -C "$COMFYUI_DIR" rev-parse HEAD 2>/dev/null || true)
+        if [[ "$current_comfyui_commit" != "$COMFYUI_COMMIT" ]]; then
+            info "Fetching pinned ComfyUI commit $COMFYUI_COMMIT"
+            git -C "$COMFYUI_DIR" fetch --depth 1 origin "$COMFYUI_COMMIT" \
+                || die "Could not fetch pinned ComfyUI commit $COMFYUI_COMMIT."
+            git -C "$COMFYUI_DIR" checkout --detach "$COMFYUI_COMMIT" \
+                || die "Could not check out pinned ComfyUI commit $COMFYUI_COMMIT."
+        fi
+        [[ -f "$COMFYUI_DIR/main.py" ]] || die "ComfyUI checkout is missing main.py at $COMFYUI_DIR"
+        ok "ComfyUI pinned to $COMFYUI_COMMIT"
     fi
 
     info "Installing ComfyUI Python deps (torch + transformers + ...) — this is the largest pip step"
