@@ -1,11 +1,9 @@
 # open-video — Plugin Registry & Marketplace Spec
 
-> **Status:** v0 / spec (design). Implementation tracks Phase 1–3 in `PLAN.md`. Apache-2.0.
-> **Audience:** plugin authors (model/backend, judge, engine, LoRA, recipe contributors), platform
-> engineers wiring the registry client + index, and the review council that curates it.
-> **One-line summary:** an `open-video install <plugin>` command plus a community-curated registry
-> that makes models, judges, engines, LoRAs, and recipes as easy to find and install as `npm install`
-> or `ollama pull` — the marketplace foundation.
+> **Status: design / not shipped.** v0.0.1 has **no** `open-video install <plugin>` marketplace.  
+> This file is an engineering **spec** for a future registry. Do not cite it as a current product surface.  
+> Business model / take-rate language elsewhere in this doc is **future idea only** — not a claim.  
+> Implementation, if any, tracks later phases in `PLAN.md`. Apache-2.0.
 
 ---
 
