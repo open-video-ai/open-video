@@ -35,6 +35,5 @@
 - Not a free cloud GPU product today (`/try` is a browser mockup).
 - Not a multi-minute Seedance-grade director in v0.0.1.
 - Not a marketplace / take-rate product in v0.0.1.
-- Strategy and GTM live in **private ops**, not this file.
 
-Longer design essays (if any) belong in ops or architecture docs with **design** labels — not as shipped features.
+Longer design essays belong in architecture docs with **design** labels — not as shipped features.

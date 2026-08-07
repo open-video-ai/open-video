@@ -1,8 +1,7 @@
 # Reference products — related open projects
 
 > Public map of projects OpenVideo learns from (product UX, install patterns, local-agent
-> surfaces). Update star counts and URLs before press.  
-> **No private GTM / positioning docs are linked from product.** Strategy lives in ops only.
+> surfaces). Update star counts and URLs before citing them.
 
 ## Canonical references
 

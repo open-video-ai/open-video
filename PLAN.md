@@ -1,7 +1,6 @@
 # open-video — Public plan (v0.0.1)
 
-> Short product plan for contributors. Competitive war-room, valuation, and GTM live in the
-> **private** ops repo — not here.
+> Short product plan for contributors.
 
 ## What shipped (v0.0.1)
 
