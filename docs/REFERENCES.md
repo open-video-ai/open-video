@@ -81,4 +81,4 @@ One-liner:
 - https://open-design.ai/ · https://github.com/nexu-io/open-design  
 - https://opencode.ai/ · https://github.com/sst/opencode / anomalyco  
 - https://openart.ai/ · https://github.com/OpenArt-AI  
-- Local: `README.md`, `REPOS.md`, `PLAN.md`; site in `open-video-web`
+- Local: `README.md`, `PLAN.md`; site in `open-video-web`

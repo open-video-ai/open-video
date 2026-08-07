@@ -204,4 +204,4 @@ Private vulnerability reporting: [SECURITY.md](SECURITY.md).
 
 [Apache-2.0](LICENSE) © OpenVideo contributors · [open-video.ai](https://open-video.ai)
 
-<p align="center"><sub>OpenVideo · open-video.ai · Apache-2.0 · Brand: <a href="BRAND.md">BRAND.md</a> · Repo map: <a href="REPOS.md">REPOS.md</a></sub></p>
+<p align="center"><sub>OpenVideo · open-video.ai · Apache-2.0</sub></p>
