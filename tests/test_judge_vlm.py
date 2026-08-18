@@ -113,3 +113,36 @@ def test_diagnose_ignores_stringly_false_flags():
     raw_bad = {"score": 0.4, "missing_elements": [], "artifacts": "heavy banding",
                "motion_quality": "good", "incoherence": "frames jump around"}
     assert {i.type for i in judge.diagnose(raw_bad, "p")} == {"artifact", "incoherence"}
+
+
+def test_assess_normalizes_numeric_string_score(monkeypatch):
+    """A VLM JSON payload may encode a numeric score as a string."""
+    judge = QualityJudge(
+        vision_fn=lambda _frames, _prompt: {
+            "score": "0.9",
+            "missing_elements": [],
+            "artifacts": "",
+            "motion_quality": "good",
+            "incoherence": False,
+        }
+    )
+    monkeypatch.setattr(judge, "extract_frames", lambda *_args, **_kwargs: ["frame.png"])
+
+    verdict = judge.assess("clip.mp4", "a blue test clip")
+
+    assert verdict.verdict == "PASS"
+    assert verdict.score == 0.9
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("not-a-number", 0.0),
+        (None, 0.0),
+        (float("nan"), 0.0),
+        (-0.2, 0.0),
+        (1.4, 1.0),
+    ],
+)
+def test_score_normalization_is_finite_and_bounded(value, expected):
+    assert QualityJudge._score(value) == expected

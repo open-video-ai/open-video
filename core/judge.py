@@ -11,7 +11,8 @@ Usage:
     v = judge.assess(video_path, prompt, shot_id=1)
     if v.verdict == "REFINE": apply(v.issues)  # fix + regenerate
 """
-import subprocess, json
+import math
+import subprocess
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, Callable
@@ -80,6 +81,17 @@ class QualityJudge:
             return value.strip().lower() not in ("", "false", "none", "no", "0")
         return bool(value)
 
+    @staticmethod
+    def _score(value) -> float:
+        """Coerce a provider score to a finite 0–1 float without breaking the pipeline."""
+        try:
+            score = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+        if not math.isfinite(score):
+            return 0.0
+        return max(0.0, min(1.0, score))
+
     def diagnose(self, vision_result: dict, prompt: str) -> list:
         """Parse vision-model output into structured issues + fixes."""
         issues = []
@@ -107,7 +119,7 @@ class QualityJudge:
 
         if self.vision_fn:
             raw = self.vision_fn(frames, prompt)
-            score = raw.get("score", 1.0)
+            score = self._score(raw.get("score", 1.0))
             issues = self.diagnose(raw, prompt)
             verdict = "PASS" if score >= self.bar and not issues else "REFINE"
             return Verdict(verdict=verdict, score=score, issues=issues, frames=frames, raw=raw)
