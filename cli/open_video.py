@@ -158,11 +158,14 @@ def _bind_engine(backend, engine):
     if not accepts_engine:
         return  # backend takes no engine kwarg; let it use its own default adapter
 
-    def _generate(req, engine=None, *args, **kwargs):
-        return orig(req, engine=engine, *args, **kwargs)
+    def _generate(req, *args, **kwargs):
+        # bound engine is authoritative; a caller-supplied engine kwarg is
+        # dropped so it cannot collide with the injected one.
+        kwargs.pop("engine", None)
+        return orig(req, *args, engine=engine, **kwargs)
 
     # call as bound method on the instance so `self` is preserved
-    backend.generate = lambda req, *a, **kw: orig(req, engine=engine, *a, **kw)
+    backend.generate = _generate
 
 
 # =============================================================================#
