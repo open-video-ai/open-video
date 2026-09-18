@@ -10,7 +10,7 @@ LoRA + quality verdict) in the output MP4 metadata. This makes every OpenVideo v
 
 No other agentic video platform has this. This is OpenVideo's "ComfyUI PNG drag-drop" moment.
 """
-import json, subprocess
+import json, os, subprocess, tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -29,6 +29,15 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
     Uses ffmpeg -metadata flags (stored in the MP4 container's moov/udta atom).
     """
     output = output_path or video_path
+    dest = output
+    if os.path.abspath(output) == os.path.abspath(video_path):
+        # ffmpeg cannot overwrite its input — mux to a sibling temp file and
+        # atomically replace the original only after verification passes.
+        fd, output = tempfile.mkstemp(
+            prefix=Path(video_path).stem + ".",
+            suffix=Path(video_path).suffix or ".mp4",
+            dir=str(Path(video_path).resolve().parent))
+        os.close(fd)
     recipe_json = json.dumps(recipe)
     embed_json = len(recipe_json.encode("utf-8")) <= MAX_RECIPE_METADATA_BYTES
     if not embed_json:
@@ -44,7 +53,8 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
             cmd.extend(["-metadata", f"{PREFIX}{key}={val}"])
     if embed_json:
         cmd.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
-    cmd.extend(["-c", "copy", output])  # stream-copy (no re-encode)
+    # MP4/MOV muxer drops non-standard metadata keys without use_metadata_tags
+    cmd.extend(["-movflags", "use_metadata_tags", "-c", "copy", output])
     r = subprocess.run(cmd, capture_output=True, timeout=60)
     if r.returncode != 0:
         # fallback: re-encode with metadata
@@ -54,9 +64,12 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
                 cmd_re.extend(["-metadata", f"{PREFIX}{key}={val}"])
         if embed_json:
             cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
-        cmd_re.extend(["-c:v", "libx264", "-crf", "18", "-c:a", "aac", output])
+        cmd_re.extend(["-movflags", "use_metadata_tags",
+                       "-c:v", "libx264", "-crf", "18", "-c:a", "aac", output])
         r = subprocess.run(cmd_re, capture_output=True, timeout=300)
         if r.returncode != 0:
+            if output != dest and os.path.exists(output):
+                os.unlink(output)
             raise RuntimeError(
                 f"ffmpeg metadata embedding failed: {r.stderr.decode(errors='replace')}"
             )
@@ -72,8 +85,12 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
             written.get(k) == v for k, v in expected_tags.items()
         )
     if not ok:
+        if output != dest and os.path.exists(output):
+            os.unlink(output)
         raise RuntimeError("embedded recipe metadata verification failed")
-    return output
+    if output != dest:
+        os.replace(output, dest)
+    return dest
 
 
 def read_recipe(video_path: str) -> Optional[dict]:
