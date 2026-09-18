@@ -301,10 +301,22 @@ def run_config(backend, engine, name, w, h, dur, seed, prompt, mode,
 
 
 def is_complete(entry: dict) -> bool:
-    """Resumable-skip test (ported from the reference)."""
+    """Resumable-skip test.
+
+    A completed receipt is only reusable while its generated artifact still
+    exists.  Receipts intentionally remain useful for failed runs and metrics,
+    but successful runs must be rerunnable if the output disappears.
+    """
     if not entry or entry.get("status") in (None, "error", "timeout"):
         return False
-    return entry.get("wall_s", 0) > 0
+    if entry.get("wall_s", 0) <= 0:
+        return False
+
+    video_path = entry.get("video_path")
+    if video_path:
+        return Path(video_path).is_file()
+
+    return False
 
 
 # =============================================================================#
