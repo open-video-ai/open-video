@@ -37,13 +37,21 @@ def test_manifest_structure():
         assert spec["url"].endswith(f"/{rel}")
         assert spec["url"].startswith("https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/")
         assert spec["size"] == KNOWN_SIZES[rel]
-        # Integrity metadata is required schema, currently pending release
-        # values: null is allowed, anything else must be a real hash/commit.
+        # Integrity metadata is required schema; values are published and
+        # asserted non-null in test_manifest_integrity_metadata.
         assert "sha256" in spec and "commit" in spec
         if spec["sha256"] is not None:
             assert re.fullmatch(r"[0-9a-f]{64}", spec["sha256"])
         if spec["commit"] is not None:
             assert re.fullmatch(r"[0-9a-f]{7,40}", spec["commit"])
+
+
+def test_manifest_integrity_metadata():
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    for rel, spec in manifest["files"].items():
+        assert re.fullmatch(r"[0-9a-f]{64}", spec["sha256"] or "")
+        assert re.fullmatch(r"[0-9a-f]{7,40}", spec["commit"] or "")
+        assert f"/resolve/{spec['commit']}/" in spec["url"]
 
 
 def test_installers_consume_shared_manifest():
