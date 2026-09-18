@@ -30,16 +30,20 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
     """
     output = output_path or video_path
     recipe_json = json.dumps(recipe)
-    if len(recipe_json.encode("utf-8")) > MAX_RECIPE_METADATA_BYTES:
-        raise ValueError(
-            f"recipe metadata exceeds {MAX_RECIPE_METADATA_BYTES} bytes"
+    embed_json = len(recipe_json.encode("utf-8")) <= MAX_RECIPE_METADATA_BYTES
+    if not embed_json:
+        print(
+            f"[open-video] warning: recipe exceeds {MAX_RECIPE_METADATA_BYTES} "
+            f"bytes; skipping {PREFIX}recipe_json tag (per-key tags still embedded)",
+            flush=True,
         )
 
     cmd = ["ffmpeg", "-y", "-v", "error", "-i", video_path]
     for key, val in recipe.items():
         if val is not None:
             cmd.extend(["-metadata", f"{PREFIX}{key}={val}"])
-    cmd.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
+    if embed_json:
+        cmd.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
     cmd.extend(["-c", "copy", output])  # stream-copy (no re-encode)
     r = subprocess.run(cmd, capture_output=True, timeout=60)
     if r.returncode != 0:
@@ -48,7 +52,8 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
         for key, val in recipe.items():
             if val is not None:
                 cmd_re.extend(["-metadata", f"{PREFIX}{key}={val}"])
-        cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
+        if embed_json:
+            cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
         cmd_re.extend(["-c:v", "libx264", "-crf", "18", "-c:a", "aac", output])
         r = subprocess.run(cmd_re, capture_output=True, timeout=300)
         if r.returncode != 0:
@@ -56,8 +61,17 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
                 f"ffmpeg metadata embedding failed: {r.stderr.decode(errors='replace')}"
             )
 
+    expected = json.loads(recipe_json)  # JSON round-trip normalizes types
     written = read_recipe(output)
-    if written != recipe:
+    if embed_json:
+        ok = written == expected
+    else:
+        # full JSON blob omitted; verify the per-key tags that were written
+        expected_tags = {k: str(v) for k, v in recipe.items() if v is not None}
+        ok = written is not None and all(
+            written.get(k) == v for k, v in expected_tags.items()
+        )
+    if not ok:
         raise RuntimeError("embedded recipe metadata verification failed")
     return output
 
