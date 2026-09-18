@@ -17,6 +17,7 @@ from typing import Optional
 
 # Metadata key prefix (avoids collisions with standard ffmpeg keys)
 PREFIX = "openvideo_"
+MAX_RECIPE_METADATA_BYTES = 32000
 
 
 def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = None) -> str:
@@ -28,12 +29,17 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
     Uses ffmpeg -metadata flags (stored in the MP4 container's moov/udta atom).
     """
     output = output_path or video_path
+    recipe_json = json.dumps(recipe)
+    if len(recipe_json.encode("utf-8")) > MAX_RECIPE_METADATA_BYTES:
+        raise ValueError(
+            f"recipe metadata exceeds {MAX_RECIPE_METADATA_BYTES} bytes"
+        )
+
     cmd = ["ffmpeg", "-y", "-v", "error", "-i", video_path]
     for key, val in recipe.items():
         if val is not None:
             cmd.extend(["-metadata", f"{PREFIX}{key}={val}"])
-    # also embed the full recipe as a single JSON string for completeness
-    cmd.extend(["-metadata", f"{PREFIX}recipe_json={json.dumps(recipe)[:32000]}"])
+    cmd.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
     cmd.extend(["-c", "copy", output])  # stream-copy (no re-encode)
     r = subprocess.run(cmd, capture_output=True, timeout=60)
     if r.returncode != 0:
@@ -42,9 +48,17 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
         for key, val in recipe.items():
             if val is not None:
                 cmd_re.extend(["-metadata", f"{PREFIX}{key}={val}"])
-        cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={json.dumps(recipe)[:32000]}"])
+        cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
         cmd_re.extend(["-c:v", "libx264", "-crf", "18", "-c:a", "aac", output])
-        subprocess.run(cmd_re, capture_output=True, timeout=300)
+        r = subprocess.run(cmd_re, capture_output=True, timeout=300)
+        if r.returncode != 0:
+            raise RuntimeError(
+                f"ffmpeg metadata embedding failed: {r.stderr.decode(errors='replace')}"
+            )
+
+    written = read_recipe(output)
+    if written != recipe:
+        raise RuntimeError("embedded recipe metadata verification failed")
     return output
 
 
