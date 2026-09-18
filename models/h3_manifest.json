@@ -1,0 +1,30 @@
+{
+  "model": "Comfy-Org/MiniMax-H3",
+  "revision": "main",
+  "files": {
+    "diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors": {
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "size": 20970379616,
+      "commit": null,
+      "sha256": null
+    },
+    "text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors": {
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "size": 27141342152,
+      "commit": null,
+      "sha256": null
+    },
+    "vae/minimax_h3_video_vae_fp16.safetensors": {
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors",
+      "size": 5207808496,
+      "commit": null,
+      "sha256": null
+    },
+    "vae/minimax_h3_audio_vae_fp32.safetensors": {
+      "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors",
+      "size": 605254808,
+      "commit": null,
+      "sha256": null
+    }
+  }
+}
