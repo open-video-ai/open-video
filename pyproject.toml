@@ -45,8 +45,6 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-# `open-video serve` needs uvicorn (and a server module, not yet shipped).
-serve = ["uvicorn>=0.20"]
 dev = [
     "pytest>=7",
     "ruff>=0.1",
