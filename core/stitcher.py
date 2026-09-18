@@ -5,6 +5,7 @@ The stitcher takes a list of generated shot videos and produces one coherent fil
 2. Cross-shot audio crossfade (optional, for smooth transitions).
 3. Optional 2K upscale via API (H3-Regenerate-2K or simple super-resolution).
 """
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -23,7 +24,12 @@ class Stitcher:
         if not video_paths:
             return None
         if len(video_paths) == 1:
-            return video_paths[0]
+            source = Path(video_paths[0])
+            destination = Path(output_path)
+            if source.resolve() != destination.resolve():
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+            return str(destination)
 
         list_file = self.output_dir / "_concat.txt"
         list_file.write_text("\n".join(f"file '{p}'" for p in video_paths))

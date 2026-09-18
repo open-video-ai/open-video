@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from open_video.core.pipeline import Shot, LongFilmPipeline
+from open_video.core.stitcher import Stitcher
 
 
 def test_shot_creation():
@@ -49,6 +50,19 @@ def test_pipeline_init():
         assert pipeline.frames.exists()
     except Exception as e:
         assert False, f"Pipeline init should not crash: {e}"
+
+
+def test_stitcher_single_shot_honors_output_path(tmp_path):
+    """A single-shot film is copied to the requested output destination."""
+    source = tmp_path / "generated.mp4"
+    output = tmp_path / "custom" / "film.mp4"
+    source.write_bytes(b"fake-video")
+
+    result = Stitcher(output_dir=str(tmp_path)).concat([str(source)], str(output))
+
+    assert result == str(output)
+    assert output.exists()
+    assert output.read_bytes() == b"fake-video"
 
 
 if __name__ == "__main__":
