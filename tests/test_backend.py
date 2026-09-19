@@ -56,6 +56,34 @@ def test_model_backend_is_abstract():
         pass  # correct: interface methods raise
 
 
+def test_model_backend_capabilities_are_isolated():
+    """Each backend instance owns its own capability state."""
+    first = ModelBackend()
+    second = ModelBackend()
+
+    first.capabilities.native_audio = True
+
+    assert first.capabilities.native_audio is True
+    assert second.capabilities.native_audio is False
+
+
+def test_subclass_class_capabilities_are_preserved():
+    """Subclass class-level capabilities survive __init__ and stay per-instance."""
+    from open_video.backends.h3.backend import H3Backend
+
+    first = H3Backend()
+    second = H3Backend()
+
+    assert first.capabilities is not second.capabilities
+    assert first.capabilities.i2v is True
+    assert first.capabilities.native_audio is True
+
+    first.capabilities.native_audio = False
+
+    assert second.capabilities.native_audio is True
+    assert H3Backend.capabilities.native_audio is True
+
+
 if __name__ == "__main__":
     test_shot_request_defaults()
     test_shot_request_with_lora()

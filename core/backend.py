@@ -8,6 +8,7 @@ Inspired by what we learned shipping H3 (see early lab): each model has its own
 prompt grammar, modes, workflow, constraints, and optimal settings.
 """
 from __future__ import annotations
+import copy
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -59,6 +60,9 @@ class ModelBackend:
     id: str = "base"
     display_name: str = "base"
     capabilities: Capabilities = Capabilities()
+
+    def __init__(self):
+        self.capabilities = copy.deepcopy(type(self).capabilities)
 
     # --- 1. prompt grammar: how to write a good prompt for THIS model ---
     def prompt_guide(self) -> str:
