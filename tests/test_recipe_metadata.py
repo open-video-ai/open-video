@@ -1,6 +1,7 @@
 """Regression tests for recipe metadata embedding."""
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -35,7 +36,7 @@ def test_embed_recipe_oversized_skips_json_tag_keeps_per_key(monkeypatch, capsys
     assert out == "output.mp4"
     assert len(calls) == 1
     assert f"openvideo_prompt={big_prompt}" in calls[0]
-    assert not any("recipe_json" in arg for arg in calls[0])
+    assert "openvideo_recipe_json=" in calls[0]
     assert "warning" in capsys.readouterr().out.lower()
 
 
@@ -60,7 +61,7 @@ def test_embed_recipe_oversized_reencode_also_skips_json_tag(monkeypatch):
     assert len(calls) == 2
     assert "libx264" in calls[1]
     assert f"openvideo_prompt={big_prompt}" in calls[1]
-    assert not any("recipe_json" in arg for arg in calls[1])
+    assert "openvideo_recipe_json=" in calls[1]
 
 
 def test_embed_recipe_oversized_fails_on_bad_perkey_metadata(monkeypatch):
@@ -291,3 +292,19 @@ def test_embed_recipe_in_place_verification_failure_cleans_temp(
 
     assert src.read_bytes() == b"original"
     assert list(tmp_path.iterdir()) == [src]
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg") or not shutil.which("ffprobe"),
+                    reason="requires ffmpeg and ffprobe")
+def test_oversized_recipe_replaces_existing_json_metadata(tmp_path):
+    video = tmp_path / "film.mp4"
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-f", "lavfi", "-i",
+         "color=c=blue:s=64x64:d=0.2", "-c:v", "mpeg4", str(video)],
+        check=True, capture_output=True, timeout=20,
+    )
+    recipe_module.embed_recipe(str(video), {"prompt": "old recipe"})
+    replacement = {"prompt": "x" * 33000}
+    recipe_module.embed_recipe(str(video), replacement)
+    assert recipe_module.read_recipe(str(video)) == replacement
+    assert list(tmp_path.iterdir()) == [video]

@@ -52,8 +52,8 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
         for key, val in recipe.items():
             if val is not None:
                 cmd.extend(["-metadata", f"{PREFIX}{key}={val}"])
-        if embed_json:
-            cmd.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
+        # Clear any inherited JSON tag when the replacement is too large.
+        cmd.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json if embed_json else ''}"])
         # MP4/MOV muxer drops non-standard metadata keys without use_metadata_tags
         cmd.extend(["-movflags", "use_metadata_tags", "-c", "copy", output])
         r = subprocess.run(cmd, capture_output=True, timeout=60)
@@ -63,8 +63,7 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
             for key, val in recipe.items():
                 if val is not None:
                     cmd_re.extend(["-metadata", f"{PREFIX}{key}={val}"])
-            if embed_json:
-                cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json}"])
+            cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json if embed_json else ''}"])
             cmd_re.extend(["-movflags", "use_metadata_tags",
                            "-c:v", "libx264", "-crf", "18", "-c:a", "aac", output])
             r = subprocess.run(cmd_re, capture_output=True, timeout=300)
