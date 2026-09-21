@@ -61,14 +61,11 @@ load_comfyui_pin() {
     [[ -f "$1/scripts/comfyui.pin" ]] && source "$1/scripts/comfyui.pin"
 }
 
-# Verified byte sizes for the 4 default H3 INT8-ConvRot files (HF == ModelScope).
-# Source: HF HEAD content-length + proven sibling-repo download receipt (53,889,785,072 B total ≈ 54 GB).
-declare -A H3_SIZES=(
-  ["diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors"]=20970379616
-  ["text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors"]=27141342152
-  ["vae/minimax_h3_video_vae_fp16.safetensors"]=5207808496
-  ["vae/minimax_h3_audio_vae_fp32.safetensors"]=605254808
-)
+# Shared H3 weight manifest — single source of truth for the 4 default INT8
+# ConvRot files (paths, byte sizes, HF URLs, release commit/sha256). Consumed
+# via scripts/verify_h3_manifest.py; paths set in resolve_root.
+H3_MANIFEST=""                  # $OV_ROOT/models/h3_manifest.json
+H3_VERIFY=""                    # $OV_ROOT/scripts/verify_h3_manifest.py
 NEEDED_DISK_BYTES=64000000000   # 60 GiB headroom + outputs
 
 # ---------------------------------------------------------------------------
@@ -253,6 +250,8 @@ resolve_root() {
     [[ -f "$OV_ROOT/cli/open_video.py" ]] \
         || die "$OV_ROOT does not look like the open-video repo (no cli/open_video.py)."
     load_comfyui_pin "$OV_ROOT"
+    H3_MANIFEST="$OV_ROOT/models/h3_manifest.json"
+    H3_VERIFY="$OV_ROOT/scripts/verify_h3_manifest.py"
 
     COMFYUI_DIR="${COMFYUI_DIR_OVERRIDE:-$OV_ROOT/ComfyUI}"
     VENV_DIR="${VENV_DIR_OVERRIDE:-$OV_ROOT/.venv}"
@@ -547,7 +546,7 @@ url_for() {  # $1 = relative path under repo; honor --source
     local rel="$1"
     case "$SOURCE" in
         hf)
-            echo "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/$rel" ;;
+            python3 "$H3_VERIFY" url "$H3_MANIFEST" "$rel" ;;
         modelscope)
             echo "https://www.modelscope.cn/api/v1/models/Comfy-Org/MiniMax-H3/repo?Revision=master&FilePath=$rel" ;;
     esac
@@ -566,11 +565,15 @@ download_weights() {
         return 0
     fi
 
+    [[ -f "$H3_MANIFEST" && -f "$H3_VERIFY" ]] \
+        || die "H3 manifest/verifier missing under $OV_ROOT (models/h3_manifest.json, scripts/verify_h3_manifest.py)."
+
     # Build the aria2 input list, skipping any file already at full size (resume).
     : > "$ARIA_LIST"
     local pending=0 already=0
-    for rel in "${!H3_SIZES[@]}"; do
-        local want=${H3_SIZES[$rel]}
+    while IFS= read -r rel; do
+        local want
+        want=$(python3 "$H3_VERIFY" size "$H3_MANIFEST" "$rel")
         local dst="$MODELS_DIR/$rel"
         local got=0
         [[ -f "$dst" ]] && got=$(stat -c%s "$dst" 2>/dev/null || stat -f%z "$dst" 2>/dev/null || echo 0)
@@ -588,10 +591,17 @@ download_weights() {
             echo "  dir=$(dirname "$dst")"
             echo "  out=$(basename "$rel")"
         } >> "$ARIA_LIST"
-    done
+    done < <(python3 "$H3_VERIFY" paths "$H3_MANIFEST")
 
     if [[ "$pending" -eq 0 ]]; then
-        ok "All 4 H3 weight files already present at full size — nothing to download."
+        # Size match is not integrity: a same-size corrupt/poisoned file must
+        # not slip through. Verify against the manifest before declaring done.
+        if ! verify_weights; then
+            err "Existing weight files failed manifest verification (see above)."
+            err "If files are corrupt, delete them and re-run to re-download."
+            exit 40
+        fi
+        ok "All 4 H3 weight files already present and verified — nothing to download."
         return 0
     fi
     info "$already file(s) already complete; downloading $pending file(s) (~54 GB total)."
@@ -617,12 +627,12 @@ download_weights() {
         # Verify how far we got; only hard-fail if NOTHING completed this pass AND
         # nothing is already complete.
         local any_complete=0
-        for rel in "${!H3_SIZES[@]}"; do
+        while IFS= read -r rel; do
             local dst="$MODELS_DIR/$rel"
             local got=0
             [[ -f "$dst" ]] && got=$(stat -c%s "$dst" 2>/dev/null || stat -f%z "$dst" 2>/dev/null || echo 0)
-            [[ "$got" -eq "${H3_SIZES[$rel]}" ]] && any_complete=1
-        done
+            [[ "$got" -eq "$(python3 "$H3_VERIFY" size "$H3_MANIFEST" "$rel")" ]] && any_complete=1
+        done < <(python3 "$H3_VERIFY" paths "$H3_MANIFEST")
         if [[ "$any_complete" -eq 0 ]]; then
             err "aria2c failed and no file is complete yet. Check your network/mirror."
             if [[ "$SOURCE" == "hf" ]]; then
@@ -635,24 +645,14 @@ download_weights() {
         warn "aria2c reported incomplete — some files finished, some didn't. Re-run to resume."
     fi
 
-    # Final verification: every file must be at its exact expected byte size.
+    # Final verification: every file must match the manifest (size + sha256
+    # when release hashes are configured; fails closed while they are pending).
     verify_weights || exit 40
-    ok "H3 weights complete and size-verified (~54 GB)"
+    ok "H3 weights complete and verified against models/h3_manifest.json (~54 GB)"
 }
 
 verify_weights() {
-    local bad=0
-    for rel in "${!H3_SIZES[@]}"; do
-        local want=${H3_SIZES[$rel]}
-        local dst="$MODELS_DIR/$rel"
-        local got=0
-        [[ -f "$dst" ]] && got=$(stat -c%s "$dst" 2>/dev/null || stat -f%z "$dst" 2>/dev/null || echo 0)
-        if [[ "$got" -ne "$want" ]]; then
-            err "size mismatch: $rel — got $got, expected $want"
-            bad=1
-        fi
-    done
-    return $bad
+    python3 "$H3_VERIFY" check --manifest "$H3_MANIFEST" --models-dir "$MODELS_DIR"
 }
 
 # ===========================================================================

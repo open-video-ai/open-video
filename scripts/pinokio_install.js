@@ -15,8 +15,8 @@
 // safe and fast. `daemon: true` keeps the launched ComfyUI alive after the
 // script returns.
 //
-// Verified H3 file/URLs come from the Comfy-Org/MiniMax-H3 Hugging Face repo
-// (https://huggingface.co/Comfy-Org/MiniMax-H3) and match the filenames in
+// H3 file/URL/size/hash policy lives in models/h3_manifest.json (shared with
+// install.sh and h3_download.sh) and matches the filenames in
 // backends/h3/backend.py -> default_settings().
 //---------------------------------------------------------------------------
 module.exports = {
@@ -167,54 +167,20 @@ module.exports = {
     // Source: https://huggingface.co/Comfy-Org/MiniMax-H3  (int8_convrot set,
     // matching backends/h3/backend.py default_settings()).
     // Files land in ComfyUI's standard model dirs so ComfyUI auto-discovers them.
+    // Paths, byte sizes, URLs and release commit/sha256 come from the shared
+    // models/h3_manifest.json via scripts/verify_h3_manifest.py: `fetch`
+    // curl-downloads missing/incomplete files (resumable), `check` verifies
+    // size + sha256 and fails closed while release hashes are pending.
     {
       method: "shell.run",
       params: {
         venv: "env",
         path: "app",
         message: [
-          "mkdir -p ComfyUI/models/vae ComfyUI/models/diffusion_models ComfyUI/models/text_encoders"
+          "mkdir -p ComfyUI/models/vae ComfyUI/models/diffusion_models ComfyUI/models/text_encoders",
+          "python scripts/verify_h3_manifest.py fetch --manifest models/h3_manifest.json --models-dir ComfyUI/models",
+          "python scripts/verify_h3_manifest.py check --manifest models/h3_manifest.json --models-dir ComfyUI/models"
         ]
-      }
-    },
-    // diffusion model — minimax_h3_fl2va_pruned_int8_convrot.safetensors (~20.97 GB)
-    {
-      when: "{{!exists('app/ComfyUI/models/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors')}}",
-      method: "shell.run",
-      params: {
-        venv: "env",
-        path: "app",
-        message: "curl -L --fail --retry 5 -C - -o ComfyUI/models/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors"
-      }
-    },
-    // text encoder — qwen3vl_32b_minimax_h3_int8_convrot.safetensors (~27.14 GB)
-    {
-      when: "{{!exists('app/ComfyUI/models/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors')}}",
-      method: "shell.run",
-      params: {
-        venv: "env",
-        path: "app",
-        message: "curl -L --fail --retry 5 -C - -o ComfyUI/models/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors"
-      }
-    },
-    // video VAE — minimax_h3_video_vae_fp16.safetensors (~5.21 GB)
-    {
-      when: "{{!exists('app/ComfyUI/models/vae/minimax_h3_video_vae_fp16.safetensors')}}",
-      method: "shell.run",
-      params: {
-        venv: "env",
-        path: "app",
-        message: "curl -L --fail --retry 5 -C - -o ComfyUI/models/vae/minimax_h3_video_vae_fp16.safetensors https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors"
-      }
-    },
-    // audio VAE — minimax_h3_audio_vae_fp32.safetensors (~0.61 GB)
-    {
-      when: "{{!exists('app/ComfyUI/models/vae/minimax_h3_audio_vae_fp32.safetensors')}}",
-      method: "shell.run",
-      params: {
-        venv: "env",
-        path: "app",
-        message: "curl -L --fail --retry 5 -C - -o ComfyUI/models/vae/minimax_h3_audio_vae_fp32.safetensors https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors"
       }
     },
 
