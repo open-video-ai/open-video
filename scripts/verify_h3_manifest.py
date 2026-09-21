@@ -119,6 +119,8 @@ def cmd_check(args) -> int:
         if not args.size_only and want_hash:
             if sha256_of(path) != want_hash:
                 print(f"hash mismatch: {rel}", file=sys.stderr)
+                print(f"Move {path} aside and rerun the installer to download a fresh copy.",
+                      file=sys.stderr)
                 bad = EXIT_BAD
     return bad
 

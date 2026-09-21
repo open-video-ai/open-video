@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -63,12 +64,12 @@ def _run_download_weights(tmp_path: Path, *, skip_download: int = 0) -> subproce
     harness = tmp_path / "harness.sh"
     harness.write_text(f"""\
 set -uo pipefail
-OV_ROOT={tmp_path}
-COMFYUI_LOG={tmp_path}/comfyui.log
-ARIA_LIST={tmp_path}/aria.list
-MODELS_DIR={tmp_path}/weights
-H3_MANIFEST={tmp_path}/manifest.json
-H3_VERIFY={VERIFIER}
+OV_ROOT={shlex.quote(str(tmp_path))}
+COMFYUI_LOG={shlex.quote(str(tmp_path / "comfyui.log"))}
+ARIA_LIST={shlex.quote(str(tmp_path / "aria.list"))}
+MODELS_DIR={shlex.quote(str(tmp_path / "weights"))}
+H3_MANIFEST={shlex.quote(str(tmp_path / "manifest.json"))}
+H3_VERIFY={shlex.quote(str(VERIFIER))}
 QUANT=int8
 SOURCE=hf
 SKIP_DOWNLOAD={skip_download}

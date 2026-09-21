@@ -20,6 +20,9 @@ mkdir -p "$LOCAL" "$(dirname "$HEART")" "$(dirname "$STATUS")"
 MANIFEST="$ROOT/models/h3_manifest.json"
 H3_VERIFY="$ROOT/scripts/verify_h3_manifest.py"
 
+# Validate the shared manifest before entering the retry loop.
+"$PY" "$H3_VERIFY" paths "$MANIFEST" >/dev/null || exit 1
+
 echo "$(date -Iseconds) START resilient H3 download loop (4 files, ~54GB)" >> "$HEART"
 while true; do
   $PY - "$LOCAL" "$MANIFEST" >> "$HEART" 2>&1 <<'PY'
@@ -55,6 +58,7 @@ PY
     else
       echo "VERIFY_FAILED" > "$STATUS"
       echo "$(date -Iseconds) VERIFY_FAILED integrity check did not pass" >> "$HEART"
+      exit 1
     fi
     break
   fi
