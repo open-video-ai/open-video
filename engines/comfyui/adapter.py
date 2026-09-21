@@ -1,6 +1,7 @@
 """ComfyUI engine adapter — open-video drives ComfyUI via its HTTP API.
 open-video is the director; ComfyUI is the hands. This is the seam."""
 import json, time, urllib.request, urllib.error
+from urllib.parse import urlencode
 from pathlib import Path
 
 from open_video.core.http import post_json
@@ -64,7 +65,7 @@ class ComfyUIAdapter:
             fn, sub = g.get("filename"), g.get("subfolder", "")
             if not fn:
                 continue
-            url = f"{self.server}/view?filename={fn}&subfolder={sub}&type=output"
+            url = f"{self.server}/view?{urlencode({'filename': fn, 'subfolder': sub, 'type': 'output'})}"
             p = self.output_dir / f"{ts}_{fn}"
             urllib.request.urlretrieve(url, p)
             saved.append(str(p))
