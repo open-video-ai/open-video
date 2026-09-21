@@ -200,3 +200,94 @@ def test_embed_recipe_in_place_failure_preserves_original(monkeypatch, tmp_path)
 
     assert src.read_bytes() == b"original"
     assert list(tmp_path.iterdir()) == [src]  # temp file cleaned up
+
+
+def test_embed_recipe_in_place_ffmpeg_timeout_cleans_temp(monkeypatch, tmp_path):
+    src = tmp_path / "film.mp4"
+    src.write_bytes(b"original")
+
+    def fake_run(cmd, **kwargs):
+        raise subprocess.TimeoutExpired(cmd, kwargs.get("timeout") or 60)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        recipe_module.embed_recipe(str(src), {"prompt": "test"})
+
+    assert src.read_bytes() == b"original"
+    assert list(tmp_path.iterdir()) == [src]
+
+
+def test_embed_recipe_in_place_reencode_timeout_cleans_temp(monkeypatch, tmp_path):
+    src = tmp_path / "film.mp4"
+    src.write_bytes(b"original")
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(cmd)
+        if len(calls) == 1:
+            return Result(1, b"stream copy failed")
+        raise subprocess.TimeoutExpired(cmd, kwargs.get("timeout") or 300)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        recipe_module.embed_recipe(str(src), {"prompt": "test"})
+
+    assert src.read_bytes() == b"original"
+    assert list(tmp_path.iterdir()) == [src]
+
+
+def test_embed_recipe_in_place_probe_timeout_cleans_temp(monkeypatch, tmp_path):
+    src = tmp_path / "film.mp4"
+    src.write_bytes(b"original")
+
+    def fake_run(cmd, **kwargs):
+        if cmd[0] == "ffprobe":
+            raise subprocess.TimeoutExpired(cmd, kwargs.get("timeout") or 15)
+        Path(cmd[-1]).write_bytes(b"muxed")
+        return Result(0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        recipe_module.embed_recipe(str(src), {"prompt": "test"})
+
+    assert src.read_bytes() == b"original"
+    assert list(tmp_path.iterdir()) == [src]
+
+
+def test_embed_recipe_in_place_unserializable_recipe_cleans_temp(
+    monkeypatch, tmp_path
+):
+    src = tmp_path / "film.mp4"
+    src.write_bytes(b"original")
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: Result(0))
+
+    with pytest.raises(TypeError):
+        recipe_module.embed_recipe(str(src), {"prompt": object()})
+
+    assert src.read_bytes() == b"original"
+    assert list(tmp_path.iterdir()) == [src]
+
+
+def test_embed_recipe_in_place_verification_failure_cleans_temp(
+    monkeypatch, tmp_path
+):
+    src = tmp_path / "film.mp4"
+    src.write_bytes(b"original")
+
+    def fake_run(cmd, **kwargs):
+        Path(cmd[-1]).write_bytes(b"muxed")
+        return Result(0)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        recipe_module, "read_recipe", lambda path: {"prompt": "wrong"}
+    )
+
+    with pytest.raises(RuntimeError, match="verification failed"):
+        recipe_module.embed_recipe(str(src), {"prompt": "test"})
+
+    assert src.read_bytes() == b"original"
+    assert list(tmp_path.iterdir()) == [src]
