@@ -594,7 +594,14 @@ download_weights() {
     done < <(python3 "$H3_VERIFY" paths "$H3_MANIFEST")
 
     if [[ "$pending" -eq 0 ]]; then
-        ok "All 4 H3 weight files already present at full size — nothing to download."
+        # Size match is not integrity: a same-size corrupt/poisoned file must
+        # not slip through. Verify against the manifest before declaring done.
+        if ! verify_weights; then
+            err "Existing weight files failed manifest verification (see above)."
+            err "If files are corrupt, delete them and re-run to re-download."
+            exit 40
+        fi
+        ok "All 4 H3 weight files already present and verified — nothing to download."
         return 0
     fi
     info "$already file(s) already complete; downloading $pending file(s) (~54 GB total)."
