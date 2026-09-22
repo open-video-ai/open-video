@@ -14,6 +14,7 @@ class Result:
     def __init__(self, returncode=0, stderr=b""):
         self.returncode = returncode
         self.stderr = stderr
+        self.stdout = '{"format": {"tags": {}}}'
 
 
 def ffmpeg_calls(calls):
@@ -111,6 +112,8 @@ def test_embed_recipe_fails_when_ffmpeg_fails(monkeypatch):
 
     def fake_run(cmd, **kwargs):
         calls.append(cmd)
+        if cmd[0] == "ffprobe":
+            return Result(0)
         return Result(1, b"broken ffmpeg")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -206,6 +209,8 @@ def test_embed_recipe_in_place_failure_preserves_original(monkeypatch, tmp_path)
     src.write_bytes(b"original")
 
     def fake_run(cmd, **kwargs):
+        if cmd[0] == "ffprobe":
+            return Result(0)
         return Result(1, b"broken ffmpeg")
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -222,6 +227,8 @@ def test_embed_recipe_in_place_ffmpeg_timeout_cleans_temp(monkeypatch, tmp_path)
     src.write_bytes(b"original")
 
     def fake_run(cmd, **kwargs):
+        if cmd[0] == "ffprobe":
+            return Result(0)
         raise subprocess.TimeoutExpired(cmd, kwargs.get("timeout") or 60)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -239,6 +246,8 @@ def test_embed_recipe_in_place_reencode_timeout_cleans_temp(monkeypatch, tmp_pat
     calls = []
 
     def fake_run(cmd, **kwargs):
+        if cmd[0] == "ffprobe":
+            return Result(0)
         calls.append(cmd)
         if len(calls) == 1:
             return Result(1, b"stream copy failed")
@@ -266,7 +275,7 @@ def test_embed_recipe_in_place_probe_timeout_cleans_temp(monkeypatch, tmp_path):
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
-    with pytest.raises(subprocess.TimeoutExpired):
+    with pytest.raises(RuntimeError, match="cannot inspect"):
         recipe_module.embed_recipe(str(src), {"prompt": "test"})
 
     assert src.read_bytes() == b"original"
@@ -351,9 +360,10 @@ def test_embed_recipe_clears_stale_owned_tags(monkeypatch):
     assert not any(m.startswith("comment=") for m in md)
 
 
-def test_embed_recipe_probe_failure_still_sets_metadata(monkeypatch):
-    """If the input can't be probed (missing/corrupt), embed still writes the
-    new recipe tags rather than crashing."""
+def test_embed_recipe_probe_failure_preserves_original(monkeypatch, tmp_path):
+    """Unknown existing tags cannot be safely replaced; fail before muxing."""
+    source = tmp_path / "film.mp4"
+    source.write_bytes(b"original")
     calls = []
 
     def fake_run(cmd, **kwargs):
@@ -367,10 +377,11 @@ def test_embed_recipe_probe_failure_still_sets_metadata(monkeypatch):
         recipe_module, "read_recipe", lambda path: {"prompt": "new"}
     )
 
-    recipe_module.embed_recipe("input.mp4", {"prompt": "new"}, "output.mp4")
-
-    ffmpeg_cmd = next(c for c in calls if c[0] == "ffmpeg")
-    assert "openvideo_prompt=new" in ffmpeg_cmd
+    with pytest.raises(RuntimeError, match="cannot inspect"):
+        recipe_module.embed_recipe(str(source), {"prompt": "new"})
+    assert not ffmpeg_calls(calls)
+    assert source.read_bytes() == b"original"
+    assert list(tmp_path.iterdir()) == [source]
 
 
 NEEDS_FFMPEG = pytest.mark.skipif(

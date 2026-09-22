@@ -26,12 +26,13 @@ def _owned_tag_keys(video_path: str) -> list:
         r = subprocess.run(
             ["ffprobe", "-v", "error", "-show_format", "-of", "json", video_path],
             capture_output=True, text=True, timeout=15)
-        if getattr(r, "returncode", 1) != 0:
-            return []
-        tags = json.loads(getattr(r, "stdout", "") or "") \
-            .get("format", {}).get("tags", {})
-    except (OSError, subprocess.SubprocessError, ValueError):
-        return []
+        if r.returncode != 0:
+            raise ValueError("ffprobe failed")
+        tags = json.loads(r.stdout).get("format", {}).get("tags", {})
+        if not isinstance(tags, dict):
+            raise ValueError("invalid metadata tags")
+    except (OSError, subprocess.SubprocessError, ValueError, AttributeError) as exc:
+        raise RuntimeError("cannot inspect existing recipe metadata") from exc
     return [k for k in tags if isinstance(k, str) and k.lower().startswith(PREFIX)]
 
 
@@ -96,9 +97,7 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
         else:
             # full JSON blob omitted; verify the per-key tags that were written
             expected_tags = {k: str(v) for k, v in recipe.items() if v is not None}
-            ok = written is not None and all(
-                written.get(k) == v for k, v in expected_tags.items()
-            )
+            ok = written == expected_tags
         if not ok:
             raise RuntimeError("embedded recipe metadata verification failed")
         if output != dest:
