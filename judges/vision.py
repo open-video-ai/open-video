@@ -47,7 +47,12 @@ class VisionJudge(QualityJudge):
                                issues=[Issue("judge_error", "vlm_api returned unusable score",
                                              "check VLM response format")])
             scores.append(score)
-            for issue in result.get("issues", []):
+            issues = result.get("issues") or []
+            if not isinstance(issues, list) or any(not isinstance(item, dict) for item in issues):
+                return Verdict(verdict="FAIL", score=0.0, frames=frames,
+                               issues=[Issue("judge_error", "vlm_api returned malformed issues",
+                                             "check VLM response format")])
+            for issue in issues:
                 all_issues.append(Issue(type=issue.get("type", "artifact"),
                                         detail=issue.get("detail", ""),
                                         fix=issue.get("fix", "try different seed")))

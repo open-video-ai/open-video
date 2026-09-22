@@ -192,6 +192,8 @@ def test_recipe_distinguishes_model_engine_and_generated_duration(tmp_path):
     assert recipe["duration_s"] == 107 / 24
     assert recipe["steps"] == 20
     assert recipe["width"] == 1344
+    shot.receipt["duration_s"] = None
+    assert pipe._build_recipe([shot], "film.mp4")["duration_s"] == shot.duration_s
 
 
 if __name__ == "__main__":

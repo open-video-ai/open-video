@@ -151,6 +151,16 @@ def test_score_normalization_is_finite_and_bounded(value, expected):
     assert QualityJudge._score(value) == expected
 
 
+@pytest.mark.parametrize("issues", [["invalid-entry"], "invalid-list", {"detail": "invalid"}])
+def test_vision_plugin_rejects_malformed_issues(monkeypatch, issues):
+    from open_video.judges.vision import VisionJudge
+    judge = VisionJudge(vlm_api=lambda *_: {"score": 0.9, "issues": issues})
+    monkeypatch.setattr(judge, "extract_frames", lambda *_: ["frame.png"])
+    verdict = judge.assess("clip.mp4", "p")
+    assert verdict.verdict == "FAIL"
+    assert verdict.score == 0.0
+
+
 # --- honest verdicts: SKIPPED / FAIL can never masquerade as PASS ---
 
 def _judge_with_frames(vision_fn, monkeypatch):

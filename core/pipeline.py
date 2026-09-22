@@ -147,7 +147,7 @@ class LongFilmPipeline:
             "mode": first.mode if first else None,
             "width": first_receipt.get("width"),
             "height": first_receipt.get("height"),
-            "duration_s": sum(s.receipt.get("duration_s", s.duration_s) for s in valid),
+            "duration_s": sum(s.receipt.get("duration_s") or s.duration_s for s in valid),
             "seed": first.seed if first else 0,
             "seeds": ",".join(str(s.seed) for s in valid),
             "shots": len(valid),
