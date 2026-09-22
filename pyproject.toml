@@ -82,6 +82,7 @@ packages = [
     "open_video.engines.comfyui",
     "open_video.judges",
     "open_video.library",
+    "open_video.models",
     "open_video.scripts",
 ]
 
@@ -92,6 +93,7 @@ packages = [
 "open_video.engines" = "engines"
 "open_video.judges" = "judges"
 "open_video.library" = "library"
+"open_video.models" = "models"
 "open_video.scripts" = "scripts"
 
 # Ship the runtime data the CLI advertises: H3 workflow templates + the official
@@ -101,4 +103,5 @@ packages = [
 [tool.setuptools.package-data]
 "open_video.backends.h3" = ["workflows/*.json", "PROMPT_GRAMMAR.md"]
 "open_video.library" = ["prompts/*.txt", "prompts/*.md"]
-"open_video.scripts" = ["install.sh", "h3_download.sh", "h3_aria2_list.txt"]
+"open_video.scripts" = ["install.sh", "h3_download.sh", "h3_aria2_list.txt", "comfyui.pin"]
+"open_video.models" = ["h3_manifest.json"]

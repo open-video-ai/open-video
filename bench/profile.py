@@ -101,6 +101,7 @@ class ResourceSampler:
         self.peak_vram_mb = 0
         self.peak_ram_mb = 0
         self.samples = 0
+        self.environment_failures = []
         self._stop = False
         self._thread = None
 
@@ -109,8 +110,15 @@ class ResourceSampler:
         self.peak_vram_mb = 0
         self.peak_ram_mb = ram_used_mb()  # baseline so peak >= pre-run usage
         self.samples = 0
+        self.environment_failures = []
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
+
+    def _record_failure(self, msg: str):
+        """Record a sampler/environment failure once per distinct message, so a
+        repeating sample loop cannot spam unbounded duplicate entries."""
+        if msg not in self.environment_failures:
+            self.environment_failures.append(msg)
 
     def stop(self):
         self._stop = True
@@ -127,15 +135,18 @@ class ResourceSampler:
                     v = int(out[self.gpu_index])
                     if v > self.peak_vram_mb:
                         self.peak_vram_mb = v
-            except Exception:
-                pass
+            except FileNotFoundError:
+                self._record_failure(
+                    "nvidia-smi not found on PATH; VRAM sampling unavailable")
+            except Exception as e:
+                self._record_failure(f"nvidia-smi sampler failed: {e}")
             # RAM
             try:
                 r = ram_used_mb()
                 if r > self.peak_ram_mb:
                     self.peak_ram_mb = r
-            except Exception:
-                pass
+            except Exception as e:
+                self._record_failure(f"RAM sampler failed: {e}")
             self.samples += 1
             time.sleep(self.interval)
 
@@ -280,6 +291,7 @@ def run_config(backend, engine, name, w, h, dur, seed, prompt, mode,
             "output_size_mb": size_mb,
             "video_path": result.video_path,
             "vram_samples": sampler.samples,
+            "environment_failures": sampler.environment_failures,
         })
     else:
         entry.update({
@@ -289,6 +301,7 @@ def run_config(backend, engine, name, w, h, dur, seed, prompt, mode,
             "peak_vram_mb": sampler.peak_vram_mb,
             "peak_ram_mb": sampler.peak_ram_mb,
             "vram_samples": sampler.samples,
+            "environment_failures": sampler.environment_failures,
         })
 
     results[name] = entry
