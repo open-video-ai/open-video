@@ -92,6 +92,21 @@ def test_lab_layout_resolution_and_mkdir(tmp_path, monkeypatch):
     assert len(staged) == 1 and staged[0].read_bytes() == FF_BYTES
 
 
+@pytest.mark.parametrize("var", ["OPEN_VIDEO_COMFYUI_DIR", "OPEN_VIDEO_LAB", "H3_LAB"])
+def test_invalid_explicit_runtime_does_not_fall_back(tmp_path, monkeypatch, var):
+    from open_video.backends.h3 import backend as module
+    fallback = tmp_path / "product" / "ComfyUI"
+    fallback.mkdir(parents=True)
+    monkeypatch.setattr(module, "REPO_ROOT", fallback.parent)
+    monkeypatch.setenv(var, str(tmp_path / "missing-runtime"))
+    engine = _CaptureEngine()
+    result = H3Backend().generate(_req(tmp_path), engine=engine)
+    assert not result.ok
+    assert var in result.error
+    assert engine.workflow is None
+    assert not (fallback / "input").exists()
+
+
 def test_staged_filename_is_unique_per_run(tmp_path, monkeypatch):
     """Two runs never collide on a hardcoded firstframe.png-style name."""
     staging = tmp_path / "input"

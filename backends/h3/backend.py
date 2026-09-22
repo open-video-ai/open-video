@@ -34,18 +34,20 @@ def resolve_comfy_input() -> Path:
     roots = []
     comfy_dir = os.environ.get("OPEN_VIDEO_COMFYUI_DIR", "").strip()
     if comfy_dir:
-        roots.append(Path(comfy_dir).expanduser())
+        roots.append(("OPEN_VIDEO_COMFYUI_DIR", Path(comfy_dir).expanduser()))
     for var in ("OPEN_VIDEO_LAB", "H3_LAB"):
         v = os.environ.get(var, "").strip()
         if v:
-            roots.append(Path(v).expanduser() / "ComfyUI")
-    roots += [REPO_ROOT.parent / "lab" / "ComfyUI", REPO_ROOT / "ComfyUI"]
-    for r in roots:
+            roots.append((var, Path(v).expanduser() / "ComfyUI"))
+    roots += [(None, REPO_ROOT.parent / "lab" / "ComfyUI"), (None, REPO_ROOT / "ComfyUI")]
+    for var, r in roots:
         if r.is_dir():
             return (r / "input").resolve()
+        if var:
+            raise FileNotFoundError(f"{var} points to a missing ComfyUI directory: {r}")
     raise FileNotFoundError(
         "ComfyUI input dir not found for staging reference frames — set "
-        "OPEN_VIDEO_COMFYUI_INPUT (tried: " + ", ".join(str(r / "input") for r in roots) + ")")
+        "OPEN_VIDEO_COMFYUI_INPUT (tried: " + ", ".join(str(r / "input") for _, r in roots) + ")")
 
 
 def _snap_17k5(duration_s: float) -> int:
