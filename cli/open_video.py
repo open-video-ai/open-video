@@ -36,7 +36,6 @@ import importlib
 import inspect
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -595,7 +594,7 @@ def build_pull_parser():
     p = argparse.ArgumentParser(
         prog="open_video pull",
         description="Fetch MiniMax H3 weights (Ollama-style pull). "
-                    "Verifies the INT8 package; resumes via scripts/install.sh + aria2c.",
+                    "Downloads and verifies INT8 weights; resumes via the packaged manifest tool.",
         epilog="examples:\n"
                "  open-video pull h3\n"
                "  open-video pull h3 --check-only\n"
@@ -616,7 +615,7 @@ def build_pull_parser():
     p.add_argument(
         "--check-only",
         action="store_true",
-        help="Only inventory files; do not invoke the installer download.",
+        help="Only inventory presence and sizes; no checksum verification or download.",
     )
     p.add_argument("--quant", default="auto", help="Quant profile hint (auto|nf4|w4|int8).")
     p.add_argument("--json", action="store_true", help="Emit inventory JSON.")
@@ -659,62 +658,39 @@ def cmd_pull(args) -> int:
     else:
         print(format_inventory(inv), flush=True)
 
-    if inv.ready:
-        print("[open-video] [3/3] already pulled — nothing to download.", flush=True)
-        return 0
-
     if args.check_only:
-        print("[open-video] [3/3] --check-only: not downloading.", flush=True)
-        return 1  # incomplete
+        print("[open-video] [3/3] --check-only: size inventory only; no checksum verification or download.",
+              flush=True)
+        return 0 if inv.ready else 1
 
-    install = REPO_ROOT / "scripts" / "install.sh"
-    if not install.is_file():
-        print(
-            f"[open-video] error: installer not found at {install}. "
-            f"Clone the repo or run: curl -fsSL https://open-video.ai/install | bash",
-            file=sys.stderr,
-        )
-        return 2
-
-    print(
-        "[open-video] [2/3] downloading via install.sh (aria2c, resumable, ~54 GB)…",
-        flush=True,
-    )
-    env = os.environ.copy()
-    env["OPEN_VIDEO_QUANT"] = rec.quant if rec.quant in ("nf4", "w4", "int8") else "int8"
-    # Force download even on no-GPU hosts when user explicitly pulls.
-    env["OPEN_VIDEO_FORCE_DOWNLOAD"] = "1"
-    cmd = [
-        "bash",
-        str(install),
-        "--root",
-        str(REPO_ROOT),
-        "--models-dir",
-        str(models_dir),
-        "--skip-server",
-        "--skip-generate",
-        "--yes",
-    ]
-    # Prefer not re-cloning ComfyUI if present; still allow install to create it for path layout.
-    if (REPO_ROOT / "ComfyUI" / "main.py").is_file():
-        cmd.append("--skip-comfyui-install")
+    # Weight pulls must also work from a read-only wheel installation. Runtime
+    # setup belongs to install.sh; fetch/check only touch the selected model store.
+    from open_video.scripts import verify_h3_manifest as manifest_tool
+    verify_args = argparse.Namespace(manifest=str(REPO_ROOT / "models" / "h3_manifest.json"),
+                                     models_dir=str(models_dir), size_only=False)
     try:
-        proc = subprocess.run(cmd, cwd=str(REPO_ROOT), env=env, check=False)
-    except OSError as e:
-        print(f"[open-video] error: failed to run installer: {e}", file=sys.stderr)
+        manifest = manifest_tool.load_manifest(verify_args.manifest)
+        if manifest_tool.missing_metadata(manifest):
+            print("[open-video] error: weight manifest lacks SHA-256/commit metadata; refusing download.",
+                  file=sys.stderr)
+            return 2
+        if not inv.ready:
+            print("[open-video] [2/3] fetching INT8 weights (curl, resumable, ~54 GB)…", flush=True)
+            code = manifest_tool.cmd_fetch(verify_args)
+            if code:
+                print("[open-video] pull incomplete: download failed; rerun to resume.", file=sys.stderr)
+                return code
+        print("[open-video] [3/3] verifying SHA-256 for every weight file…", flush=True)
+        code = manifest_tool.cmd_check(verify_args)
+    except (OSError, ValueError, KeyError, SystemExit) as exc:
+        print(f"[open-video] error: weight pull failed: {exc}", file=sys.stderr)
         return 2
-
-    inv2 = inventory_h3_int8(models_dir)
-    print(format_inventory(inv2), flush=True)
-    if inv2.ready:
-        print("[open-video] [3/3] pull complete.", flush=True)
-        return 0
-    print(
-        f"[open-video] [3/3] pull incomplete (installer exit {proc.returncode}). "
-        f"Re-run `open-video pull {model}` to resume.",
-        file=sys.stderr,
-    )
-    return proc.returncode or 1
+    if code:
+        print("[open-video] pull failed integrity verification; existing files were preserved.",
+              file=sys.stderr)
+        return code
+    print("[open-video] H3 weights verified (SHA-256).", flush=True)
+    return 0
 
 
 def build_status_parser():
