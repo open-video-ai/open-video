@@ -1,13 +1,16 @@
-# open-video — Public plan (v0.0.1)
+# open-video — Public plan (v0.1.0)
 
 > Short product plan for contributors.
 
-## What shipped (v0.0.1)
+## What shipped (v0.1.0)
 
-- Local **MiniMax H3** via ComfyUI (`open-video pull` / `status` / `run`)
+- Local **MiniMax H3** via ComfyUI (`open-video pull` / `status` / `run`), INT8 weights verified against a packaged manifest
 - Agent skill harness: `skill/h3-video`
+- Recipe-in-render metadata (atomic embed; read via `open_video.core.recipe.read_recipe`)
+- Opt-in VLM judge → bounded refine loop; honest `SKIPPED` verdict when no VLM is configured
+- Reliability: unique I2V/FL2V staging via `OPEN_VIDEO_COMFYUI_INPUT`, real engine-error propagation
 - Install path + product site (install/docs; `/try` is a UI mockup, not free cloud GPU)
-- Scaffolding under `core/` for planner/judge/stitcher (not a finished multi-minute director)
+- Scaffolding under `core/` for planner/stitcher (not a finished multi-minute director)
 
 ## Design direction (honest labels)
 
@@ -15,8 +18,8 @@
 |---|---|
 | Single-shot H3 generate | **Shipped** |
 | Agent prompt skill | **Shipped** |
-| Vision judge → refine loop | **Scaffold** — needs a real `vision_fn` |
-| Multi-shot plan + stitch | **Designed / partial** |
+| Vision judge → refine loop | **Shipped (opt-in)** — real `vision_fn` via `OPEN_VIDEO_VLM_*`; `SKIPPED` honestly when unset |
+| Multi-shot plan + stitch | **Experimental / partial** |
 | 2nd model backend | **Planned** |
 | Hosted generate / desktop app | **Not shipped** |
 | Marketplace / take rate | **Not a product claim** — do not document as current |
@@ -30,8 +33,8 @@
 
 ## Success for the next milestone
 
-A coherent multi-shot open demo with a **real** vision review (not the PASS stub), documented
-with receipts — not star-count goals on the README.
+A coherent multi-shot open demo with a **real** vision review, run end-to-end and documented
+with receipts — **not yet verified**; do not claim it as passing until the run exists.
 
 ## Open decisions (engineering)
 

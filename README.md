@@ -12,14 +12,14 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"/></a>
-  <img alt="Version" src="https://img.shields.io/badge/version-0.0.1-informational.svg"/>
+  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-informational.svg"/>
   <a href="https://open-video.ai"><img alt="Website" src="https://img.shields.io/website?url=https%3A%2F%2Fopen-video.ai&label=open-video.ai"/></a>
   <a href="https://huggingface.co/open-video-ai"><img alt="Hugging Face" src="https://img.shields.io/badge/HuggingFace-open--video--ai-yellow.svg"/></a>
 </p>
 
 <p align="center">
   <sub><b>Ollama → local LLMs.&nbsp;&nbsp;OpenVideo → local video.</b></sub><br/>
-  <sub>v0.0.1 is exactly that loop for MiniMax H3 — not a multi-model platform yet. <a href="https://open-video.ai/demo.mp4">▶ Watch the demo</a></sub>
+  <sub>v0.1.0 is exactly that loop for MiniMax H3 — not a multi-model platform yet. <a href="https://open-video.ai/demo.mp4">▶ Watch the demo</a></sub>
 </p>
 
 ---
@@ -27,11 +27,10 @@
 ## 60-second start
 
 ```bash
-# Linux / macOS — installs ComfyUI engine + pulls H3 weights (resumable, ~54 GB)
-curl -fsSL https://open-video.ai/install | bash
-
-# Windows (PowerShell) — prefers WSL2 for the full H3 GPU path
-irm https://open-video.ai/install.ps1 | iex
+# v0.1.0 ships from the GitHub tag (Linux / macOS / WSL2)
+git clone --depth 1 --branch v0.1.0 https://github.com/open-video-ai/open-video
+cd open-video
+bash scripts/install.sh             # ComfyUI engine + H3 weights (resumable, ~54 GB)
 
 # Same mental model as Ollama: pull → status → run
 open-video pull h3                  # verify / resume H3 weights
@@ -41,27 +40,34 @@ open-video run "A lone astronaut planting a flag on a red dune at dusk" --durati
 open-video "sunset waves" --dry-run # plan + validate, no GPU spent
 ```
 
+> The `curl https://open-video.ai/install` site installer still points at the
+> previous release until an authorized site cutover — use the tag clone above
+> for v0.1.0.
+
 | OS | Install | Generate |
 |---|---|---|
-| **Linux** | `curl …/install \| bash` | NVIDIA GPU · full H3 |
-| **macOS** | same curl (setup + dry-run) | H3 generation via community/MLX paths; not default |
-| **Windows** | `irm …/install.ps1 \| iex` | **WSL2** for H3 GPU; native dry-run OK |
+| **Linux** | tag clone + `scripts/install.sh` | NVIDIA GPU · full H3 |
+| **macOS** | same clone (setup + dry-run) | H3 generation via community/MLX paths; not default |
+| **Windows** | same clone inside **WSL2** | WSL2 for H3 GPU; native dry-run OK |
 
 **Hardware.** Local-first; bring your own NVIDIA GPU. `open-video recommend-quant` picks the
 right weight tier for your card:
 
 | VRAM | Quant tier |
 |---|---|
-| ≥ 22 GB | INT8 ConvRot (default, verified) |
+| ≥ 22 GB | INT8 ConvRot (default, verified — the only tier `pull` installs) |
 | 12–22 GB | INT8 + `--lowvram` offload |
-| 9–12 GB | W4 ConvRot (~10 GB) |
-| < 9 GB | NF4 (~8 GB entry) |
+| 9–12 GB | W4 ConvRot (~10 GB) — manual, experimental |
+| < 9 GB | NF4 (~8 GB entry) — manual, experimental |
+
+`recommend-quant` may *suggest* W4/NF4 for small cards, but the installer never
+fetches them — those tiers are manual experiments, not a shipped path.
 
 <details>
 <summary><b>Prefer manual clone / pip?</b></summary>
 
 ```bash
-git clone https://github.com/open-video-ai/open-video && cd open-video
+git clone --depth 1 --branch v0.1.0 https://github.com/open-video-ai/open-video && cd open-video
 pip install -e .
 open-video pull h3
 open-video run "waves at sunset, golden hour" --duration 10 --model h3 --output out.mp4
@@ -80,8 +86,8 @@ Point any agent host at the skill — it installs/pulls if needed, crafts the **
 
 | Skill | Use when |
 |---|---|
-| **[`skill/h3-video/SKILL.md`](skill/h3-video/SKILL.md)** | **v0.0.1 default** — high-quality single/short H3 clips (T2V / I2V / FL2VA) |
-| [`skill/open-video/SKILL.md`](skill/open-video/SKILL.md) | Longer director path (plan → judge → stitch) — evolving |
+| **[`skill/h3-video/SKILL.md`](skill/h3-video/SKILL.md)** | **v0.1.0 default** — high-quality single/short H3 clips (T2V / I2V / FL2VA) |
+| [`skill/open-video/SKILL.md`](skill/open-video/SKILL.md) | Longer director path (plan → judge → stitch) — **experimental** |
 
 Works with Claude Code, Cursor, Codex, OpenCode, and any host that loads `SKILL.md`.
 Quality is encoded, not left to chance: prompt grammar ([`backends/h3/PROMPT_GRAMMAR.md`](backends/h3/PROMPT_GRAMMAR.md)),
@@ -97,23 +103,25 @@ a hard validator, and curated presets (`open-video list-presets`).
 
 ## What works today vs what is designed next
 
-| | v0.0.1 (shipped) | Designed (not wired yet) |
+| | v0.1.0 (shipped) | Designed (not wired yet) |
 |---|---|---|
 | **Generate** | Local MiniMax H3 via ComfyUI — `pull` / `status` / `run` | Multi-model backends (Wan, LTX, …) |
 | **Agent path** | `skill/h3-video` crafts official prompts + drives the CLI | Full multi-shot director agent |
-| **Judge loop** | Real VLM judge via env `OPEN_VIDEO_VLM_URL/MODEL/KEY` + automatic REFINE retries (`OPEN_VIDEO_JUDGE_RETRIES`, best take kept); honest PASS stub when unset | Best-of-N tournament judging |
+| **Judge loop** | Opt-in real VLM judge via env `OPEN_VIDEO_VLM_URL/MODEL/KEY` + bounded REFINE retries (`OPEN_VIDEO_JUDGE_RETRIES`, best take kept); honest `SKIPPED` (score 0) when unset | Best-of-N tournament judging |
 | **Long film** | Single clips (H3 shot length) | Planner → stitch multi-minute film |
 | **Hosted try** | Site `/try` is a **browser mockup** | Real hosted generate |
 
 The generate → judge → **refine** loop runs today: point `OPEN_VIDEO_VLM_URL` at any
 OpenAI-compatible vision model and low-scoring shots regenerate automatically with a bumped
-seed (`OPEN_VIDEO_JUDGE_RETRIES` extra takes, best score kept — full take history in `--json`).
+seed (`OPEN_VIDEO_JUDGE_RETRIES` extra takes, best score kept — full take history plus the
+winning take's seed in the `--json` receipt). With no VLM configured the verdict is
+honestly `SKIPPED` — never a fake PASS.
 
 ## Why local
 
 Closed tools charge per second and keep your prompts and footage in their pipeline. Open video
 models are now good enough to matter — what was missing is the simple local loop: install →
-pull → run, with best-practice prompting built in. v0.0.1 is that loop.
+pull → run, with best-practice prompting built in. v0.1.0 is that loop.
 
 | | OpenVideo (local) | Typical closed SaaS |
 |---|---|---|
@@ -143,7 +151,7 @@ pull → run, with best-practice prompting built in. v0.0.1 is that loop.
 | **Seedance** | Closed agentic long video | ❌ | ❌ | Hosted product |
 | **ComfyUI** | Node-graph engine | ✅ GPL | via custom nodes | **The runtime we drive** — a dependency, not a competitor |
 
-> OpenVideo is not a foundation model and not a replacement for ComfyUI. v0.0.1 is the
+> OpenVideo is not a foundation model and not a replacement for ComfyUI. v0.1.0 is the
 > **install → pull → run** layer plus an agent skill on top of H3.
 
 ## Contributing
@@ -185,9 +193,12 @@ Full design notes: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Status & roadmap
 
-**v0.0.1 — shipped:** local H3 pull/run, agent skill harness, one-line installer, product site.
+**v0.1.0 — shipped:** local H3 pull/run with integrity-verified weights, agent skill
+harness, recipe-in-render metadata, opt-in VLM judge with honest `SKIPPED` fallback, and
+unique I2V/FL2V input staging (`OPEN_VIDEO_COMFYUI_INPUT`).
 
-- **Next:** wire a real vision judge, multi-shot continuity, a license-clean second backend.
+- **Next:** a real multi-shot demo verified end-to-end with receipts (not yet run),
+  multi-shot continuity, a license-clean second backend.
 - **Later, only when real:** hosted generate, desktop packaging, community gallery.
 
 ## Acknowledgments

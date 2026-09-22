@@ -1,13 +1,13 @@
 ---
 name: h3-video
 description: >
-  OpenVideo skill (v0.0.1): generate high-quality local video with the OpenVideo product
+  OpenVideo skill (v0.1.0): generate high-quality local video with the OpenVideo product
   (MiniMax H3 backend). Use for OpenVideo install/pull/status/run, official 3-field prompts,
   T2V/I2V/FL2VA, agent-driven video. Brand is OpenVideo — not a bare ComfyUI workflow.
   Triggers: OpenVideo, open-video, H3, generate video, T2V, I2V, FL2VA.
 ---
 
-# OpenVideo skill · v0.0.1
+# OpenVideo skill · v0.1.0
 
 **Brand: OpenVideo** (always lead with this). MiniMax H3 is the model OpenVideo drives.
 
@@ -59,7 +59,7 @@ Product = `open-video/` checkout. `lab/` is runtime only — never the product r
 | **1** | **3-field prompt** | Official structure; concrete visible/audible detail; camera type+amplitude+speed; dialogue in `<d>[lang]…</d>` |
 | **2** | **Mode** | T2V / I2V / FL2VA chosen correctly from inputs |
 | **3** | **Resolution / steps** | **1344×768**, **20 steps**, `res_multistep` + `simple` (defaults in harness) |
-| **4** | **Quant** | INT8 on 5090-class; lower VRAM → `recommend-quant` (nf4/w4/int8+lowvram) |
+| **4** | **Quant** | INT8 on 5090-class (the only tier `pull` installs); lower VRAM → `recommend-quant` may suggest nf4/w4, which are manual + experimental — never auto-installed |
 | **5** | **Duration** | 5–10 s sweet spot (max 15 s / shot); multi-shot via cut times or `open-video` director skill |
 | **6** | **Review** | Watch / extract frames; fix prompt; re-run. Dual vision gate only when shipping |
 
@@ -177,11 +177,11 @@ python -m open_video run "$(cat prompts/my_shot.txt)" \
 
 ### F. Review & iterate
 
-0. **Automatic VLM judge:** set `OPEN_VIDEO_VLM_URL` + `OPEN_VIDEO_VLM_MODEL`
+0. **Automatic VLM judge (opt-in):** set `OPEN_VIDEO_VLM_URL` + `OPEN_VIDEO_VLM_MODEL`
    (+ `OPEN_VIDEO_VLM_KEY`) to any OpenAI-compatible vision endpoint and the
    pipeline judges every shot for real (score + issues in the `--json` output).
-   Without these env vars the judge auto-PASSes — then the manual review below
-   is mandatory, not optional.
+   Without these env vars the verdict is honestly `SKIPPED` (score 0) — never a
+   fake PASS — so the manual review below is mandatory, not optional.
 1. Play the mp4 (native audio matters).
 2. Extract a contact sheet:  
    `ffmpeg -y -i out.mp4 -vf "fps=1,scale=320:-1,tile=4x2" contact.png`
@@ -205,9 +205,11 @@ seed · mode · wall time** (from receipt).
 ## 4. Ollama-shaped command cheat sheet
 
 ```bash
-# Install (once)
-curl -fsSL https://open-video.ai/install | bash          # Linux/macOS
-# Windows: irm https://open-video.ai/install.ps1 | iex   # prefers WSL for GPU
+# Install (once) — v0.1.0 from the GitHub tag
+git clone --depth 1 --branch v0.1.0 https://github.com/open-video-ai/open-video
+cd open-video && bash scripts/install.sh   # Windows: run inside WSL2
+# note: curl https://open-video.ai/install still serves the previous release
+# until an authorized site cutover
 
 cd "$OPEN_VIDEO_ROOT"
 python -m open_video pull h3              # download / verify weights
@@ -225,6 +227,7 @@ python -m open_video list-models
 | `OPEN_VIDEO_ROOT` | Product checkout |
 | `OPEN_VIDEO_MODELS` | Weights root (`h3_models` or ComfyUI/models) |
 | `OPEN_VIDEO_COMFYUI` | ComfyUI base URL |
+| `OPEN_VIDEO_COMFYUI_INPUT` | I2V/FL2V staging dir — must belong to that ComfyUI server (unique filenames per run) |
 | `OPEN_VIDEO_MODEL` | Default backend (`h3`) |
 | `H3_LAB` | Optional lab tree with ComfyUI + h3_agent |
 | `OPEN_VIDEO_VLM_URL` | OpenAI-compatible vision endpoint → real judge |
@@ -282,7 +285,7 @@ non_diegetic_music: …
 | Intent | Skill |
 |---|---|
 | **High-quality H3 clip, agent generate video** | **`h3-video` (this file) — default** |
-| Multi-minute film, judge→refine→stitch | `skill/open-video` (scaffold; not full product) |
+| Multi-minute film, judge→refine→stitch | `skill/open-video` (experimental; not full product) |
 | Website / Pages | separate `open-video-web` repo |
 
 ---

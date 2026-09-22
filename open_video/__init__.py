@@ -1,6 +1,6 @@
-"""open-video — Ollama for MiniMax H3 + agent skill harness (v0.0.1).
+"""open-video — Ollama for MiniMax H3 + agent skill harness (v0.1.0).
 
-v0.0.1 scope: local install/pull/run for H3, plus ``skill/h3-video`` so any
+v0.1.0 scope: local install/pull/run for H3, plus ``skill/h3-video`` so any
 agent host can generate high-quality video. Longer director pipelines exist
 in-tree but are not the release thesis.
 
@@ -39,7 +39,7 @@ if _os.path.isfile(_os.path.join(_repo, "pyproject.toml")) and _os.path.isdir(
     __path__.append(_repo)
 del _os, _repo
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 # --- re-export the key classes (the public surface the task pins) -----------
 # These imports are side-effect-free (all stdlib at import time); safe to eager-load.
