@@ -97,8 +97,8 @@ packages = [
 "open_video.scripts" = "scripts"
 
 # Ship the runtime data the CLI advertises: H3 workflow templates + the official
-# prompt grammar (backend.prompt_guide), the prompt presets (list-presets), and
-# the resumable weight installer (pull). REPO_ROOT-relative lookups in the CLI
+# prompt grammar (backend.prompt_guide), prompt presets (list-presets), and
+# the pinned weight manifest used by pull. REPO_ROOT-relative lookups in the CLI
 # resolve identically in a source checkout and inside the installed package.
 [tool.setuptools.package-data]
 "open_video.backends.h3" = ["workflows/*.json", "PROMPT_GRAMMAR.md"]

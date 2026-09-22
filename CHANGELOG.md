@@ -13,8 +13,9 @@ Reliability improvements for local MiniMax H3 generation and the agent skill.
   tags are cleared before re-embed, so a re-rendered file never carries the
   previous run's recipe.
 - **Integrity-verified weights** — `open-video pull h3` verifies the packaged
-  manifest (sizes + checksums) instead of trusting file presence; the manifest
-  ships with the package.
+  manifest (sizes + SHA-256), including existing same-size files. Downloads
+  only write to the selected model store, including from a wheel installation.
+  `--check-only` explicitly performs a size inventory without hashing.
 - **Engine adapter hardening** — ComfyUI adapter: correct URL encoding and real
   error propagation (engine failures surface as errors, not silent timeouts).
 - **I2V / FLF2V staging** — first/last frames are staged under unique names via

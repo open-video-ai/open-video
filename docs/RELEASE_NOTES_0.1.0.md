@@ -20,7 +20,9 @@ is updated separately and may serve an older version.
   with atomic replacement for in-place updates; stale OpenVideo metadata tags
   are cleared on re-embed.
 - **Integrity-verified weights** — `open-video pull h3` verifies a packaged
-  manifest (sizes + checksums), not just file presence.
+  manifest (sizes + SHA-256), including existing files with matching sizes.
+  Downloads only write to the selected model store and work from wheel
+  installations. `--check-only` is a size inventory without checksum verification.
 - **Engine adapter hardening** — correct URL encoding; ComfyUI errors propagate
   as errors instead of silent timeouts.
 - **I2V / FLF2V unique staging** — first/last frames are staged under unique
@@ -45,16 +47,31 @@ is updated separately and may serve an older version.
   `recommend-quant` may suggest them but nothing auto-installs them.
 - The long-film director (`skill/open-video`) stays **experimental**; generation
   requires an NVIDIA GPU runtime.
-- No new GPU/Windows/visual acceptance claims in this release.
+- Native Windows execution and independent visual-quality acceptance remain
+  unverified. The GPU check below covers a small functional sequence.
+- With the pinned ComfyUI and legacy low-VRAM offloading, audio VAE decoding
+  can fail with a CPU/CUDA device mismatch. `--cpu-vae` worked for the small
+  check but moves both VAEs to CPU and can substantially slow decoding. A
+  full-size retry was cancelled during CPU video decoding; full-size acceptance
+  remains unverified. See [the runtime notes](LAB.md#audio-vae-with-constrained-gpu-memory).
 
 ## Verification status
 
 | Check | Status |
 |---|---|
-| Unit/integration tests (`pytest`) | pending — run at release cut |
-| `python -m open_video list-models --json` | verified on the release branch |
-| `python -m open_video "<prompt>" --dry-run --json` | verified on the release branch |
-| Real multi-shot demo with VLM judge + receipts | **pending** — next milestone; not claimed as passing |
+| Unit/integration tests (`pytest`) | **163 passed**, including from an extracted source distribution |
+| Installed wheel in a clean Python 3.12 environment | **10 checks passed**: packaged data, entry point, model listing, dry-run, portrait CLI wiring, take receipts and recipe read-back |
+| Real GPU functional sequence | **Passed at 256×256**: T2V followed by I2V using the first shot's last frame; 214 video frames at 24 fps (8.9167 s), with audio and embedded recipe |
+| Independent visual-quality / VLM acceptance | **Unverified**; both shots report `SKIPPED` |
+| Full-size GPU / native Windows execution | **Unverified** |
+
+The wheel CLI check used a loopback ComfyUI fixture and real ffmpeg; it checks
+integration, not model generation. The separate real GPU check used an RTX 5090,
+the four checksum-verified INT8 files, ComfyUI
+`14b05228cef127ce529bc0c08660770d4af3e9a8`, 20 steps per shot, seeds 220901 and
+220902, and `--lowvram --disable-dynamic-vram --cpu-vae`. It completed in about
+446 seconds on a shared host. This is a functional result, not a speed or
+visual-quality benchmark.
 
 ## Upgrade notes
 
