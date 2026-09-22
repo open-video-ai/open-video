@@ -42,6 +42,14 @@ def test_windows_installer_exists():
     assert "WSL" in text
 
 
+def test_windows_installer_wsl_guard_accepts_gitfile():
+    """WSL embedded-bash reuse guard must accept linked checkouts where .git is
+    a file (worktrees/submodules), matching install.sh's -e test."""
+    text = (REPO / "scripts" / "install.ps1").read_text(encoding="utf-8")
+    assert "[ ! -e `$HOME/open-video/.git ]" in text
+    assert "[ ! -d `$HOME/open-video/.git ]" not in text
+
+
 def test_comfyui_pin_single_source():
     """Both installer scripts must source scripts/comfyui.pin (no drifting SHAs)."""
     import re

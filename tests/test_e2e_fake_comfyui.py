@@ -7,8 +7,10 @@ runs real ffmpeg on the downloaded clip. Requires ffmpeg/ffprobe (CI installs
 them; locally they're already a runtime dependency).
 """
 import json
+import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -164,3 +166,46 @@ def test_refine_retry_keeps_best_take(tmp_path, monkeypatch):
     takes = shot.receipt["takes"]
     assert [t["judge_score"] for t in takes] == [0.3, 0.9]
     assert shot.receipt["judge_score"] == 0.9 and shot.verdict == "PASS"
+
+
+def test_cli_aspect_and_json_receipt_end_to_end(tmp_path):
+    """Advertised CLI contract: --aspect must reach the submitted workflow and
+    --json must emit per-shot receipts (takes / judge frames / actual
+    generation parameters), not just the summary fields."""
+    clip = _tiny_mp4(tmp_path / "src.mp4")
+    fake = FakeComfy(clip, pending_polls=0)
+    out = tmp_path / "film.mp4"
+    repo = Path(__file__).resolve().parent.parent
+    env = {k: v for k, v in os.environ.items() if not k.startswith("OPEN_VIDEO_VLM")}
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(repo / "cli" / "open_video.py"),
+             "a blue test pattern, static camera", "--duration", "5",
+             "--aspect", "9:16", "--server", fake.url,
+             "--output", str(out), "--json"],
+            capture_output=True, text=True, cwd=repo, env=env, timeout=300)
+    finally:
+        fake.close()
+
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    payload = json.loads(proc.stdout.strip().splitlines()[-1])
+    assert payload["dry_run"] is False and payload["film"] == str(out)
+
+    # the aspect reached the real workflow JSON posted to the server
+    w, h = H3Backend().resolution_for("9:16")
+    assert h > w, "9:16 must produce a portrait canvas"
+    inputs = fake.submitted[0]["prompt"]["h3_i2v"]["inputs"]
+    assert (inputs["width"], inputs["height"]) == (w, h)
+
+    shot = payload["shots"][0]
+    for key in ("scene_id", "mode", "duration_s", "seed", "video_path",
+                "verdict", "judge_score", "judge_issues"):
+        assert key in shot, f"existing --json key '{key}' must be preserved"
+    receipt = shot["receipt"]
+    assert receipt["aspect"] == "9:16"
+    assert (receipt["width"], receipt["height"]) == (w, h)
+    takes = receipt["takes"]
+    assert len(takes) == 1, "SKIPPED judge means a single take"
+    assert (takes[0]["receipt"]["width"], takes[0]["receipt"]["height"]) == (w, h)
+    assert takes[0]["judge_frames"], "judge frames must be recorded per take"
+    assert shot["verdict"] == "SKIPPED"  # no VLM configured: honest, not fake PASS

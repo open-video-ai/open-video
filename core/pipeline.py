@@ -42,9 +42,11 @@ class LongFilmPipeline:
     Owns: the per-shot loop, the FL2VA chain, and verdict/receipt bookkeeping on Shot.
     """
 
-    def __init__(self, backend, engine, output_dir: str = "output", vision_fn: Optional[callable] = None):
+    def __init__(self, backend, engine, output_dir: str = "output",
+                 vision_fn: Optional[callable] = None, aspect: str = "16:9"):
         self.backend = backend
         self.engine = engine
+        self.aspect = aspect
         self.out = Path(output_dir)
         self.frames = self.out / "frames"
         self.out.mkdir(parents=True, exist_ok=True)
@@ -78,10 +80,11 @@ class LongFilmPipeline:
         best-scoring take. Without a real judge, take 1 is SKIPPED and retained.
         OPEN_VIDEO_JUDGE_RETRIES caps extra takes (default 1)."""
         try:
-            w, h = self.backend.resolution_for("16:9") if self.backend else (1344, 768)
+            w, h = self.backend.resolution_for(self.aspect) if self.backend else (1344, 768)
         except Exception:
             w, h = 1344, 768
         retries = max(0, int(os.environ.get("OPEN_VIDEO_JUDGE_RETRIES", "1") or 0))
+        shot.receipt["aspect"] = self.aspect
         initial_receipt = dict(shot.receipt)
         takes = []
         for attempt in range(retries + 1):

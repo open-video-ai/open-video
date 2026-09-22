@@ -218,7 +218,9 @@ def _emit_generate_json(shots, film, dry_run: bool):
         if not dry_run:
             d.update({"video_path": s_.video_path, "verdict": s_.verdict,
                       "judge_score": s_.receipt.get("judge_score"),
-                      "judge_issues": s_.receipt.get("judge_issues", [])})
+                      "judge_issues": s_.receipt.get("judge_issues", []),
+                      "judge_frames": s_.receipt.get("judge_frames", []),
+                      "receipt": s_.receipt})
         out.append(d)
     print(json.dumps({"dry_run": dry_run, "validated": True, "film": film, "shots": out}))
 
@@ -356,7 +358,8 @@ def cmd_generate(args) -> int:
     _bind_engine(backend, engine)
 
     from open_video.core.pipeline import LongFilmPipeline
-    pipeline = LongFilmPipeline(backend=backend, engine=engine, output_dir=out_dir)
+    pipeline = LongFilmPipeline(backend=backend, engine=engine, output_dir=out_dir,
+                                aspect=args.aspect)
     film, _final_plan = pipeline.make_film(shots, out_path=str(out_path))
     if not film:
         print("[open-video] error: pipeline did not produce a film.", file=sys.stderr)
@@ -527,8 +530,8 @@ def build_generate_parser():
                    help="Validate prompt + show the plan, then exit without generating.")
     p.add_argument("--json", action="store_true",
                    help="Emit a machine-readable JSON result (film path + per-shot judge "
-                        "verdicts) as the final stdout line — the agent self-verification "
-                        "channel.")
+                        "verdicts + full take receipts) as the final stdout line — the "
+                        "agent self-verification channel.")
     return p
 
 
