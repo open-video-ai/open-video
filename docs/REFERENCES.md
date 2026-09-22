@@ -55,6 +55,9 @@ One-liner:
 
 ## Install UX parity
 
+The table describes the website entry points. For the v0.1.0 versioned install,
+follow [Quickstart](QUICKSTART.md); the website installer is updated separately.
+
 | Surface | OpenCode | Open Design | OpenVideo |
 |---|---|---|---|
 | One-liner | `curl -fsSL https://opencode.ai/install \| bash` | `curl -fsSL https://open-design.ai/install.sh \| sh` | `curl -fsSL https://open-video.ai/install \| bash` |

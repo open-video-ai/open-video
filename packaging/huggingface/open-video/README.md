@@ -35,7 +35,7 @@ open-video pull h3
 open-video run "a red panda in mist" --duration 5
 ```
 
-The `curl https://open-video.ai/install` site installer still serves the previous release until an authorized site cutover.
+Use the versioned clone above to install this release. The website installer is updated separately and may serve an older version.
 
 Agent: load `skill/h3-video/SKILL.md` from the repo.
 

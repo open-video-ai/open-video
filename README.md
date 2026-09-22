@@ -47,7 +47,7 @@ is updated separately and may serve an older version.
 |---|---|---|
 | **Linux** | tag clone + `scripts/install.sh` | NVIDIA GPU · full H3 |
 | **macOS** | same clone (setup + dry-run) | H3 generation via community/MLX paths; not default |
-| **Windows** | same clone inside **WSL2** | WSL2 for H3 GPU; native dry-run OK |
+| **Windows** | same clone inside **WSL2** | WSL2 for H3 GPU; native execution is unverified |
 
 **Hardware.** Local-first; bring your own NVIDIA GPU. `open-video recommend-quant` picks the
 right weight tier for your card:
