@@ -20,6 +20,21 @@ PREFIX = "openvideo_"
 MAX_RECIPE_METADATA_BYTES = 32000
 
 
+def _owned_tag_keys(video_path: str) -> list:
+    """Return the input's existing openvideo_* metadata keys (any case)."""
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_format", "-of", "json", video_path],
+            capture_output=True, text=True, timeout=15)
+        if getattr(r, "returncode", 1) != 0:
+            return []
+        tags = json.loads(getattr(r, "stdout", "") or "") \
+            .get("format", {}).get("tags", {})
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return []
+    return [k for k in tags if isinstance(k, str) and k.lower().startswith(PREFIX)]
+
+
 def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = None) -> str:
     """Embed the generation recipe into an MP4's metadata via ffmpeg.
 
@@ -48,25 +63,27 @@ def embed_recipe(video_path: str, recipe: dict, output_path: Optional[str] = Non
                 flush=True,
             )
 
-        cmd = ["ffmpeg", "-y", "-v", "error", "-i", video_path]
+        metadata_args = []
+        # Clear every openvideo_* tag inherited from the input (omitted keys,
+        # None values, case variants) so replacements leave no stale metadata.
+        for key in _owned_tag_keys(video_path):
+            metadata_args.extend(["-metadata", f"{key}="])
         for key, val in recipe.items():
             if val is not None:
-                cmd.extend(["-metadata", f"{PREFIX}{key}={val}"])
+                metadata_args.extend(["-metadata", f"{PREFIX}{key}={val}"])
         # Clear any inherited JSON tag when the replacement is too large.
-        cmd.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json if embed_json else ''}"])
+        metadata_args.extend(
+            ["-metadata", f"{PREFIX}recipe_json={recipe_json if embed_json else ''}"])
         # MP4/MOV muxer drops non-standard metadata keys without use_metadata_tags
-        cmd.extend(["-movflags", "use_metadata_tags", "-c", "copy", output])
-        r = subprocess.run(cmd, capture_output=True, timeout=60)
+        base = (["ffmpeg", "-y", "-v", "error", "-i", video_path]
+                + metadata_args + ["-movflags", "use_metadata_tags"])
+        r = subprocess.run(base + ["-c", "copy", output],
+                           capture_output=True, timeout=60)
         if r.returncode != 0:
             # fallback: re-encode with metadata
-            cmd_re = ["ffmpeg", "-y", "-v", "error", "-i", video_path]
-            for key, val in recipe.items():
-                if val is not None:
-                    cmd_re.extend(["-metadata", f"{PREFIX}{key}={val}"])
-            cmd_re.extend(["-metadata", f"{PREFIX}recipe_json={recipe_json if embed_json else ''}"])
-            cmd_re.extend(["-movflags", "use_metadata_tags",
-                           "-c:v", "libx264", "-crf", "18", "-c:a", "aac", output])
-            r = subprocess.run(cmd_re, capture_output=True, timeout=300)
+            r = subprocess.run(
+                base + ["-c:v", "libx264", "-crf", "18", "-c:a", "aac", output],
+                capture_output=True, timeout=300)
             if r.returncode != 0:
                 raise RuntimeError(
                     f"ffmpeg metadata embedding failed: {r.stderr.decode(errors='replace')}"
