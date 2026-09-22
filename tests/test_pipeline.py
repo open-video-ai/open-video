@@ -91,8 +91,10 @@ class _StubBackend:
         item = self._results.pop(0)
         if isinstance(item, ShotResult):
             return item
-        return ShotResult(ok=True, video_path=str(item),
-                          receipt={"take_index": len(self.seeds), "gen_seed": req.seed})
+        receipt = {"take_index": len(self.seeds), "gen_seed": req.seed}
+        if len(self.seeds) == 2:
+            receipt["second_take_only"] = True
+        return ShotResult(ok=True, video_path=str(item), receipt=receipt)
 
 
 def _tiny_mp4(path: Path, color: str):
@@ -126,6 +128,7 @@ def test_earlier_best_take_restores_seed_receipt_and_frames(tmp_path, monkeypatc
     assert shot.receipt["judge_score"] == 0.6
     assert shot.receipt["take_index"] == 1, "generation receipt must be take 1's"
     assert shot.receipt["gen_seed"] == 42
+    assert "second_take_only" not in shot.receipt
     frames = shot.receipt["judge_frames"]
     assert frames and all("/take1/" in f and Path(f).exists() for f in frames)
     take2_frames = list((tmp_path / "out" / "frames" / "take2").glob("*.png"))
@@ -172,6 +175,23 @@ def test_build_recipe_propagates_skipped(tmp_path):
     assert pipe._build_recipe(plan_with("PASS", "SKIPPED"), "f.mp4")["quality_verdict"] == "SKIPPED"
     assert pipe._build_recipe(plan_with("REFINE", "SKIPPED"), "f.mp4")["quality_verdict"] == "REFINE"
     assert pipe._build_recipe(plan_with("PASS", "PASS"), "f.mp4")["quality_verdict"] == "PASS"
+
+
+def test_recipe_distinguishes_model_engine_and_generated_duration(tmp_path):
+    from types import SimpleNamespace
+    pipe = LongFilmPipeline(backend=SimpleNamespace(id="minimax-h3"),
+                            engine=SimpleNamespace(id="comfyui"), output_dir=str(tmp_path))
+    shot = Shot(scene_id=1, prompt="p", seed=107, duration_s=4,
+                video_path="clip.mp4", verdict="SKIPPED",
+                receipt={"duration_s": 107 / 24, "width": 1344, "height": 768,
+                         "steps": 20, "sampler": "res_multistep", "scheduler": "simple"})
+    recipe = pipe._build_recipe([shot], "film.mp4")
+    assert recipe["model"] == "minimax-h3"
+    assert recipe["engine"] == "comfyui"
+    assert recipe["seed"] == 107
+    assert recipe["duration_s"] == 107 / 24
+    assert recipe["steps"] == 20
+    assert recipe["width"] == 1344
 
 
 if __name__ == "__main__":

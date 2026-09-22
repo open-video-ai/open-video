@@ -75,13 +75,14 @@ class LongFilmPipeline:
     # --- single-shot generation via backend, with judge-driven retries ---
     def _run_shot(self, shot: Shot) -> bool:
         """Generate → judge; on REFINE regenerate with a bumped seed and keep the
-        best-scoring take. Retries only matter with a real judge (the stub
-        PASSes take 1). OPEN_VIDEO_JUDGE_RETRIES caps extra takes (default 1)."""
+        best-scoring take. Without a real judge, take 1 is SKIPPED and retained.
+        OPEN_VIDEO_JUDGE_RETRIES caps extra takes (default 1)."""
         try:
             w, h = self.backend.resolution_for("16:9") if self.backend else (1344, 768)
         except Exception:
             w, h = 1344, 768
         retries = max(0, int(os.environ.get("OPEN_VIDEO_JUDGE_RETRIES", "1") or 0))
+        initial_receipt = dict(shot.receipt)
         takes = []
         for attempt in range(retries + 1):
             seed = shot.seed + attempt * 100
@@ -116,6 +117,8 @@ class LongFilmPipeline:
         shot.video_path = best["video_path"]
         shot.verdict = best["verdict"]
         shot.seed = best["seed"]
+        shot.receipt.clear()
+        shot.receipt.update(initial_receipt)
         shot.receipt.update(best["receipt"])
         shot.receipt["judge_score"] = best["judge_score"]
         shot.receipt["judge_issues"] = best["judge_issues"]
@@ -139,13 +142,18 @@ class LongFilmPipeline:
         first_receipt = (first.receipt if first else {}) or {}
         return {
             "prompt": " | ".join(s.prompt for s in valid) if valid else "",
-            "model": str(engine_id or backend_id or "unknown"),
+            "model": str(backend_id or "unknown"),
+            "engine": engine_id,
+            "mode": first.mode if first else None,
             "width": first_receipt.get("width"),
             "height": first_receipt.get("height"),
-            "duration_s": sum(s.duration_s for s in valid),
+            "duration_s": sum(s.receipt.get("duration_s", s.duration_s) for s in valid),
             "seed": first.seed if first else 0,
             "seeds": ",".join(str(s.seed) for s in valid),
             "shots": len(valid),
+            "steps": first_receipt.get("steps"),
+            "sampler": first_receipt.get("sampler"),
+            "scheduler": first_receipt.get("scheduler"),
             "lora": first_receipt.get("lora"),
             "lora_weight": first_receipt.get("lora_weight"),
             "quality_verdict": worst,
