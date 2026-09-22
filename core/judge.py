@@ -3,10 +3,10 @@
 Frame extraction + vision assessment. A real vision model activates via env
 (OPEN_VIDEO_VLM_URL / OPEN_VIDEO_VLM_MODEL / OPEN_VIDEO_VLM_KEY — see
 judges/openai_compat.py) or an explicit ``vision_fn``. Without either, the
-judge is an honest PASS stub.
+judge reports an honest SKIPPED (score 0.0) — never a fake PASS.
 
 Usage:
-    judge = QualityJudge.from_env()          # env-wired (or PASS stub)
+    judge = QualityJudge.from_env()          # env-wired (or SKIPPED)
     judge = QualityJudge(vision_fn=my_api)   # explicit
     v = judge.assess(video_path, prompt, shot_id=1)
     if v.verdict == "REFINE": apply(v.issues)  # fix + regenerate
@@ -27,8 +27,8 @@ class Issue:
 
 @dataclass
 class Verdict:
-    verdict: str = "PASS"          # PASS | REFINE | FAIL
-    score: float = 1.0             # 0.0–1.0 quality score
+    verdict: str = "PASS"          # PASS | REFINE | FAIL | SKIPPED (no VLM configured)
+    score: float = 1.0             # 0.0–1.0 quality score (0.0 on FAIL/SKIPPED)
     issues: list = field(default_factory=list)   # list[Issue]
     frames: list = field(default_factory=list)   # assessed frame paths
     raw: dict = field(default_factory=dict)      # raw vision-model output
@@ -45,30 +45,45 @@ class QualityJudge:
 
     @classmethod
     def from_env(cls, **kwargs) -> "QualityJudge":
-        """Judge wired to the env-configured VLM, or the PASS stub when unset."""
+        """Judge wired to the env-configured VLM, or SKIPPED verdicts when unset."""
         if kwargs.get("vision_fn") is None:
             from open_video.judges.openai_compat import vision_fn_from_env
             kwargs["vision_fn"] = vision_fn_from_env()
         return cls(**kwargs)
 
     def extract_frames(self, video_path: str, shot_id: int, frames_dir: str = "output/frames") -> list:
-        """Extract N evenly-spaced frames from the video for the judge."""
+        """Extract N evenly-spaced frames from the video for the judge.
+
+        Returns [] on any extraction failure (missing ffmpeg/ffprobe, ffmpeg
+        error) — callers must treat that as FAIL, never reuse stale files.
+        """
         frames_dir = Path(frames_dir); frames_dir.mkdir(parents=True, exist_ok=True)
-        out = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
-                              "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", video_path],
-                             capture_output=True, text=True, timeout=15)
-        total = int(out.stdout.strip()) if out.stdout.strip().isdigit() else 120
-        idxs = sorted({int(i * (total - 1) / max(self.n - 1, 1)) for i in range(self.n)})
-        # one decode pass for all frames (was: one full ffmpeg run per frame)
-        select = "+".join(f"eq(n\\,{i})" for i in idxs)
-        pattern = frames_dir / f"shot{shot_id}_sel%d.png"
-        subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", video_path,
-                        "-vf", f"select='{select}'", "-vsync", "passthrough",
-                        "-frames:v", str(len(idxs)), str(pattern)], check=False)
+        stem = f"shot{shot_id}"
+        # drop leftover sel files from a previous attempt/take so a failed
+        # ffmpeg run cannot recycle stale frames as if they were fresh
+        for stale in frames_dir.glob(f"{stem}_sel*.png"):
+            stale.unlink()
+        try:
+            out = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
+                                  "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", video_path],
+                                 capture_output=True, text=True, timeout=15)
+            total = int(out.stdout.strip()) if out.stdout.strip().isdigit() else 120
+            idxs = sorted({int(i * (total - 1) / max(self.n - 1, 1)) for i in range(self.n)})
+            # one decode pass for all frames (was: one full ffmpeg run per frame)
+            select = "+".join(f"eq(n\\,{i})" for i in idxs)
+            pattern = frames_dir / f"{stem}_sel%d.png"
+            proc = subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", video_path,
+                                   "-vf", f"select='{select}'", "-vsync", "passthrough",
+                                   "-frames:v", str(len(idxs)), str(pattern)],
+                                  capture_output=True, text=True, check=False, timeout=60)
+            if proc.returncode != 0:
+                return []
+        except (OSError, subprocess.SubprocessError):
+            return []  # missing ffmpeg/ffprobe or a subprocess timeout
         paths = []
         for k, idx in enumerate(idxs, start=1):
-            src = frames_dir / f"shot{shot_id}_sel{k}.png"
-            dst = frames_dir / f"shot{shot_id}_f{idx}.png"
+            src = frames_dir / f"{stem}_sel{k}.png"
+            dst = frames_dir / f"{stem}_f{idx}.png"
             if src.exists():
                 src.replace(dst)
                 paths.append(str(dst))
@@ -82,15 +97,21 @@ class QualityJudge:
         return bool(value)
 
     @staticmethod
-    def _score(value) -> float:
-        """Coerce a provider score to a finite 0–1 float without breaking the pipeline."""
+    def _parse_score(value):
+        """Finite 0–1 float, or None when the callback score is missing/invalid/nonfinite."""
         try:
             score = float(value)
         except (TypeError, ValueError):
-            return 0.0
+            return None
         if not math.isfinite(score):
-            return 0.0
+            return None
         return max(0.0, min(1.0, score))
+
+    @staticmethod
+    def _score(value) -> float:
+        """Coerce a provider score to a finite 0–1 float without breaking the pipeline."""
+        parsed = QualityJudge._parse_score(value)
+        return parsed if parsed is not None else 0.0
 
     def diagnose(self, vision_result: dict, prompt: str) -> list:
         """Parse vision-model output into structured issues + fixes."""
@@ -112,17 +133,39 @@ class QualityJudge:
 
     def assess(self, video_path: str, prompt: str, shot_id: int = 0,
                frames_dir: str = "output/frames") -> Verdict:
-        """Full assessment: extract frames → vision-judge → verdict + diagnosis."""
+        """Full assessment: extract frames → vision-judge → verdict + diagnosis.
+
+        Honest failure modes: no frames → FAIL 0.0; no ``vision_fn`` → SKIPPED 0.0
+        (the shot was not judged — distinct from PASS); a callback that raises,
+        returns a non-dict, or yields a missing/invalid/nonfinite score → FAIL 0.0.
+        """
         frames = self.extract_frames(video_path, shot_id, frames_dir)
         if not frames:
-            return Verdict(verdict="FAIL", issues=[Issue("extraction", "no frames extracted", "check video")])
+            return Verdict(verdict="FAIL", score=0.0,
+                           issues=[Issue("extraction", "no frames extracted", "check video")])
 
-        if self.vision_fn:
+        if self.vision_fn is None:
+            # SKIPPED: no vision model configured — the hook is ready (wire
+            # vision_fn or OPEN_VIDEO_VLM_* to judge for real). Not a PASS.
+            return Verdict(verdict="SKIPPED", score=0.0, frames=frames)
+
+        try:
             raw = self.vision_fn(frames, prompt)
-            score = self._score(raw.get("score", 1.0))
-            issues = self.diagnose(raw, prompt)
-            verdict = "PASS" if score >= self.bar and not issues else "REFINE"
-            return Verdict(verdict=verdict, score=score, issues=issues, frames=frames, raw=raw)
-        else:
-            # v0: no vision model wired → PASS (the hook is ready; wire vision_fn for v1)
-            return Verdict(verdict="PASS", score=1.0, frames=frames)
+        except Exception as e:
+            # report the exception type only — messages/URLs may carry credentials
+            return Verdict(verdict="FAIL", score=0.0, frames=frames,
+                           issues=[Issue("judge_error", f"vision_fn raised {type(e).__name__}",
+                                         "check VLM endpoint/config")])
+        if not isinstance(raw, dict):
+            return Verdict(verdict="FAIL", score=0.0, frames=frames,
+                           issues=[Issue("judge_error", "vision_fn returned a non-dict result",
+                                         "check VLM response format")])
+        score = self._parse_score(raw.get("score"))
+        if score is None:
+            return Verdict(verdict="FAIL", score=0.0, frames=frames, raw=raw,
+                           issues=[Issue("judge_error",
+                                         f"vision_fn returned unusable score: {raw.get('score')!r}",
+                                         "check VLM response format")])
+        issues = self.diagnose(raw, prompt)
+        verdict = "PASS" if score >= self.bar and not issues else "REFINE"
+        return Verdict(verdict=verdict, score=score, issues=issues, frames=frames, raw=raw)

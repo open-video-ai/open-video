@@ -31,7 +31,7 @@ class Shot:
     first_frame: Optional[str] = None
     last_frame: Optional[str] = None
     video_path: Optional[str] = None
-    verdict: str = ""           # PASS | REFINE | FAIL
+    verdict: str = ""           # PASS | REFINE | FAIL | SKIPPED (no VLM configured)
     receipt: dict = field(default_factory=dict)
 
 
@@ -54,11 +54,13 @@ class LongFilmPipeline:
         self._stitcher = Stitcher(output_dir=str(self.out))
 
     # --- the judge (delegates to core.judge.QualityJudge) ---
-    def judge(self, shot: Shot) -> bool:
+    def judge(self, shot: Shot, attempt: int = 0) -> bool:
         """Assess shot vs prompt intent + quality bar via QualityJudge; write verdict + frames
-        back into the shot. Returns False only on FAIL (REFINE/PASS continue the chain)."""
+        back into the shot. Returns False only on FAIL (REFINE/PASS/SKIPPED continue the chain).
+        Each attempt extracts into its own take dir so frame receipts stay per-take truthful."""
+        frames_dir = str(self.frames / f"take{attempt + 1}")
         verdict = self._judge.assess(shot.video_path, shot.prompt,
-                                     shot_id=shot.scene_id, frames_dir=str(self.frames))
+                                     shot_id=shot.scene_id, frames_dir=frames_dir)
         shot.verdict = verdict.verdict
         shot.receipt["judge_frames"] = verdict.frames
         shot.receipt["judge_score"] = verdict.score
@@ -66,18 +68,21 @@ class LongFilmPipeline:
             shot.receipt["judge_issues"] = [
                 {"type": i.type, "detail": i.detail, "fix": i.fix} for i in verdict.issues
             ]
+        else:
+            shot.receipt.pop("judge_issues", None)
         return verdict.verdict != "FAIL"
 
     # --- single-shot generation via backend, with judge-driven retries ---
     def _run_shot(self, shot: Shot) -> bool:
         """Generate → judge; on REFINE regenerate with a bumped seed and keep the
-        best-scoring take. Retries only matter with a real judge (the stub
-        PASSes take 1). OPEN_VIDEO_JUDGE_RETRIES caps extra takes (default 1)."""
+        best-scoring take. Without a real judge, take 1 is SKIPPED and retained.
+        OPEN_VIDEO_JUDGE_RETRIES caps extra takes (default 1)."""
         try:
             w, h = self.backend.resolution_for("16:9") if self.backend else (1344, 768)
         except Exception:
             w, h = 1344, 768
         retries = max(0, int(os.environ.get("OPEN_VIDEO_JUDGE_RETRIES", "1") or 0))
+        initial_receipt = dict(shot.receipt)
         takes = []
         for attempt in range(retries + 1):
             seed = shot.seed + attempt * 100
@@ -95,19 +100,29 @@ class LongFilmPipeline:
                 return False
             shot.video_path = result.video_path
             shot.receipt.update(result.receipt)
-            ok = self.judge(shot)
+            ok = self.judge(shot, attempt)
+            # snapshot everything judged about THIS take so the best-take pick
+            # below can restore truthful bookkeeping (not the last take's)
             takes.append({"attempt": attempt + 1, "seed": seed,
                           "video_path": shot.video_path, "verdict": shot.verdict,
                           "judge_score": shot.receipt.get("judge_score"),
-                          "judge_issues": shot.receipt.get("judge_issues", [])})
+                          "judge_issues": shot.receipt.get("judge_issues", []),
+                          "judge_frames": shot.receipt.get("judge_frames", []),
+                          "receipt": dict(result.receipt)})
             if not ok or shot.verdict != "REFINE":
                 break
-        # keep the best take by judge score (None sorts lowest)
+        # keep the best take by judge score (None sorts lowest) and restore ITS
+        # seed / generation receipt / judged frames+issues on the shot
         best = max(takes, key=lambda t: (t["judge_score"] is not None, t["judge_score"]))
         shot.video_path = best["video_path"]
         shot.verdict = best["verdict"]
+        shot.seed = best["seed"]
+        shot.receipt.clear()
+        shot.receipt.update(initial_receipt)
+        shot.receipt.update(best["receipt"])
         shot.receipt["judge_score"] = best["judge_score"]
         shot.receipt["judge_issues"] = best["judge_issues"]
+        shot.receipt["judge_frames"] = best["judge_frames"]
         shot.receipt["takes"] = takes
         return shot.verdict != "FAIL"
 
@@ -118,19 +133,27 @@ class LongFilmPipeline:
         engine_id = getattr(self.engine, "id", None) if self.engine else None
         backend_id = getattr(self.backend, "id", None) if self.backend else None
         verdicts = [s.verdict for s in valid if s.verdict]
+        # SKIPPED sits between REFINE and PASS: an unjudged shot must not be
+        # reported as judged-good, but a judged REFINE stays the worse signal.
         worst = ("FAIL" if "FAIL" in verdicts
                  else "REFINE" if "REFINE" in verdicts
+                 else "SKIPPED" if "SKIPPED" in verdicts
                  else "PASS" if verdicts else "")
         first_receipt = (first.receipt if first else {}) or {}
         return {
             "prompt": " | ".join(s.prompt for s in valid) if valid else "",
-            "model": str(engine_id or backend_id or "unknown"),
+            "model": str(backend_id or "unknown"),
+            "engine": engine_id,
+            "mode": first.mode if first else None,
             "width": first_receipt.get("width"),
             "height": first_receipt.get("height"),
-            "duration_s": sum(s.duration_s for s in valid),
+            "duration_s": sum(s.receipt.get("duration_s") or s.duration_s for s in valid),
             "seed": first.seed if first else 0,
             "seeds": ",".join(str(s.seed) for s in valid),
             "shots": len(valid),
+            "steps": first_receipt.get("steps"),
+            "sampler": first_receipt.get("sampler"),
+            "scheduler": first_receipt.get("scheduler"),
             "lora": first_receipt.get("lora"),
             "lora_weight": first_receipt.get("lora_weight"),
             "quality_verdict": worst,
@@ -140,7 +163,10 @@ class LongFilmPipeline:
 
     # --- the full long-film pipeline ---
     def make_film(self, plan: list, out_path: str = "output/film.mp4"):
-        """plan = list[Shot]. Orchestrates: generate (FL2VA chain) → judge → stitch → embed recipe → film."""
+        """plan = list[Shot]. Orchestrates: generate (FL2VA chain) → judge → stitch → embed recipe → film.
+
+        Returns (film_path, plan) on success. If ANY requested shot fails, returns
+        (None, plan) — a partial concat must never be reported as the completed film."""
         print(f"[open-video] long-film pipeline: {len(plan)} shots → {out_path}", flush=True)
         prev_last = None
         for shot in plan:
@@ -152,7 +178,7 @@ class LongFilmPipeline:
             ok = self._run_shot(shot)
             if not ok:
                 print(f"[open-video] shot {shot.scene_id} FAILED: {shot.receipt.get('error','?')}", flush=True)
-                break
+                return None, plan
             print(f"[open-video] shot {shot.scene_id} ✓ {shot.video_path} [{shot.verdict}]", flush=True)
             lf = self.out / f"_lf_{shot.scene_id}.png"
             prev_last = self._stitcher.extract_last_frame(shot.video_path, str(lf))

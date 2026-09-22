@@ -8,8 +8,8 @@ Stdlib only (urllib), same policy as the rest of the runtime. Activated by env:
     OPEN_VIDEO_VLM_MODEL   a vision-capable chat model id
     OPEN_VIDEO_VLM_KEY     bearer token (optional for local servers)
 
-With URL+MODEL set, ``QualityJudge.from_env()`` judges for real; without them it
-keeps the honest v0 PASS-stub behavior.
+With URL+MODEL set, ``QualityJudge.from_env()`` judges for real; without them the
+judge reports an honest SKIPPED verdict (score 0.0), never a fake PASS.
 """
 from __future__ import annotations
 
