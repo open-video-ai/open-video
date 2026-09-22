@@ -25,7 +25,14 @@ Site and private maintainer ops, if you clone them, are separate repos — not r
 | `OPEN_VIDEO_LAB` | `../lab` | Runtime root |
 | `OPEN_VIDEO_MODELS` | `$OPEN_VIDEO_LAB/h3_models` | Weight files |
 | `OPEN_VIDEO_COMFYUI` | `http://127.0.0.1:8188` | HTTP API |
+| `OPEN_VIDEO_COMFYUI_INPUT` | resolved from the runtime directory | Existing input directory belonging to that HTTP server; used for I2V/FLF2V staging |
+| `OPEN_VIDEO_COMFYUI_DIR` | `$OPEN_VIDEO_LAB/ComfyUI` | ComfyUI checkout used to resolve its input directory |
 | `OPEN_VIDEO_COMFY_PYTHON` | (optional) | Python that runs ComfyUI |
+
+An explicitly configured input/runtime path that does not exist stops I2V/FLF2V
+before submission. Fix or unset the variable named in the error. If ComfyUI uses
+a custom input directory, set `OPEN_VIDEO_COMFYUI_INPUT` to that exact directory;
+the HTTP API does not verify that a local directory belongs to the server.
 
 ## Prefer product surfaces
 

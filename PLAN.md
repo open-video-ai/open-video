@@ -6,7 +6,7 @@
 
 - Local **MiniMax H3** via ComfyUI (`open-video pull` / `status` / `run`), INT8 weights verified against a packaged manifest
 - Agent skill harness: `skill/h3-video`
-- Recipe-in-render metadata (atomic embed; read via `open_video.core.recipe.read_recipe`)
+- Recipe-in-render metadata (atomic in-place updates; read via `open_video.core.recipe.read_recipe`)
 - Opt-in VLM judge → bounded refine loop; honest `SKIPPED` verdict when no VLM is configured
 - Reliability: unique I2V/FL2V staging via `OPEN_VIDEO_COMFYUI_INPUT`, real engine-error propagation
 - Install path + product site (install/docs; `/try` is a UI mockup, not free cloud GPU)

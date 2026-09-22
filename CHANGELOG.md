@@ -1,17 +1,15 @@
 # Changelog
 
-Site: [`open-video-web`](https://github.com/open-video-ai/open-video-web).
+Site: [open-video.ai](https://open-video.ai).
 
 ## [0.1.0] — 2026-09-22
 
-Reliability release on the same thesis: **Ollama for MiniMax H3 + skill harness**.
-No new surface area — the CLI, skill, and backend plugin model are unchanged;
-what changed is that the shipped path now fails honestly and cleans up after itself.
+Reliability improvements for local MiniMax H3 generation and the agent skill.
 
 ### Reliability fixes
 
 - **Recipe-in-render round-trip** — `embed_recipe` / `read_recipe` now round-trip
-  atomically (write-then-move, no half-written mp4s) and stale OpenVideo metadata
+  with atomic replacement for in-place updates, and stale OpenVideo metadata
   tags are cleared before re-embed, so a re-rendered file never carries the
   previous run's recipe.
 - **Integrity-verified weights** — `open-video pull h3` verifies the packaged
@@ -26,9 +24,12 @@ what changed is that the shipped path now fails honestly and cleans up after its
 - **Honest judge** — without `OPEN_VIDEO_VLM_URL` + `OPEN_VIDEO_VLM_MODEL` (or an
   explicit `vision_fn`), shot verdicts are now reported as `SKIPPED` (score 0)
   instead of a silent PASS stub. Real VLM callbacks stay strictly opt-in.
-- **Bounded judge loop** — VLM validation is finite (bounded timeouts/retries via
-  `OPEN_VIDEO_JUDGE_RETRIES`); the best take's seed and per-take history are kept
-  in the receipt; aborting a run leaves a partial-film receipt instead of nothing.
+- **Judge retries and receipts** — `OPEN_VIDEO_JUDGE_RETRIES` sets the number of
+  extra takes (default 1); the best take's seed and per-take history are kept in
+  the JSON receipt. A failed requested shot stops the run without reporting a
+  partial film as complete.
+- **Portrait generation** — `--aspect 9:16` now reaches the backend's generation
+  settings; JSON output includes the actual dimensions and take receipts.
 
 ### Docs / honesty
 
@@ -36,16 +37,15 @@ what changed is that the shipped path now fails honestly and cleans up after its
   read-back is the Python API: `open_video.core.recipe.read_recipe(path)`.
 - Default weights path is **INT8 only**. W4 / NF4 tiers are manual, experimental
   suggestions — never auto-installed.
-- Install: v0.1.0 is distributed from the GitHub tag (`git clone --branch
-  v0.1.0`). The open-video.ai site installer still points at the previous
-  release until an authorized site cutover.
+- Install this version from the GitHub tag (`git clone --branch v0.1.0`).
+  The website installer is updated separately and may serve an older version.
 
 ### Still not shipped
 
 - Long-film director stays **experimental** (`skill/open-video`); generation
   requires an NVIDIA GPU runtime.
-- No new GPU/Windows/visual acceptance claims — the next milestone is a real
-  multi-shot demo, verified with receipts (not yet run).
+- Native Windows execution and an independent visual review of a multi-shot
+  demo remain unverified. See the release notes for the recorded acceptance checks.
 
 ## [0.0.1] — 2026-08-07
 

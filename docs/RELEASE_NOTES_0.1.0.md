@@ -1,8 +1,8 @@
 # OpenVideo v0.1.0 — Release Notes
 
-Reliability release on the v0.0.1 thesis: **Ollama for MiniMax H3 + agent skill
-harness**. Same CLI, same skill, same backend plugin model — the shipped path
-now verifies what it downloads, fails honestly, and cleans up after itself.
+Reliability improvements for local MiniMax H3 generation: verified weight
+downloads, isolated reference inputs, accurate generation receipts, and explicit
+failure and judge status.
 
 ## Get it
 
@@ -11,14 +11,14 @@ git clone --depth 1 --branch v0.1.0 https://github.com/open-video-ai/open-video
 cd open-video && bash scripts/install.sh
 ```
 
-The `curl https://open-video.ai/install` site installer still serves the
-previous release until an authorized site cutover — the tag clone above is the
-primary v0.1.0 path.
+Use the versioned clone above to install this release. The website installer
+is updated separately and may serve an older version.
 
 ## What changed
 
 - **Recipe-in-render round-trip** — `embed_recipe`/`read_recipe` round-trip
-  atomically; stale OpenVideo metadata tags are cleared on re-embed.
+  with atomic replacement for in-place updates; stale OpenVideo metadata tags
+  are cleared on re-embed.
 - **Integrity-verified weights** — `open-video pull h3` verifies a packaged
   manifest (sizes + checksums), not just file presence.
 - **Engine adapter hardening** — correct URL encoding; ComfyUI errors propagate
@@ -30,11 +30,14 @@ primary v0.1.0 path.
   `OPEN_VIDEO_VLM_MODEL`, or an explicit `vision_fn`), shot verdicts are
   `SKIPPED` (score 0) instead of a silent PASS. Real VLM callbacks remain
   strictly opt-in.
-- **Bounded refine loop** — finite validation/retries
-  (`OPEN_VIDEO_JUDGE_RETRIES`); the best take's seed and full take history are
-  recorded in the receipt; aborting leaves a partial-film receipt.
+- **Judge retries and receipts** — `OPEN_VIDEO_JUDGE_RETRIES` sets the number
+  of extra takes (default 1). The best take's seed and full take history are
+  recorded in the JSON receipt. A failed requested shot stops the run without
+  reporting a partial film as complete.
+- **Portrait generation** — `--aspect 9:16` reaches the backend's generation
+  settings; JSON output includes the actual dimensions and take receipts.
 
-## Truth in advertising
+## Scope and limitations
 
 - No `open-video inspect` / `remix` / `--lora` CLI flags exist. Recipe read-back:
   `python -c "from open_video.core.recipe import read_recipe; print(read_recipe('out.mp4'))"`.

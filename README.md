@@ -40,9 +40,8 @@ open-video run "A lone astronaut planting a flag on a red dune at dusk" --durati
 open-video "sunset waves" --dry-run # plan + validate, no GPU spent
 ```
 
-> The `curl https://open-video.ai/install` site installer still points at the
-> previous release until an authorized site cutover — use the tag clone above
-> for v0.1.0.
+Use the versioned clone above to install this release. The website installer
+is updated separately and may serve an older version.
 
 | OS | Install | Generate |
 |---|---|---|
@@ -197,7 +196,7 @@ Full design notes: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 harness, recipe-in-render metadata, opt-in VLM judge with honest `SKIPPED` fallback, and
 unique I2V/FL2V input staging (`OPEN_VIDEO_COMFYUI_INPUT`).
 
-- **Next:** a real multi-shot demo verified end-to-end with receipts (not yet run),
+- **Next:** a multi-shot demo with an independent visual review and receipts,
   multi-shot continuity, a license-clean second backend.
 - **Later, only when real:** hosted generate, desktop packaging, community gallery.
 
