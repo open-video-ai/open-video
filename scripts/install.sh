@@ -236,9 +236,9 @@ resolve_root() {
         else
             # Standalone run (e.g. curl|bash): clone the repo first.
             OV_ROOT="${OV_ROOT:-$(pwd)/open-video}"
-            warn "Running standalone — cloning open-video into: $OV_ROOT"
-            if [[ -d "$OV_ROOT/.git" ]]; then
-                ok "Reusing existing checkout at $OV_ROOT"
+            info "Standalone install — product checkout: $OV_ROOT"
+            if [[ -e "$OV_ROOT/.git" ]]; then
+                ok "Reusing existing checkout without updating its source: $OV_ROOT"
             else
                 if ! have git; then die "git is required to clone open-video. Install git and re-run."; fi
                 git clone --depth 1 "$REPO_URL" "$OV_ROOT" \
@@ -249,6 +249,12 @@ resolve_root() {
     OV_ROOT=$(cd "$OV_ROOT" && pwd) || die "root path not accessible: $OV_ROOT"
     [[ -f "$OV_ROOT/cli/open_video.py" ]] \
         || die "$OV_ROOT does not look like the open-video repo (no cli/open_video.py)."
+    # Never pull or switch a user's checkout implicitly. Reject an incompatible
+    # old checkout before installing dependencies or downloading weights.
+    local required
+    for required in core/resources.py scripts/comfyui.pin models/h3_manifest.json scripts/verify_h3_manifest.py; do
+        [[ -f "$OV_ROOT/$required" ]] || die "Checkout is missing $required. Preserve local changes, update the intended product branch with git pull --ff-only in '$OV_ROOT', then re-run. The installer does not update product source automatically."
+    done
     load_comfyui_pin "$OV_ROOT"
     H3_MANIFEST="$OV_ROOT/models/h3_manifest.json"
     H3_VERIFY="$OV_ROOT/scripts/verify_h3_manifest.py"
@@ -848,7 +854,7 @@ ${C_BOLD}Browse prompt recipes & backends:${C_RESET}
 ${C_BOLD}Help & docs:${C_RESET}  https://open-video.ai   (docs/getting-started.md, docs/h3_ecosystem.md)
 ${C_BOLD}Community:${C_RESET}     https://open-video.ai  ·  GitHub Issues on open-video-ai/open-video
 
-${C_DIM}Re-run this installer any time to update or repair — every step is resumable.${C_RESET}
+${C_DIM}Re-run to resume or repair this checkout. To upgrade, preserve local changes and run git pull --ff-only on your intended product branch first.${C_RESET}
 EOF
 }
 
