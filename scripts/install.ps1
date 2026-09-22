@@ -79,6 +79,12 @@ if [ ! -d `$HOME/open-video/.git ]; then
   git clone --depth 1 '$RepoUrl' `$HOME/open-video
 fi
 cd `$HOME/open-video
+for required in core/resources.py scripts/comfyui.pin models/h3_manifest.json scripts/verify_h3_manifest.py; do
+  if [ ! -f "`$required" ]; then
+    printf '%s\n' "Checkout is missing `$required. Preserve local changes and run git pull --ff-only on the intended branch in ~/open-video, then re-run. Product source is not updated automatically." >&2
+    exit 1
+  fi
+done
 bash scripts/install.sh $argStr
 "@
   Write-Info "wsl bash -lc '... install.sh $argStr'"
@@ -103,8 +109,14 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue) -and -not (Get-Comma
 
 if (-not (Test-Path (Join-Path $Root ".git"))) {
   git clone --depth 1 $RepoUrl $Root
+  if ($LASTEXITCODE -ne 0) { throw "git clone failed" }
 } else {
-  Write-Ok "Checkout already present at $Root"
+  Write-Ok "Reusing checkout without updating its source: $Root"
+}
+foreach ($required in @("cli/open_video.py", "core/resources.py", "scripts/comfyui.pin", "models/h3_manifest.json", "scripts/verify_h3_manifest.py")) {
+  if (-not (Test-Path -PathType Leaf (Join-Path $Root $required))) {
+    throw "Checkout is missing $required. Preserve local changes and run git pull --ff-only on the intended branch in '$Root', then re-run. Product source is not updated automatically."
+  }
 }
 
 $py = if (Get-Command python -ErrorAction SilentlyContinue) { "python" } else { "python3" }

@@ -5,15 +5,49 @@ ModelBackend interface. H3 = the #1 open video model (Arena T2V #2 / I2V #3 over
 at parity with closed). Baseline backend for open-video.
 """
 from __future__ import annotations
-import json, shutil, subprocess
+import json, os, shutil, subprocess, uuid
 from pathlib import Path
 from open_video.core.backend import ModelBackend, Capabilities, ShotRequest, ShotResult
 
 HERE = Path(__file__).parent
+REPO_ROOT = HERE.parent.parent            # repo root (source) / open_video pkg dir (wheel)
 WORKFLOWS = {"t2v": HERE / "workflows" / "h3_t2v_api.json",
              "i2v": HERE / "workflows" / "h3_flf2v_api.json",
              "flf2v": HERE / "workflows" / "h3_flf2v_api.json"}
-COMFY_INPUT = Path("ComfyUI/input")  # engine-relative; the adapter/engine host stages images here
+
+
+def resolve_comfy_input() -> Path:
+    """Absolute ComfyUI ``input/`` dir where reference frames are staged.
+
+    OPEN_VIDEO_COMFYUI_INPUT wins; else derived from the ComfyUI root the rest of
+    the project already knows (OPEN_VIDEO_COMFYUI_DIR, $OPEN_VIDEO_LAB/$H3_LAB
+    lab layout, sibling lab/, the repo's own ComfyUI checkout). Never CWD-relative —
+    an unresolvable runtime raises so the caller fails loudly instead of mkdir-ing
+    a wrong dir.
+    """
+    env = os.environ.get("OPEN_VIDEO_COMFYUI_INPUT", "").strip()
+    if env:
+        p = Path(env).expanduser()
+        if not p.is_dir():
+            raise FileNotFoundError(f"OPEN_VIDEO_COMFYUI_INPUT={p} is not a directory")
+        return p.resolve()
+    roots = []
+    comfy_dir = os.environ.get("OPEN_VIDEO_COMFYUI_DIR", "").strip()
+    if comfy_dir:
+        roots.append(("OPEN_VIDEO_COMFYUI_DIR", Path(comfy_dir).expanduser()))
+    for var in ("OPEN_VIDEO_LAB", "H3_LAB"):
+        v = os.environ.get(var, "").strip()
+        if v:
+            roots.append((var, Path(v).expanduser() / "ComfyUI"))
+    roots += [(None, REPO_ROOT.parent / "lab" / "ComfyUI"), (None, REPO_ROOT / "ComfyUI")]
+    for var, r in roots:
+        if r.is_dir():
+            return (r / "input").resolve()
+        if var:
+            raise FileNotFoundError(f"{var} points to a missing ComfyUI directory: {r}")
+    raise FileNotFoundError(
+        "ComfyUI input dir not found for staging reference frames — set "
+        "OPEN_VIDEO_COMFYUI_INPUT (tried: " + ", ".join(str(r / "input") for _, r in roots) + ")")
 
 
 def _snap_17k5(duration_s: float) -> int:
@@ -26,7 +60,7 @@ class H3Backend(ModelBackend):
     id = "minimax-h3"
     display_name = "MiniMax H3 (Hailuo 3.0)"
     capabilities = Capabilities(
-        t2v=True, i2v=True, flf2v=True, r2v=True, native_audio=True,
+        t2v=True, i2v=True, flf2v=True, r2v="r2v" in WORKFLOWS, native_audio=True,
         max_duration_s=15.0, max_short_edge_px=768,
         aspects=("21:9", "16:9", "4:3", "1:1", "3:4", "9:16"),
         strengths=("native-stereo-audio", "prompt-adherence", "arena-top-open"),
@@ -116,15 +150,34 @@ class H3Backend(ModelBackend):
             wf["sigmashift"]["inputs"]["model"] = ["lora_loader", 0]  # rewire model through LoRA
         if req.trigger_word:
             wf["h3_i2v"]["inputs"]["prompt"] = f"{req.trigger_word}, {req.prompt}"
-        # stage reference frames for I2V/FL2VA
+        # stage reference frames for I2V/FL2VA (per-run filenames: no cross-run collisions)
         if req.mode in ("i2v", "flf2v"):
-            COMFY_INPUT.mkdir(parents=True, exist_ok=True)
-            if req.first_frame:
-                shutil.copy(req.first_frame, COMFY_INPUT / "firstframe.png")
-            if req.mode == "flf2v" and req.last_frame:
-                shutil.copy(req.last_frame, COMFY_INPUT / "lastframe.png")
-            else:  # i2v: drop the last-frame branch
-                wf["h3_i2v"]["inputs"].pop("last_frame", None); wf.pop("load_lastframe", None)
+            refs = [("first_frame", req.first_frame)]
+            if req.mode == "flf2v":
+                refs.append(("last_frame", req.last_frame))
+            for name, p in refs:
+                if not p:
+                    return ShotResult(ok=False, error=f"H3 mode '{req.mode}' requires {name}")
+                if not Path(p).is_file():
+                    return ShotResult(ok=False, error=f"H3 {name} not readable: {p}")
+            try:
+                staging = resolve_comfy_input()
+                staging.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                return ShotResult(ok=False, error=f"staging dir: {e}")
+            tag = uuid.uuid4().hex[:8]
+            try:
+                ff_name = f"ov_ff_{req.seed}_{tag}{Path(req.first_frame).suffix or '.png'}"
+                shutil.copy(req.first_frame, staging / ff_name)
+                wf["load_firstframe"]["inputs"]["image"] = ff_name
+                if req.mode == "flf2v":
+                    lf_name = f"ov_lf_{req.seed}_{tag}{Path(req.last_frame).suffix or '.png'}"
+                    shutil.copy(req.last_frame, staging / lf_name)
+                    wf["load_lastframe"]["inputs"]["image"] = lf_name
+                else:  # i2v: drop the last-frame branch
+                    wf["h3_i2v"]["inputs"].pop("last_frame", None); wf.pop("load_lastframe", None)
+            except OSError as e:
+                return ShotResult(ok=False, error=f"stage refs: {e}")
         wf["save_video"]["inputs"]["filename_prefix"] = f"ov_{req.mode}"
         # run
         if engine is None:
@@ -137,6 +190,14 @@ class H3Backend(ModelBackend):
         if res["status"].get("status_str") != "success":
             return ShotResult(ok=False, error=res["status"].get("status_str", "failed"),
                               receipt={"prompt_id": res["prompt_id"], "status": res["status"]})
-        return ShotResult(ok=True, video_path=(res["outputs"][0] if res["outputs"] else None),
-                          receipt={"prompt_id": res["prompt_id"], "engine": engine.id,
-                                   "outputs": res["outputs"]})
+        outputs = res.get("outputs") or []
+        receipt = {"prompt_id": res["prompt_id"], "engine": engine.id, "outputs": outputs,
+                   "model": self.id, "mode": req.mode, "seed": req.seed,
+                   "width": req.width, "height": req.height,
+                   "duration_s": _snap_17k5(req.duration_s) / 24,
+                   "steps": s["steps"], "sampler": s["sampler"], "scheduler": s["scheduler"],
+                   "lora": req.lora, "lora_weight": req.lora_weight if req.lora else None}
+        if not outputs:
+            return ShotResult(ok=False, error="engine reported success but returned no video",
+                              receipt=receipt)
+        return ShotResult(ok=True, video_path=outputs[0], receipt=receipt)
