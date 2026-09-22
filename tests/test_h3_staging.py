@@ -217,6 +217,10 @@ def test_t2v_does_not_touch_the_staging_dir(tmp_path, monkeypatch):
 
     assert res.ok, res.error
     assert not (tmp_path / "ComfyUI").exists()
+    assert res.receipt["model"] == "minimax-h3"
+    assert res.receipt["seed"] == req.seed
+    assert (res.receipt["width"], res.receipt["height"]) == (64, 36)
+    assert res.receipt["duration_s"] == H3Backend().duration_to_length(2.0) / 24
 
 
 def test_success_with_no_outputs_is_a_failure(tmp_path):

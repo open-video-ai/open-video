@@ -117,7 +117,7 @@ def test_list_models_json_serializable(capsys):
                for r in rows)
     h3 = next(r for r in rows if r["alias"] == "h3")
     assert h3["id"] == "minimax-h3"
-    assert {"t2v", "i2v", "flf2v", "r2v"} <= set(h3["modes"].split("/"))
+    assert set(h3["modes"].split("/")) == {"t2v", "i2v", "flf2v"}
     assert h3["max_s"] == 15.0
 
 

@@ -189,7 +189,12 @@ class H3Backend(ModelBackend):
             return ShotResult(ok=False, error=res["status"].get("status_str", "failed"),
                               receipt={"prompt_id": res["prompt_id"], "status": res["status"]})
         outputs = res.get("outputs") or []
-        receipt = {"prompt_id": res["prompt_id"], "engine": engine.id, "outputs": outputs}
+        receipt = {"prompt_id": res["prompt_id"], "engine": engine.id, "outputs": outputs,
+                   "model": self.id, "mode": req.mode, "seed": req.seed,
+                   "width": req.width, "height": req.height,
+                   "duration_s": _snap_17k5(req.duration_s) / 24,
+                   "steps": s["steps"], "sampler": s["sampler"], "scheduler": s["scheduler"],
+                   "lora": req.lora, "lora_weight": req.lora_weight if req.lora else None}
         if not outputs:
             return ShotResult(ok=False, error="engine reported success but returned no video",
                               receipt=receipt)
