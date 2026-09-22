@@ -4,8 +4,8 @@
 > Canonical commands for README / site / tutorial.
 
 ## Prerequisites
-- **NVIDIA GPU** (32GB-class VRAM for the default INT8 ConvRot path; smaller cards need manual, experimental W4/NF4 tiers)
-- **Linux or macOS** (Windows via WSL2)
+- **NVIDIA GPU** (the installer selects INT8 and enables ComfyUI offload below 22 GiB VRAM; W4/NF4 are separate manual experiments)
+- **Linux or Windows via WSL2** for the default GPU path; macOS supports setup and dry-run
 - **~60GB disk** (for ComfyUI + H3 weights)
 
 ## 3 Steps (human / CLI)
@@ -17,8 +17,8 @@ cd open-video
 bash scripts/install.sh
 ```
 First run downloads ~54GB of H3 weights (resumable, integrity-verified).
-The `curl https://open-video.ai/install` site installer still serves the
-previous release until an authorized site cutover — use the tag clone above.
+Use the versioned clone above to install this release. The website installer
+is updated separately and may serve an older version.
 
 ### 2. Pull / status (Ollama-shaped)
 ```bash
@@ -67,7 +67,8 @@ open-video "a 60-second short film about a lighthouse keeper" --duration 60
 ```
 
 ### Read a video's embedded recipe
-Every render embeds its generation recipe in the mp4 metadata. Read it back
+The pipeline embeds its generation recipe in the mp4 metadata and reports a
+warning if embedding fails. Read it back
 with the Python API (there is no `inspect`/`remix` CLI):
 
 ```bash
@@ -80,9 +81,9 @@ PY
 ## Troubleshooting
 | Issue | Fix |
 |---|---|
-| `CUDA out of memory` | Re-run with INT8 + `--lowvram`; W4/NF4 tiers are manual, experimental — not installed by `pull` |
+| `CUDA out of memory` | Start the ComfyUI server with `python main.py --lowvram` in its runtime environment. This is a ComfyUI flag, not an `open-video` flag; the installer selects it automatically below 22 GiB VRAM. |
 | Download slow | Use aria2c with 16 connections: `aria2c -x16 -s16 <url>` |
-| ComfyUI not running | `cd ComfyUI && python main.py --listen --lowvram --use-sage-attention` |
+| ComfyUI not running | In its runtime environment: `cd ComfyUI && python main.py --listen 127.0.0.1 --lowvram` |
 | I2V/FL2V frame not found | Set `OPEN_VIDEO_COMFYUI_INPUT` to the server's own `input/` dir |
 | NVFP4 OOM on 5090 | Avoid NVFP4 — use INT8 ConvRot (default) |
 

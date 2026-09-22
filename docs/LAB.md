@@ -48,3 +48,13 @@ the HTTP API does not verify that a local directory belongs to the server.
 - Never commit weights, ComfyUI clones, or `.env` files.
 - Do not hardcode machine-absolute paths; use env vars or paths relative to the checkout.
 - Weight license (MiniMax H3 Community) is separate from this software’s Apache-2.0.
+
+### Audio VAE with constrained GPU memory
+
+The pinned ComfyUI version can fail in H3 audio decoding with
+`Input type (torch.cuda.FloatTensor) and weight type (torch.FloatTensor)` when
+legacy partial offloading is used (`--lowvram --disable-dynamic-vram`).
+Add `--cpu-vae` to that server's launch command to keep VAE inputs and weights
+on CPU. This affects both audio and video VAE computation and can substantially
+increase decoding time. H3 sampling still runs on the GPU. See the release notes
+for the tested configuration and outcome.

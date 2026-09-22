@@ -208,8 +208,7 @@ seed · mode · wall time** (from receipt).
 # Install (once) — v0.1.0 from the GitHub tag
 git clone --depth 1 --branch v0.1.0 https://github.com/open-video-ai/open-video
 cd open-video && bash scripts/install.sh   # Windows: run inside WSL2
-# note: curl https://open-video.ai/install still serves the previous release
-# until an authorized site cutover
+# The website installer is updated separately and may serve an older version.
 
 cd "$OPEN_VIDEO_ROOT"
 python -m open_video pull h3              # download / verify weights

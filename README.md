@@ -54,8 +54,8 @@ right weight tier for your card:
 
 | VRAM | Quant tier |
 |---|---|
-| ≥ 22 GB | INT8 ConvRot (default, verified — the only tier `pull` installs) |
-| 12–22 GB | INT8 + `--lowvram` offload |
+| ≥ 22 GiB | INT8 ConvRot (default, checksum verified — the only tier `pull` installs) |
+| 12–22 GiB | INT8 + automatic ComfyUI low-VRAM offload |
 | 9–12 GB | W4 ConvRot (~10 GB) — manual, experimental |
 | < 9 GB | NF4 (~8 GB entry) — manual, experimental |
 

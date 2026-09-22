@@ -4,6 +4,9 @@ include PLAN.md
 include ARCHITECTURE.md
 include LICENSE
 include pyproject.toml
+# Keep the included tests runnable from the source distribution.
+include tests/conftest.py
+include scripts/install.ps1 scripts/lab-restore.sh scripts/pinokio_install.js
 recursive-include backends *.json
 recursive-include library *.txt *.md
 recursive-include docs *.md
