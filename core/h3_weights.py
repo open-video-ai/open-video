@@ -1,7 +1,7 @@
 """H3 weight inventory — Ollama-style ``pull`` target for MiniMax H3.
 
 Verified INT8 ConvRot package (same four files as ``scripts/install.sh``).
-Network-free checks only; download is delegated to the installer.
+Network-free size checks only; the CLI delegates downloads and hashing to the manifest tool.
 """
 from __future__ import annotations
 

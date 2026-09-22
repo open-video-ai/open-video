@@ -1,21 +1,24 @@
-# OpenVideo Quickstart (v0.0.1)
+# OpenVideo Quickstart (v0.1.0)
 
-> **v0.0.1 = Ollama for MiniMax H3 + `skill/h3-video` harness** — any agent can generate high-quality local video.  
+> **v0.1.0 = Ollama for MiniMax H3 + `skill/h3-video` harness** — any agent can generate high-quality local video.
 > Canonical commands for README / site / tutorial.
 
 ## Prerequisites
-- **NVIDIA GPU** (8GB+ VRAM for NF4, 32GB+ for INT8 ConvRot)
-- **Linux or macOS** (Windows via WSL2)
+- **NVIDIA GPU** (the installer selects INT8 and enables ComfyUI offload below 22 GiB VRAM; W4/NF4 are separate manual experiments)
+- **Linux or Windows via WSL2** for the default GPU path; macOS supports setup and dry-run
 - **~60GB disk** (for ComfyUI + H3 weights)
 
 ## 3 Steps (human / CLI)
 
 ### 1. Install
 ```bash
-curl -fsSL https://open-video.ai/install | bash
-# or: git clone … && bash scripts/install.sh
+git clone --depth 1 --branch v0.1.0 https://github.com/open-video-ai/open-video
+cd open-video
+bash scripts/install.sh
 ```
-First run downloads ~54GB of H3 weights (resumable).
+First run downloads ~54GB of H3 weights (resumable, integrity-verified).
+Use the versioned clone above to install this release. The website installer
+is updated separately and may serve an older version.
 
 ### 2. Pull / status (Ollama-shaped)
 ```bash
@@ -37,7 +40,7 @@ open-video "sunset waves" --dry-run
 3. Agent crafts **official 3-field H3 prompt** (not a bare one-liner)
 4. Agent runs `open-video run …` and returns the mp4
 
-## What happens (v0.0.1)
+## What happens (v0.1.0)
 1. Weights + ComfyUI ready (`pull` / `status`)
 2. Skill or human crafts H3 3-field prompt (quality lever)
 3. H3 generates clip (local GPU; typical 5–10s, 1344×768-class)
@@ -50,32 +53,38 @@ open-video "sunset waves" --dry-run
 open-video "a neon koi swimming through rain" --duration 10 --aspect 9:16
 ```
 
-### With a LoRA
+### Image-to-video / first-last-frame
 ```bash
-open-video "a product shot of a luxury watch" --lora cinematic-v2 --lora-weight 0.7
+open-video run "…" --mode i2v --first-frame inputs/start.png
+open-video run "…" --mode flf2v --first-frame inputs/start.png --last-frame inputs/end.png
 ```
+Frames are staged into the ComfyUI server's own input dir — set
+`OPEN_VIDEO_COMFYUI_INPUT` to a directory that belongs to that server.
 
-### Multi-shot film (beyond 15s)
+### Multi-shot film (beyond 15s — experimental director path)
 ```bash
 open-video "a 60-second short film about a lighthouse keeper" --duration 60
 ```
 
-### Inspect a video's recipe (the recipe-in-render feature)
-```bash
-open-video inspect output/film.mp4
-```
+### Read a video's embedded recipe
+The pipeline embeds its generation recipe in the mp4 metadata and reports a
+warning if embedding fails. Read it back
+with the Python API (there is no `inspect`/`remix` CLI):
 
-### Remix a video (recreate from embedded recipe)
 ```bash
-open-video remix output/film.mp4
+python - <<'PY'
+from open_video.core.recipe import read_recipe
+print(read_recipe("output/film.mp4"))
+PY
 ```
 
 ## Troubleshooting
 | Issue | Fix |
 |---|---|
-| `CUDA out of memory` | Use NF4 quant (8GB VRAM) — edit `backends/h3/backend.py` settings |
+| `CUDA out of memory` | Start the ComfyUI server with `python main.py --lowvram` in its runtime environment. This is a ComfyUI flag, not an `open-video` flag; the installer selects it automatically below 22 GiB VRAM. |
 | Download slow | Use aria2c with 16 connections: `aria2c -x16 -s16 <url>` |
-| ComfyUI not running | `cd ComfyUI && python main.py --listen --lowvram --use-sage-attention` |
+| ComfyUI not running | In its runtime environment: `cd ComfyUI && python main.py --listen 127.0.0.1 --lowvram` |
+| I2V/FL2V frame not found | Set `OPEN_VIDEO_COMFYUI_INPUT` to the server's own `input/` dir |
 | NVFP4 OOM on 5090 | Avoid NVFP4 — use INT8 ConvRot (default) |
 
 ## Next steps

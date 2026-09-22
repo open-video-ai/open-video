@@ -49,28 +49,28 @@ open and local-first.
 
 ## 2. Install (primary paths)
 
-Pick **one**. Real generation needs an **NVIDIA GPU** (about 8–10 GB VRAM practical floor for a
-small quant; ~21 GB+ comfortable for INT8).
+Pick **one**. Real generation uses an **NVIDIA GPU** with the INT8 weights;
+the installer enables ComfyUI offloading below 22 GiB VRAM. Other quantization
+tiers are manual experiments.
 
 | Path | Best for | Needs |
 |---|---|---|
-| **A. One-line install** | Fastest setup | Linux/macOS terminal + NVIDIA GPU + disk (~60 GB) |
+| **A. Versioned install** | Installing v0.1.0 | Linux/WSL2 + NVIDIA GPU + disk (~60 GB) |
 | **B. Clone + scripts** | Developers already in the repo | Same GPU + Python 3.10+ |
 | **C. Browser `/try`** | Seeing the *idea* of the product | Browser only — **mockup, not cloud generate** |
 
 Full detail: [`getting-started.md`](./getting-started.md) · [`QUICKSTART.md`](./QUICKSTART.md).
 
-### Option A — One-line install (recommended)
+### Option A — Versioned install (recommended)
 
 ```bash
-curl -fsSL https://open-video.ai/install | bash
+git clone --depth 1 --branch v0.1.0 https://github.com/open-video-ai/open-video
+cd open-video
+bash scripts/install.sh
 ```
 
-Windows (PowerShell), when supported by the host script:
-
-```powershell
-irm https://open-video.ai/install.ps1 | iex
-```
+On Windows, run these commands inside WSL2. The website installer is updated
+separately and may serve an older version.
 
 The installer sets up ComfyUI, downloads H3 weights (resumable), and prints next commands. Prefer
 flags from the script’s `--help` / `--self-test` when debugging.
