@@ -253,11 +253,12 @@ def cmd_generate(args) -> int:
               file=sys.stderr)
         return 2
 
-    # 4. aspect vs native list (warning only; resolution_for still computes a grid)
+    # 4. Reject unsupported aspects before planning or spending GPU time.
     if caps.aspects and args.aspect not in caps.aspects:
-        print(f"[open-video] warning: aspect '{args.aspect}' not in model's native "
-              f"aspects {caps.aspects}; will compute the nearest grid anyway.",
+        print(f"[open-video] error: model '{backend.id}' does not support aspect "
+              f"'{args.aspect}'; choose from {', '.join(caps.aspects)}.",
               file=sys.stderr)
+        return 2
 
     # 5. duration sanity
     if args.duration <= 0:
