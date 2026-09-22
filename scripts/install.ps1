@@ -75,7 +75,7 @@ if ($wsl) {
   # Install into ~/open-video inside default WSL distro
   $cmd = @"
 set -e
-if [ ! -d `$HOME/open-video/.git ]; then
+if [ ! -e `$HOME/open-video/.git ]; then
   git clone --depth 1 '$RepoUrl' `$HOME/open-video
 fi
 cd `$HOME/open-video

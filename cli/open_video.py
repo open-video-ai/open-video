@@ -218,7 +218,9 @@ def _emit_generate_json(shots, film, dry_run: bool):
         if not dry_run:
             d.update({"video_path": s_.video_path, "verdict": s_.verdict,
                       "judge_score": s_.receipt.get("judge_score"),
-                      "judge_issues": s_.receipt.get("judge_issues", [])})
+                      "judge_issues": s_.receipt.get("judge_issues", []),
+                      "judge_frames": s_.receipt.get("judge_frames", []),
+                      "receipt": s_.receipt})
         out.append(d)
     print(json.dumps({"dry_run": dry_run, "validated": True, "film": film, "shots": out}))
 
@@ -251,11 +253,12 @@ def cmd_generate(args) -> int:
               file=sys.stderr)
         return 2
 
-    # 4. aspect vs native list (warning only; resolution_for still computes a grid)
+    # 4. Reject unsupported aspects before planning or spending GPU time.
     if caps.aspects and args.aspect not in caps.aspects:
-        print(f"[open-video] warning: aspect '{args.aspect}' not in model's native "
-              f"aspects {caps.aspects}; will compute the nearest grid anyway.",
+        print(f"[open-video] error: model '{backend.id}' does not support aspect "
+              f"'{args.aspect}'; choose from {', '.join(caps.aspects)}.",
               file=sys.stderr)
+        return 2
 
     # 5. duration sanity
     if args.duration <= 0:
@@ -356,7 +359,8 @@ def cmd_generate(args) -> int:
     _bind_engine(backend, engine)
 
     from open_video.core.pipeline import LongFilmPipeline
-    pipeline = LongFilmPipeline(backend=backend, engine=engine, output_dir=out_dir)
+    pipeline = LongFilmPipeline(backend=backend, engine=engine, output_dir=out_dir,
+                                aspect=args.aspect)
     film, _final_plan = pipeline.make_film(shots, out_path=str(out_path))
     if not film:
         print("[open-video] error: pipeline did not produce a film.", file=sys.stderr)
@@ -527,8 +531,8 @@ def build_generate_parser():
                    help="Validate prompt + show the plan, then exit without generating.")
     p.add_argument("--json", action="store_true",
                    help="Emit a machine-readable JSON result (film path + per-shot judge "
-                        "verdicts) as the final stdout line — the agent self-verification "
-                        "channel.")
+                        "verdicts + full take receipts) as the final stdout line — the "
+                        "agent self-verification channel.")
     return p
 
 
